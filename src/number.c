@@ -42,7 +42,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     if (buf == NULL) {
                         // out of memory
                         assert(false);
-                        return JsonLogic_Null;
+                        return JsonLogic_NaN;
                     }
                     for (size_t index = 0; index < string->size; ++ index) {
                         buf[index] = string->str[index];
@@ -51,7 +51,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     double value = strtod(buf, &endptr);
                     free(buf);
                     if (*endptr) {
-                        return (JsonLogic_Handle){ .number = NAN };
+                        return JsonLogic_NaN;
                     }
                     return (JsonLogic_Handle){ .number = value };
                 }
@@ -62,7 +62,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 if (array->size == 0) {
                     return (JsonLogic_Handle){ .number = 0.0 };
                 } else if (array->size > 1) {
-                    return (JsonLogic_Handle){ .number = NAN };
+                    return JsonLogic_NaN;
                 }
                 handle = array->items[0];
                 break;
@@ -74,7 +74,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 return (JsonLogic_Handle){ .number = handle.intptr == JsonLogic_True.intptr ? 1.0 : 0.0 };
 
             default:
-                return (JsonLogic_Handle){ .number = NAN };
+                return JsonLogic_NaN;
         }
     }
 }

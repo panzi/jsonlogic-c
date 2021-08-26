@@ -513,8 +513,17 @@ JsonLogic_Handle jsonlogic_op_LOG(JsonLogic_Handle data, JsonLogic_Handle args[]
 }
 
 JsonLogic_Handle jsonlogic_op_MAX(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    // TODO
-    return JsonLogic_Null;
+    if (argc == 0) {
+        return (JsonLogic_Handle){ .number = -INFINITY };
+    }
+    JsonLogic_Handle value = jsonlogic_to_number(args[0]);
+    for (size_t index = 1; index < argc; ++ index) {
+        JsonLogic_Handle other = jsonlogic_to_number(args[index]);
+        if (other.number > value.number) {
+            value.number = other.number;
+        }
+    }
+    return value;
 }
 
 JsonLogic_Handle jsonlogic_op_MERGE(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -523,8 +532,17 @@ JsonLogic_Handle jsonlogic_op_MERGE(JsonLogic_Handle data, JsonLogic_Handle args
 }
 
 JsonLogic_Handle jsonlogic_op_MIN(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    // TODO
-    return JsonLogic_Null;
+    if (argc == 0) {
+        return (JsonLogic_Handle){ .number = INFINITY };
+    }
+    JsonLogic_Handle value = jsonlogic_to_number(args[0]);
+    for (size_t index = 1; index < argc; ++ index) {
+        JsonLogic_Handle other = jsonlogic_to_number(args[index]);
+        if (other.number < value.number) {
+            value.number = other.number;
+        }
+    }
+    return value;
 }
 
 JsonLogic_Handle jsonlogic_op_MISSING(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
