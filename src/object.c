@@ -52,7 +52,8 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
     for (size_t index = 0; index < count; ++ index) {
         JsonLogic_Object_Entry entry = va_arg(ap, JsonLogic_Object_Entry);
         JsonLogic_Handle key = jsonlogic_to_string(entry.key);
-        if (JSONLOGIC_IS_NULL(key)) {
+        if (!JSONLOGIC_IS_STRING(key)) {
+            jsonlogic_decref(key);
             for (size_t free_index = 0; free_index < index; ++ free_index) {
                 JsonLogic_Object_Entry *entry = &object->entries[free_index];
                 jsonlogic_decref(entry->key);
@@ -60,6 +61,8 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
             }
             free(object);
             va_end(ap);
+            // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         jsonlogic_incref(entry.value);
@@ -80,7 +83,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
             const JsonLogic_String *key = JSONLOGIC_CAST_STRING(object->entries[index].key);
             if (jsonlogic_string_equals(prev, key)) {
                 jsonlogic_object_free(object);
-                // since qsort() isn't stable we can't delete 
+                // since qsort() isn't stable, wouldn't know what to delete
                 assert(false);
                 return JsonLogic_Null;
             }
@@ -160,41 +163,59 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
         case JsonLogic_Type_Object:
         {
             JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
-            if (object->size == 0) {
+            size_t index = jsonlogic_object_get_index(object, key);
+            if (index >= object->size) {
                 return JsonLogic_Null;
             }
-            JsonLogic_Handle strkey = jsonlogic_to_string(key);
-            if (JSONLOGIC_IS_NULL(strkey)) {
-                return JsonLogic_Null;
-            }
-            const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
-
-            size_t left  = 0;
-            size_t right = object->size - 1;
-            while (left != right) {
-                // (x + y - 1) / y
-                // ceiling integer division (assumes this all isn't overlowing)
-                size_t mid = (left + right + 1) / 2;
-                if (jsonlogic_string_compare(
-                        JSONLOGIC_CAST_STRING(object->entries[mid].key),
-                        stringkey) > 0) {
-                    right = mid - 1;
-                } else {
-                    left = mid;
-                }
-            }
-            const JsonLogic_Object_Entry *entry = &object->entries[left];
-            JsonLogic_Handle value = JsonLogic_Null;
-            if (jsonlogic_string_equals(
-                    JSONLOGIC_CAST_STRING(entry->key),
-                    stringkey)) {
-                value = entry->value;
-                jsonlogic_incref(value);
-            }
-            jsonlogic_decref(strkey);
-            return value;
+            return jsonlogic_incref(object->entries[index].value);
         }
         default:
             return JsonLogic_Null;
     }
+}
+
+size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const JsonLogic_Char *key, size_t key_size) {
+    size_t left  = 0;
+    size_t right = object->size - 1;
+    while (left != right) {
+        // (x + y - 1) / y
+        // ceiling integer division (assumes this all isn't overlowing)
+        size_t mid = (left + right + 1) / 2;
+        const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
+        if (jsonlogic_utf16_compare(
+                entrykey->str,
+                entrykey->size,
+                key,
+                key_size) > 0) {
+            right = mid - 1;
+        } else {
+            left = mid;
+        }
+    }
+    const JsonLogic_Object_Entry *entry = &object->entries[left];
+    const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(entry->key);
+    if (jsonlogic_utf16_equals(
+            entrykey->str,
+            entrykey->size,
+            key,
+            key_size)) {
+        return left;
+    }
+    return object->size;
+}
+
+size_t jsonlogic_object_get_index(JsonLogic_Object *object, JsonLogic_Handle key) {
+    if (object->size == 0) {
+        return 0;
+    }
+    JsonLogic_Handle strkey = jsonlogic_to_string(key);
+    if (!JSONLOGIC_IS_STRING(strkey)) {
+        // memory allocation failed
+        assert(false);
+        return SIZE_MAX;
+    }
+    const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
+    const size_t index = jsonlogic_object_get_index_utf16(object, stringkey->str, stringkey->size);
+    jsonlogic_decref(strkey);
+    return index;
 }

@@ -64,6 +64,9 @@ extern "C" {
 
 JSONLOGIC_EXPORT JsonLogic_Array *jsonlogic_array_with_capacity(size_t size);
 
+JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const JsonLogic_Char *key, size_t key_size);
+JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index(JsonLogic_Object *object, JsonLogic_Handle key);
+
 JSONLOGIC_PRIVATE void jsonlogic_string_free(JsonLogic_String *string);
 JSONLOGIC_PRIVATE void jsonlogic_array_free (JsonLogic_Array  *array);
 JSONLOGIC_PRIVATE void jsonlogic_object_free(JsonLogic_Object *object);

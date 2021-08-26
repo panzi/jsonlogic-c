@@ -9,6 +9,9 @@
     #define static_assert(...) _Static_assert(__VA_ARGS__)
 #endif
 
+JSONLOGIC_DECL_UTF16(JSONLOGIC_ACCUMULATOR, 'a', 'c', 'c', 'u', 'm', 'u', 'l', 'a', 't', 'o', 'r')
+JSONLOGIC_DECL_UTF16(JSONLOGIC_CURRENT,     'c', 'u', 'r', 'r', 'e', 'n', 't')
+
 const JsonLogic_Handle JsonLogic_NaN   = { .number = NAN };
 const JsonLogic_Handle JsonLogic_Null  = { .intptr = JsonLogic_Type_Null };
 const JsonLogic_Handle JsonLogic_True  = { .intptr = JsonLogic_Type_Boolean | 1 };
@@ -500,11 +503,27 @@ JsonLogic_Handle jsonlogic_apply_custom(
             RETURN(JsonLogic_Null);
         }
         JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(context);
-        JsonLogic_Handle accumulator = jsonlogic_incref(init);
+        JsonLogic_Handle accumulator = init;
+
+        size_t accumulator_index = jsonlogic_object_get_index_utf16(object, JSONLOGIC_ACCUMULATOR, JSONLOGIC_ACCUMULATOR_SIZE);
+        assert(accumulator_index < object->size);
+
+        size_t current_index = jsonlogic_object_get_index_utf16(object, JSONLOGIC_CURRENT, JSONLOGIC_CURRENT_SIZE);
+        assert(current_index < object->size);
 
         for (size_t index = 0; index < array->size; ++ index) {
-            JsonLogic_Handle item = array->items[index];
-            
+            object->entries[accumulator_index].value = accumulator;
+            object->entries[current_index].value     = array->items[index];
+
+            accumulator = jsonlogic_apply_custom(
+                jsonlogic_incref(logic),
+                jsonlogic_incref(context),
+                operations,
+                operation_count
+            );
+
+            object->entries[accumulator_index].value = JsonLogic_Null;
+            object->entries[current_index].value     = JsonLogic_Null;
         }
 
         jsonlogic_decref(context);
