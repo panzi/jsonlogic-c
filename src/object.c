@@ -94,7 +94,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
 }
 
-JSONLOGIC_DECL_UTF16(JSONLOGIC_LENGTH, 'l', 'e', 'n', 'g', 't', 'h')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, 'l', 'e', 'n', 'g', 't', 'h')
 
 JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle key) {
     if (JSONLOGIC_IS_NUMBER(handle)) {

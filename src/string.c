@@ -95,6 +95,8 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
 
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * utf16_size);
     if (string == NULL) {
+        // memory allocation failed
+        assert(false);
         return JsonLogic_Null;
     }
     string->refcount = 1;
@@ -124,6 +126,8 @@ JsonLogic_Handle jsonlogic_string_from_utf16(const JsonLogic_Char *str) {
 JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, size_t size) {
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * size);
     if (string == NULL) {
+        // memory allocation failed
+        assert(false);
         return JsonLogic_Null;
     }
     string->refcount = 1;
@@ -180,6 +184,8 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
     JsonLogic_String *new_string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * sz_size);
 
     if (new_string == NULL) {
+        // memory allocation failed
+        assert(false);
         return JsonLogic_Null;
     }
 
@@ -196,6 +202,7 @@ JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle inde
         JsonLogic_Handle temp = jsonlogic_to_string(handle);
         if (JSONLOGIC_IS_NULL(temp)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_substr(JSONLOGIC_CAST_STRING(temp), index, size);
@@ -267,27 +274,46 @@ bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, const JsonLogic_Char *
     return true;
 }
 
-JSONLOGIC_DECL_UTF16(JSONLOGIC_OBJECT_STRING, '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
-JSONLOGIC_DECL_UTF16(JSONLOGIC_NULL_STRING,   'n', 'u', 'l', 'l')
-JSONLOGIC_DECL_UTF16(JSONLOGIC_TRUE_STRING,   't', 'r', 'u', 'e')
-JSONLOGIC_DECL_UTF16(JSONLOGIC_FALSE_STRING,  'f', 'a', 'l', 's', 'e')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_OBJECT_STRING,   '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NULL_STRING,     'n', 'u', 'l', 'l')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_TRUE_STRING,     't', 'r', 'u', 'e')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_FALSE_STRING,    'f', 'a', 'l', 's', 'e')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NAN_STRING,      'N', 'a', 'N')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_POS_INFINITY_STRING, 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NEG_INFINITY_STRING, '-', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
+
+bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value) {
+    if (isnan(value)) {
+        return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NAN_STRING, JSONLOGIC_NAN_STRING_SIZE);
+    }
+
+    if (isinf(value)) {
+        if (value > 0) {
+            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_POS_INFINITY_STRING, JSONLOGIC_POS_INFINITY_STRING_SIZE);
+        } else {
+            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE);
+        }
+    }
+
+    char latin1[128];
+    int count = snprintf(latin1, sizeof(buf), "%g", value);
+    if (count >= sizeof(latin1)) {
+        size_t size = (size_t)count + 1;
+        char *latin1 = malloc(size);
+        if (latin1 == NULL) {
+            return false;
+        }
+        snprintf(latin1, size, "%g", value);
+        bool result = jsonlogic_buffer_append_latin1(buf, latin1);
+        free(latin1);
+        return result;
+    }
+    return jsonlogic_buffer_append_latin1(buf, latin1);
+}
 
 bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
     if (handle.intptr < JsonLogic_MaxNumber) {
-        char latin1[128];
-        int count = snprintf(latin1, sizeof(buf), "%g", handle.number);
-        if (count >= sizeof(latin1)) {
-            size_t size = (size_t)count + 1;
-            char *latin1 = malloc(size);
-            if (latin1 == NULL) {
-                return false;
-            }
-            snprintf(latin1, size, "%g", handle.number);
-            bool result = jsonlogic_buffer_append_latin1(buf, latin1);
-            free(latin1);
-            return result;
-        }
-        return jsonlogic_buffer_append_latin1(buf, latin1);
+        return jsonlogic_buffer_append_double(buf, handle.number);
     }
 
     switch (handle.intptr & JsonLogic_TypeMask) {
@@ -328,7 +354,8 @@ bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
             return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_OBJECT_STRING, JSONLOGIC_OBJECT_STRING_SIZE);
 
         default:
-            return true;
+            assert(false);
+            return false;
     }
 }
 

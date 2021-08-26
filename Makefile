@@ -7,6 +7,7 @@ LIB_OBJS=$(BUILD_DIR)/obj/jsonlogic.o \
          $(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/number.o \
          $(BUILD_DIR)/obj/compare.o \
+         $(BUILD_DIR)/obj/json.o \
          $(BUILD_DIR)/obj/object.o
 LIBS=-lm
 
