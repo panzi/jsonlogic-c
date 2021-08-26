@@ -10,6 +10,20 @@
 extern "C" {
 #endif
 
+#if defined(JSONLOGIC_INTERN_H)
+typedef union {
+    uintptr_t intptr;
+    double    number;
+} JsonLogic_Handle;
+#else
+typedef struct JsonLogic_Struct* JsonLogic_Handle;
+#endif
+
+typedef struct JsonLogic_Object_Entry {
+    JsonLogic_Handle key;
+    JsonLogic_Handle value;
+} JsonLogic_Object_Entry;
+
 typedef uint16_t JsonLogic_Char;
 typedef uint64_t JsonLogic_Type;
 

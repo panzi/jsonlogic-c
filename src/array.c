@@ -15,6 +15,22 @@ JsonLogic_Handle jsonlogic_empty_array() {
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
 }
 
+JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
+    JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * size);
+    if (array == NULL) {
+        return NULL;
+    }
+
+    array->refcount = 1;
+    array->size     = 0;
+
+    for (size_t index = 0; index < size; ++ index) {
+        array->items[index] = JsonLogic_Null;
+    }
+
+    return array;
+}
+
 JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * count);
     if (array == NULL) {
@@ -38,7 +54,7 @@ JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
 }
 
-void jsonlogic_free_array(JsonLogic_Array *array) {
+void jsonlogic_array_free(JsonLogic_Array *array) {
     for (size_t index = 0; index < array->size; ++ index) {
         jsonlogic_decref(array->items[index]);
     }

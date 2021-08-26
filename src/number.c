@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <assert.h>
 
 JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
     for (;;) {
@@ -23,21 +24,37 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                         return (JsonLogic_Handle){ .number = NAN };
                     }
                 }
-                char *buf = malloc(string->size + 1);
-                if (buf == NULL) {
-                    return JsonLogic_Null;
+
+                char *endptr = NULL;
+                char buf[128];
+                if (string->size < sizeof(buf)) {
+                    for (size_t index = 0; index < string->size; ++ index) {
+                        buf[index] = string->str[index];
+                    }
+                    buf[string->size] = 0;
+                    double value = strtod(buf, &endptr);
+                    if (*endptr) {
+                        return (JsonLogic_Handle){ .number = NAN };
+                    }
+                    return (JsonLogic_Handle){ .number = value };
+                } else {
+                    char *buf = malloc(string->size + 1);
+                    if (buf == NULL) {
+                        // out of memory
+                        assert(false);
+                        return JsonLogic_Null;
+                    }
+                    for (size_t index = 0; index < string->size; ++ index) {
+                        buf[index] = string->str[index];
+                    }
+                    buf[string->size] = 0;
+                    double value = strtod(buf, &endptr);
+                    free(buf);
+                    if (*endptr) {
+                        return (JsonLogic_Handle){ .number = NAN };
+                    }
+                    return (JsonLogic_Handle){ .number = value };
                 }
-                for (size_t index = 0; index < string->size; ++ index) {
-                    buf[index] = string->str[index];
-                }
-                buf[string->size] = 0;
-                char *endptr = 0;
-                double value = strtod(buf, &endptr);
-                free(buf);
-                if (*endptr) {
-                    return (JsonLogic_Handle){ .number = NAN };
-                }
-                return (JsonLogic_Handle){ .number = value };
             }
             case JsonLogic_Type_Array:
             {

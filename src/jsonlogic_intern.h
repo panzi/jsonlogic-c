@@ -17,11 +17,6 @@ struct JsonLogic_Array;
 struct JsonLogic_String;
 struct JsonLogic_Object;
 
-typedef union {
-    uintptr_t intptr;
-    double    number;
-} JsonLogic_Handle;
-
 #define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)((handle).intptr & JsonLogic_PtrMask))
 #define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) ((handle).intptr & JsonLogic_PtrMask))
 #define JSONLOGIC_CAST_OBJECT(handle) ((JsonLogic_Object*)((handle).intptr & JsonLogic_PtrMask))
@@ -32,6 +27,12 @@ typedef union {
 #define JSONLOGIC_IS_BOOLEAN(handle) (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Boolean)
 #define JSONLOGIC_IS_NULL(handle)    ((handle).intptr == JsonLogic_Type_Null)
 #define JSONLOGIC_IS_NUMBER(handle)  ((handle).intptr < JsonLogic_MaxNumber)
+#define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == JsonLogic_Type_Boolean | 1)
+#define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == JsonLogic_Type_Boolean | 0)
+
+#define JSONLOGIC_DECL_UTF16(NAME, ...) \
+    JSONLOGIC_PRIVATE const size_t NAME##_SIZE = sizeof((char[]){__VA_ARGS__}); \
+    JSONLOGIC_PRIVATE const JsonLogic_Char NAME[sizeof((char[]){__VA_ARGS__})] = { __VA_ARGS__ };
 
 typedef struct JsonLogic_String {
     size_t refcount;
@@ -45,15 +46,10 @@ typedef struct JsonLogic_Array {
     JsonLogic_Handle items[1];
 } JsonLogic_Array;
 
-typedef struct JsonLogic_Object_Entry {
-    JsonLogic_Handle key;
-    JsonLogic_Handle value;
-} JsonLogic_Object_Entry;
-
 typedef struct JsonLogic_Object {
     size_t refcount;
     size_t size;
-    JsonLogic_Object_Entry items[1];
+    JsonLogic_Object_Entry entries[1];
 } JsonLogic_Object;
 
 #ifdef __cplusplus
@@ -66,9 +62,23 @@ typedef struct JsonLogic_Object {
 extern "C" {
 #endif
 
-JSONLOGIC_PRIVATE void jsonlogic_free_string(JsonLogic_String *string);
-JSONLOGIC_PRIVATE void jsonlogic_free_array (JsonLogic_Array  *array);
-JSONLOGIC_PRIVATE void jsonlogic_free_object(JsonLogic_Object *object);
+JSONLOGIC_EXPORT JsonLogic_Array *jsonlogic_array_with_capacity(size_t size);
+
+JSONLOGIC_PRIVATE void jsonlogic_string_free(JsonLogic_String *string);
+JSONLOGIC_PRIVATE void jsonlogic_array_free (JsonLogic_Array  *array);
+JSONLOGIC_PRIVATE void jsonlogic_object_free(JsonLogic_Object *object);
+
+JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic_String *string) {
+    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+}
+
+JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array) {
+    return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
+}
+
+JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object) {
+    return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
+}
 
 typedef struct JsonLogic_Buffer {
     size_t size;
@@ -78,12 +88,14 @@ typedef struct JsonLogic_Buffer {
 #define JSONLOGIC_BUFFER_INIT ((JsonLogic_Buffer){ .size = 0, .data = NULL })
 #define JSONLOGIC_CHUNK_SIZE 256
 
-JSONLOGIC_PRIVATE bool jsonlogic_string_equals (JsonLogic_String *a, JsonLogic_String *b);
-JSONLOGIC_PRIVATE int  jsonlogic_string_compare(JsonLogic_String *a, JsonLogic_String *b);
+JSONLOGIC_PRIVATE bool jsonlogic_string_equals (const JsonLogic_String *a, const JsonLogic_String *b);
+JSONLOGIC_PRIVATE int  jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b);
+
+JSONLOGIC_PRIVATE size_t jsonlogic_string_to_index(const JsonLogic_String *string);
 
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_ensure(JsonLogic_Buffer *buf, size_t want_free_size);
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str);
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, JsonLogic_Char *str, size_t size);
+JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_utf16 (JsonLogic_Buffer *buf, JsonLogic_Char *str, size_t size);
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle);
 JSONLOGIC_PRIVATE JsonLogic_String *jsonlogic_buffer_take(JsonLogic_Buffer *buf);
 JSONLOGIC_PRIVATE void jsonlogic_buffer_free(JsonLogic_Buffer *buf);

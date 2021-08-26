@@ -8,7 +8,7 @@ LIB_OBJS=$(BUILD_DIR)/obj/jsonlogic.o \
          $(BUILD_DIR)/obj/number.o \
          $(BUILD_DIR)/obj/compare.o \
          $(BUILD_DIR)/obj/object.o
-LIBS=
+LIBS=-lm
 
 SO_OBJS=$(patsubst $(BUILD_DIR)/obj/%,$(BUILD_DIR)/shared-obj/%,$(LIB_OBJS))
 

@@ -45,12 +45,10 @@ JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, si
 }
 
 static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, JsonLogic_Handle index, JsonLogic_Handle size) {
-    double dbl_index = jsonlogic_to_double(index);
-    double dbl_size  = jsonlogic_to_double(size);
-
     size_t sz_index;
     size_t sz_size;
 
+    double dbl_index = jsonlogic_to_double(index);
     if (isnan(dbl_index)) {
         sz_index = 0;
     } else if (dbl_index < 0) {
@@ -67,19 +65,25 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
         }
     }
 
-    if (isnan(dbl_size)) {
-        sz_size = 0;
-    } else if (dbl_size < 0) {
-        if (-dbl_size >= (double)string->size) {
-            sz_size = 0;
-        } else {
-            sz_size = string->size + (size_t)dbl_size;
-        }
+    if (JSONLOGIC_IS_NULL(size)) {
+        sz_size = sz_index < string->size ? string->size - sz_index : 0;
     } else {
-        if (dbl_size > (double)(string->size - sz_index)) {
-            sz_size = string->size - sz_index;
+        double dbl_size = jsonlogic_to_double(size);
+
+        if (isnan(dbl_size)) {
+            sz_size = 0;
+        } else if (dbl_size < 0) {
+            if (-dbl_size >= (double)string->size) {
+                sz_size = 0;
+            } else {
+                sz_size = string->size + (size_t)dbl_size;
+            }
         } else {
-            sz_size = (size_t)dbl_size;
+            if (dbl_size > (double)(string->size - sz_index)) {
+                sz_size = string->size - sz_index;
+            } else {
+                sz_size = (size_t)dbl_size;
+            }
         }
     }
 
@@ -305,7 +309,7 @@ JsonLogic_Handle jsonlogic_to_string(JsonLogic_Handle handle) {
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
 }
 
-bool jsonlogic_string_equals(JsonLogic_String *a, JsonLogic_String *b) {
+bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *b) {
     if (a->size != b->size) {
         return false;
     }
@@ -313,12 +317,21 @@ bool jsonlogic_string_equals(JsonLogic_String *a, JsonLogic_String *b) {
     return memcmp(a->str, b->str, a->size * sizeof(JsonLogic_Char)) == 0;
 }
 
-int jsonlogic_string_compare(JsonLogic_String *a, JsonLogic_String *b) {
-    size_t minsize = a->size < b->size ? a->size : b->size;
+
+bool jsonlogic_utf16_equals(const JsonLogic_Char *a, size_t asize, const JsonLogic_Char *b, size_t bsize) {
+    if (asize != bsize) {
+        return false;
+    }
+
+    return memcmp(a, b, asize * sizeof(JsonLogic_Char)) == 0;
+}
+
+int jsonlogic_utf16_compare(const JsonLogic_Char *a, size_t asize, const JsonLogic_Char *b, size_t bsize) {
+    size_t minsize = asize < bsize ? asize : bsize;
 
     for (size_t index = 0; index < minsize; ++ index) {
-        JsonLogic_Char ach = a->str[index];
-        JsonLogic_Char bch = b->str[index];
+        JsonLogic_Char ach = a[index];
+        JsonLogic_Char bch = b[index];
 
         int cmp = ach - bch;
         if (cmp != 0) {
@@ -326,9 +339,35 @@ int jsonlogic_string_compare(JsonLogic_String *a, JsonLogic_String *b) {
         }
     }
 
-    return a->size > b->size ? 1 : a->size < b->size ? -1 : 0;
+    return asize > bsize ? 1 : asize < bsize ? -1 : 0;
 }
 
-void jsonlogic_free_string(JsonLogic_String *string) {
+int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b) {
+    return jsonlogic_utf16_compare(a->str, a->size, b->str, b->size);
+}
+
+void jsonlogic_string_free(JsonLogic_String *string) {
     free(string);
+}
+
+size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
+    size_t value = 0;
+
+    for (size_t index = 0; index < string->size; ++ index) {
+        if (value >= SIZE_MAX / 10) {
+            return SIZE_MAX;
+        }
+        JsonLogic_Char ch = string->str[index];
+        if (ch < '0' || ch > '1') {
+            return SIZE_MAX;
+        }
+        int ord = ch - '0';
+        value *= 10;
+        if (value > SIZE_MAX - ord) {
+            return SIZE_MAX;
+        }
+        value += ord;
+    }
+
+    return value;
 }

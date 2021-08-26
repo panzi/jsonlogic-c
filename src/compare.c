@@ -160,6 +160,44 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
     }
 }
 
+int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
+    if (a.intptr < JsonLogic_MaxNumber) {
+        double bnum = jsonlogic_to_double(b);
+        return a.number < bnum ? -1 : a.number > bnum ? 1 : 0;
+    }
+
+    if (b.intptr < JsonLogic_MaxNumber) {
+        double anum = jsonlogic_to_double(a);
+        return anum < b.number ? -1 : anum > b.number ? 1 : 0;
+    }
+
+    if ((a.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+        JsonLogic_Handle bstr = jsonlogic_to_string(b);
+        if (JSONLOGIC_IS_NULL(bstr)) {
+            // memory allocation failed
+            assert(false);
+            return 0;
+        }
+        int result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr));
+        jsonlogic_decref(bstr);
+        return result;
+    }
+
+    if ((b.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+        JsonLogic_Handle astr = jsonlogic_to_string(a);
+        if (JSONLOGIC_IS_NULL(astr)) {
+            // memory allocation failed
+            assert(false);
+            return 0;
+        }
+        int result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b));
+        jsonlogic_decref(astr);
+        return result;
+    }
+
+    return 0;
+}
+
 JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b) {
     if (a.intptr < JsonLogic_MaxNumber) {
         double bnum = jsonlogic_to_double(b);
@@ -175,6 +213,7 @@ JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
         if (JSONLOGIC_IS_NULL(bstr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) < 0 ?
@@ -187,6 +226,7 @@ JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
         if (JSONLOGIC_IS_NULL(astr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) < 0 ?
@@ -213,6 +253,7 @@ JsonLogic_Handle jsonlogic_gt(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
         if (JSONLOGIC_IS_NULL(bstr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) > 0 ?
@@ -225,6 +266,7 @@ JsonLogic_Handle jsonlogic_gt(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
         if (JSONLOGIC_IS_NULL(astr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) > 0 ?
@@ -251,6 +293,7 @@ JsonLogic_Handle jsonlogic_le(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
         if (JSONLOGIC_IS_NULL(bstr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) <= 0 ?
@@ -263,6 +306,7 @@ JsonLogic_Handle jsonlogic_le(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
         if (JSONLOGIC_IS_NULL(astr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) <= 0 ?
@@ -289,6 +333,7 @@ JsonLogic_Handle jsonlogic_ge(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
         if (JSONLOGIC_IS_NULL(bstr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) >= 0 ?
@@ -301,6 +346,7 @@ JsonLogic_Handle jsonlogic_ge(JsonLogic_Handle a, JsonLogic_Handle b) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
         if (JSONLOGIC_IS_NULL(astr)) {
             // memory allocation failed
+            assert(false);
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) >= 0 ?
