@@ -1,6 +1,7 @@
 #include "jsonlogic_intern.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <assert.h>
 #include <math.h>
 
@@ -508,8 +509,30 @@ JsonLogic_Handle jsonlogic_op_IN(JsonLogic_Handle data, JsonLogic_Handle args[],
 }
 
 JsonLogic_Handle jsonlogic_op_LOG(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    // TODO
-    return JsonLogic_Null;
+    if (argc == 0) {
+        puts("null");
+        return JsonLogic_Null;
+    }
+    JsonLogic_Handle value = args[0];
+    JsonLogic_Handle string = jsonlogic_to_string(value);
+    if (!JSONLOGIC_IS_STRING(string)) {
+        // out of memory
+        assert(false);
+        puts("null");
+    } else {
+        JsonLogic_String *str = JSONLOGIC_CAST_STRING(string);
+        char *utf8 = jsonlogic_utf16_to_utf8(str->str, str->size);
+        if (utf8 == NULL) {
+            // out of memory
+            assert(false);
+            puts("null");
+        } else {
+            puts(utf8);
+            free(utf8);
+        }
+        jsonlogic_decref(string);
+    }
+    return value;
 }
 
 JsonLogic_Handle jsonlogic_op_MAX(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -629,4 +652,3 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
         }
     }
 }
-
