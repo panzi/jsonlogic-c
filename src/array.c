@@ -100,3 +100,26 @@ JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item
             return JsonLogic_False;
     }
 }
+
+JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
+    assert(array->refcount < 2);
+
+    if (size < array->size) {
+        for (size_t index = size; index < array->size; ++ index) {
+            jsonlogic_decref(array->items[index]);
+            array->items[index] = JsonLogic_Null;
+        }
+
+        JsonLogic_Array *new_array = realloc(array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * size);
+        if (new_array == NULL) {
+            // memory allocation failed
+            assert(false);
+        } else {
+            array = new_array;
+        }
+
+        array->size = size;
+    }
+
+    return array;
+}

@@ -103,7 +103,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
         {
             size_t index = SIZE_MAX;
             if (JSONLOGIC_IS_STRING(key)) {
-                JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
+                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
                 if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
                     return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
                 }
@@ -113,7 +113,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 if (JSONLOGIC_IS_NULL(strkey)) {
                     return JsonLogic_Null;
                 }
-                JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
+                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
                 if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
                     jsonlogic_decref(strkey);
                     return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
@@ -121,7 +121,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 index = jsonlogic_string_to_index(stringkey);
                 jsonlogic_decref(strkey);
             }
-            JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
+            const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
             if (index < string->size) {
                 return jsonlogic_string_from_utf16_sized(string->str + index, 1);
             }
@@ -131,7 +131,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
         {
             size_t index = SIZE_MAX;
             if (JSONLOGIC_IS_STRING(key)) {
-                JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
+                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
                 if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
                     return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
                 }
@@ -141,7 +141,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 if (JSONLOGIC_IS_NULL(strkey)) {
                     return JsonLogic_Null;
                 }
-                JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
+                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
                 if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
                     jsonlogic_decref(strkey);
                     return jsonlogic_number_from(JSONLOGIC_CAST_ARRAY(handle)->size);
@@ -149,7 +149,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 index = jsonlogic_string_to_index(stringkey);
                 jsonlogic_decref(strkey);
             }
-            JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
+            const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
             if (index < array->size) {
                 JsonLogic_Handle item = array->items[index];
                 jsonlogic_incref(item);
@@ -167,7 +167,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
             if (JSONLOGIC_IS_NULL(strkey)) {
                 return JsonLogic_Null;
             }
-            JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
+            const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
 
             size_t left  = 0;
             size_t right = object->size - 1;
@@ -183,11 +183,11 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                     left = mid;
                 }
             }
-            JsonLogic_Object_Entry *entry = &object->entries[left];
+            const JsonLogic_Object_Entry *entry = &object->entries[left];
             JsonLogic_Handle value = JsonLogic_Null;
-            if (jsonlogic_string_compare(
+            if (jsonlogic_string_equals(
                     JSONLOGIC_CAST_STRING(entry->key),
-                    stringkey) > 0) {
+                    stringkey)) {
                 value = entry->value;
                 jsonlogic_incref(value);
             }

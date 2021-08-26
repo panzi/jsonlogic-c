@@ -69,14 +69,23 @@ JSONLOGIC_PRIVATE void jsonlogic_array_free (JsonLogic_Array  *array);
 JSONLOGIC_PRIVATE void jsonlogic_object_free(JsonLogic_Object *object);
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic_String *string) {
+    if (string == NULL) {
+        return JsonLogic_Null;
+    }
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
 }
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array) {
+    if (array == NULL) {
+        return JsonLogic_Null;
+    }
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
 }
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object) {
+    if (object == NULL) {
+        return JsonLogic_Null;
+    }
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
 }
 
@@ -92,6 +101,8 @@ JSONLOGIC_PRIVATE bool jsonlogic_string_equals (const JsonLogic_String *a, const
 JSONLOGIC_PRIVATE int  jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b);
 
 JSONLOGIC_PRIVATE size_t jsonlogic_string_to_index(const JsonLogic_String *string);
+
+JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size);
 
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_ensure(JsonLogic_Buffer *buf, size_t want_free_size);
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str);

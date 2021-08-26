@@ -13,8 +13,8 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Null;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_True;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_False;
 
-JSONLOGIC_EXPORT void jsonlogic_incref(JsonLogic_Handle handle);
-JSONLOGIC_EXPORT void jsonlogic_decref(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse(const char *str);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size);
@@ -44,7 +44,7 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...
 #define jsonlogic_array_from(...) jsonlogic_array_from_vararg(jsonlogic_count_values(__VA_ARGS__), __VA_ARGS__)
 
 
-#define jsonlogic_count_entries(...) (sizeof((JsonLogic_Object_Entry[]){__VA_ARGS__} / sizeof(JsonLogic_Object_Entry)))
+#define jsonlogic_count_entries(...) (sizeof((JsonLogic_Object_Entry[]){__VA_ARGS__}) / sizeof(JsonLogic_Object_Entry))
 /**
  * @code
  * JsonLogic_Handle object = jsonlogic_object_from(
@@ -53,7 +53,6 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...
  *      jsonlogic_entry(key_handle, value_handle)
  * );
  * @endcode
- * 
  * 
  */
 #define jsonlogic_object_from(...) jsonlogic_array_from_vararg(jsonlogic_count_entries(__VA_ARGS__), __VA_ARGS__)
@@ -98,7 +97,6 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_strict_not_equal(JsonLogic_Handle a,
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle object, JsonLogic_Handle key);
-
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);
 
 typedef JsonLogic_Handle (*JsonLogic_Operation)(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
