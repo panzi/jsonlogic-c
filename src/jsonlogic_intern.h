@@ -27,8 +27,8 @@ struct JsonLogic_Object;
 #define JSONLOGIC_IS_BOOLEAN(handle) (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Boolean)
 #define JSONLOGIC_IS_NULL(handle)    ((handle).intptr == JsonLogic_Type_Null)
 #define JSONLOGIC_IS_NUMBER(handle)  ((handle).intptr < JsonLogic_MaxNumber)
-#define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == JsonLogic_Type_Boolean | 1)
-#define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == JsonLogic_Type_Boolean | 0)
+#define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == (JsonLogic_Type_Boolean | 1))
+#define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == (JsonLogic_Type_Boolean | 0))
 
 #define JSONLOGIC_DECL_UTF16(NAME, ...) \
     JSONLOGIC_PRIVATE const size_t NAME##_SIZE = sizeof((char[]){__VA_ARGS__}); \
@@ -95,7 +95,7 @@ JSONLOGIC_PRIVATE size_t jsonlogic_string_to_index(const JsonLogic_String *strin
 
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_ensure(JsonLogic_Buffer *buf, size_t want_free_size);
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str);
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_utf16 (JsonLogic_Buffer *buf, JsonLogic_Char *str, size_t size);
+JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_utf16 (JsonLogic_Buffer *buf, const JsonLogic_Char *str, size_t size);
 JSONLOGIC_PRIVATE bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle);
 JSONLOGIC_PRIVATE JsonLogic_String *jsonlogic_buffer_take(JsonLogic_Buffer *buf);
 JSONLOGIC_PRIVATE void jsonlogic_buffer_free(JsonLogic_Buffer *buf);

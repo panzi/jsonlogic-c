@@ -95,6 +95,8 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_not_equal(JsonLogic_Handle a, JsonLo
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_strict_equal    (JsonLogic_Handle a, JsonLogic_Handle b);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_strict_not_equal(JsonLogic_Handle a, JsonLogic_Handle b);
 
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item);
+
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle object, JsonLogic_Handle key);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);

@@ -1,9 +1,12 @@
 #include "jsonlogic_intern.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+
+#define JSONLOGIC_CODEPOINT_MAX 0x10FFFF
 
 JsonLogic_Handle jsonlogic_string_from_latin1(const char *str) {
     return jsonlogic_string_from_latin1_sized(str, strlen(str));
@@ -20,6 +23,93 @@ JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size
     for (size_t index = 0; index < size; ++ index) {
         string->str[index] = str[index];
     }
+
+    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+}
+
+JsonLogic_Handle jsonlogic_string_from_utf8(const char *str) {
+    return jsonlogic_string_from_utf8_sized(str, strlen(str));
+}
+
+#define JSONLOGIC_DECODE_UTF8(STR, SIZE, CODE) \
+    for (size_t index = 0; index < (SIZE);) { \
+        uint8_t byte1 = (STR)[index ++]; \
+        if (byte1 < 0x80) { \
+            uint32_t codepoint = byte1; \
+            CODE; \
+        } else if (byte1 < 0xC2) { \
+            /* unexpected continuation or overlong 2-byte sequence, ignored */ \
+        } else if (byte1 < 0xE0) { \
+            if (index < (SIZE)) { \
+                uint8_t byte2 = (STR)[index ++]; \
+                if ((byte2 & 0xC0) == 0x80) { \
+                    uint32_t codepoint = (uint32_t)(byte1 & 0xF1) << 6 | \
+                                         (uint32_t)(byte2 & 0x3F); \
+                    CODE; \
+                } /* else illegal byte sequence, ignored */ \
+            } /* else unexpected end of multibyte sequence, ignored */ \
+        } else if (byte1 < 0xF0) { \
+            if (index + 1 < (SIZE)) { \
+                uint8_t byte2 = (STR)[index ++]; \
+                uint8_t byte3 = (STR)[index ++]; \
+                \
+                if ((byte1 != 0xE0 || byte2 >= 0xA0) && \
+                    (byte2 & 0xC0) == 0x80 && \
+                    (byte3 & 0xC0) == 0x80) { \
+                    uint32_t codepoint = (uint32_t)(byte1 & 0x0F) << 12 | \
+                                         (uint32_t)(byte2 & 0x3F) <<  6 | \
+                                         (uint32_t)(byte3 & 0x3F); \
+                    CODE; \
+                } /* else illegal byte sequence, ignored */ \
+            } /* else unexpected end of multibyte sequence, ignored */ \
+        } else if (byte1 < 0xF8) { \
+            if (index + 2 < (SIZE)) { \
+                uint8_t byte2 = (STR)[index ++]; \
+                uint8_t byte3 = (STR)[index ++]; \
+                uint8_t byte4 = (STR)[index ++]; \
+                \
+                if ((byte1 != 0xF0 || byte2 >= 0x90) && \
+                    (byte1 != 0xF4 || byte2 < 0x90) && \
+                    (byte2 & 0xC0) == 0x80 && \
+                    (byte3 & 0xC0) == 0x80 && \
+                    (byte4 & 0xC0) == 0x80) { \
+                    uint32_t codepoint = (uint32_t)(byte1 & 0x07) << 18 | \
+                                         (uint32_t)(byte2 & 0x3F) << 12 | \
+                                         (uint32_t)(byte3 & 0x3F) <<  6 | \
+                                         (uint32_t)(byte4 & 0x3F); \
+                    CODE; \
+                } \
+            } /* else unexpected end of multibyte sequence, ignored */ \
+        } /* else illegal byte sequence, ignored */ \
+    }
+
+JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) {
+    size_t utf16_size = 0;
+    JSONLOGIC_DECODE_UTF8(str, size, {
+        if (codepoint < 0x10000) {
+            utf16_size += 1;
+        } else {
+            utf16_size += 2;
+        }
+    });
+
+    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * utf16_size);
+    if (string == NULL) {
+        return JsonLogic_Null;
+    }
+    string->refcount = 1;
+    string->size     = utf16_size;
+
+    size_t utf16_index = 0;
+    JSONLOGIC_DECODE_UTF8(str, size, {
+        if (codepoint < 0x10000) {
+            string->str[utf16_index ++] = codepoint;
+        } else {
+            string->str[utf16_index ++] = 0xD800 | (codepoint >> 10);
+            string->str[utf16_index ++] = 0xDC00 | (codepoint & 0x3FF);
+        }
+    });
+    assert(utf16_index == utf16_size);
 
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
 }
@@ -163,7 +253,7 @@ bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str) {
     return false;
 }
 
-bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, JsonLogic_Char *str, size_t size) {
+bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, const JsonLogic_Char *str, size_t size) {
     if (!jsonlogic_buffer_ensure(buf, size)) {
         return false;
     }
@@ -177,10 +267,10 @@ bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, JsonLogic_Char *str, s
     return true;
 }
 
-#define JSON_LOGIC_OBJECT_STRING "[object Object]"
-#define JSON_LOGIC_NULL_STRING   "null"
-#define JSON_LOGIC_TRUE_STRING   "true"
-#define JSON_LOGIC_FALSE_STRING  "false"
+JSONLOGIC_DECL_UTF16(JSONLOGIC_OBJECT_STRING, '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
+JSONLOGIC_DECL_UTF16(JSONLOGIC_NULL_STRING,   'n', 'u', 'l', 'l')
+JSONLOGIC_DECL_UTF16(JSONLOGIC_TRUE_STRING,   't', 'r', 'u', 'e')
+JSONLOGIC_DECL_UTF16(JSONLOGIC_FALSE_STRING,  'f', 'a', 'l', 's', 'e')
 
 bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
     if (handle.intptr < JsonLogic_MaxNumber) {
@@ -203,33 +293,18 @@ bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         {
-            JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
+            const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
             return jsonlogic_buffer_append_utf16(buf, string->str, string->size);
         }
         case JsonLogic_Type_Boolean:
-        {
             if (handle.intptr == JsonLogic_False.intptr) {
-                JsonLogic_Char str[sizeof(JSON_LOGIC_FALSE_STRING) - 1];
-                for (size_t index = 0; index < sizeof(JSON_LOGIC_FALSE_STRING) - 1; ++ index) {
-                    str[index] = JSON_LOGIC_FALSE_STRING[index];
-                }
-                return jsonlogic_buffer_append_utf16(buf, str, sizeof(JSON_LOGIC_FALSE_STRING) - 1);
+                return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_FALSE_STRING, JSONLOGIC_FALSE_STRING_SIZE);
             } else {
-                JsonLogic_Char str[sizeof(JSON_LOGIC_TRUE_STRING) - 1];
-                for (size_t index = 0; index < sizeof(JSON_LOGIC_TRUE_STRING) - 1; ++ index) {
-                    str[index] = JSON_LOGIC_TRUE_STRING[index];
-                }
-                return jsonlogic_buffer_append_utf16(buf, str, sizeof(JSON_LOGIC_TRUE_STRING) - 1);
+                return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_TRUE_STRING, JSONLOGIC_TRUE_STRING_SIZE);
             }
-        }
         case JsonLogic_Type_Null:
-        {
-            JsonLogic_Char str[sizeof(JSON_LOGIC_NULL_STRING) - 1];
-            for (size_t index = 0; index < sizeof(JSON_LOGIC_NULL_STRING) - 1; ++ index) {
-                str[index] = JSON_LOGIC_NULL_STRING[index];
-            }
-            return jsonlogic_buffer_append_utf16(buf, str, sizeof(JSON_LOGIC_NULL_STRING) - 1);
-        }
+            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
+
         case JsonLogic_Type_Array:
         {
             JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
@@ -241,7 +316,8 @@ bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
                     if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){','}, 1)) {
                         return false;
                     }
-                    if (!jsonlogic_buffer_append(buf, array->items[index])) {
+                    JsonLogic_Handle item = array->items[index];
+                    if (!JSONLOGIC_IS_NULL(item) && !jsonlogic_buffer_append(buf, item)) {
                         return false;
                     }
                 }
@@ -249,13 +325,8 @@ bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
             return true;
         }
         case JsonLogic_Type_Object:
-        {
-            JsonLogic_Char str[sizeof(JSON_LOGIC_OBJECT_STRING) - 1];
-            for (size_t index = 0; index < sizeof(JSON_LOGIC_OBJECT_STRING) - 1; ++ index) {
-                str[index] = JSON_LOGIC_OBJECT_STRING[index];
-            }
-            return jsonlogic_buffer_append_utf16(buf, str, sizeof(JSON_LOGIC_OBJECT_STRING) - 1);
-        }
+            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_OBJECT_STRING, JSONLOGIC_OBJECT_STRING_SIZE);
+
         default:
             return true;
     }
@@ -370,4 +441,80 @@ size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
     }
 
     return value;
+}
+
+#define JSONLOGIC_DECODE_UTF16(STR, SIZE, CODE) \
+    for (size_t index = 0; index < (SIZE);) { \
+        JsonLogic_Char w1 = (STR)[index ++]; \
+        switch (w1 & 0xfc00) { \
+            case 0xd800: \
+                if (index < (SIZE)) { \
+                    JsonLogic_Char w2 = (STR)[index ++]; \
+                    \
+                    if ((w2 & 0xfc00) == 0xdc00) { \
+                        uint32_t hi = w1 & 0x3FF; \
+                        uint32_t lo = w2 & 0x3FF; \
+                        uint32_t codepoint = (hi << 10) | lo | 0x10000; \
+                        \
+                        if (codepoint <= JSONLOGIC_CODEPOINT_MAX) { \
+                            CODE; \
+                        } /* else illegal code point, ignored */ \
+                    } /* else illegal code unit, ignored */ \
+                } /* else illegal code unit, ignored */ \
+                break; \
+            \
+            case 0x0000: \
+            { \
+                uint32_t codepoint = w1; \
+                CODE; \
+                break; \
+            } \
+            default: \
+                /* illegal code unit, ignored */ \
+                break; \
+        } \
+    }
+
+char *jsonlogic_utf16_to_utf8(const JsonLogic_Char *str, size_t size) {
+    size_t utf8_size = 1;
+    JSONLOGIC_DECODE_UTF16(str, size, {
+        if (codepoint > 0x10000) {
+            utf8_size += 4;
+        } else if (codepoint >= 0x800) {
+            utf8_size += 3;
+        } else if (codepoint >= 0x80) {
+            utf8_size += 2;
+        } else {
+            utf8_size += 1;
+        }
+    });
+
+    char *utf8 = malloc(utf8_size);
+    if (utf8 == NULL) {
+        return NULL;
+    }
+
+    size_t utf8_index = 0;
+    JSONLOGIC_DECODE_UTF16(str, size, {
+        if (codepoint > 0x10000) {
+            utf8[utf8_index ++] =  (codepoint >> 18)         | 0xF0;
+            utf8[utf8_index ++] = ((codepoint >> 12) & 0x3F) | 0x80;
+            utf8[utf8_index ++] = ((codepoint >>  6) & 0x3F) | 0x80;
+            utf8[utf8_index ++] =  (codepoint        & 0x3F) | 0x80;
+        } else if (codepoint >= 0x800) {
+            utf8[utf8_index ++] =  (codepoint >> 12)         | 0xE0;
+            utf8[utf8_index ++] = ((codepoint >>  6) & 0x3F) | 0x80;
+            utf8[utf8_index ++] =  (codepoint        & 0x3F) | 0x80;
+        } else if (codepoint >= 0x80) {
+            utf8[utf8_index ++] = (codepoint >> 6)   | 0xC0;
+            utf8[utf8_index ++] = (codepoint & 0x3F) | 0x80;
+        } else {
+            utf8[utf8_index ++] = codepoint;
+        }
+    });
+
+    utf8[utf8_index] = 0;
+    assert(utf8_index + 1 == utf8_size);
+
+    return utf8;
 }

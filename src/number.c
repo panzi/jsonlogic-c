@@ -40,7 +40,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 } else {
                     char *buf = malloc(string->size + 1);
                     if (buf == NULL) {
-                        // out of memory
+                        // memory allocation failed
                         assert(false);
                         return JsonLogic_NaN;
                     }

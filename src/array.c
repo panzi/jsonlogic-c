@@ -1,7 +1,9 @@
 #include "jsonlogic_intern.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <string.h>
 
 JsonLogic_Handle jsonlogic_empty_array() {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
@@ -59,4 +61,42 @@ void jsonlogic_array_free(JsonLogic_Array *array) {
         jsonlogic_decref(array->items[index]);
     }
     free(array);
+}
+
+JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item) {
+    switch (list.intptr & JsonLogic_TypeMask) {
+        case JsonLogic_Type_Array:
+        {
+            const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(list);
+            for (size_t index = 0; index < array->size; ++ index) {
+                if (JSONLOGIC_IS_TRUE(jsonlogic_strict_equal(item, array->items[index]))) {
+                    return JsonLogic_True;
+                }
+            }
+            return JsonLogic_False;
+        }
+        case JsonLogic_Type_String:
+        {
+            const JsonLogic_String *string = JSONLOGIC_CAST_STRING(list);
+            const JsonLogic_Handle needle = jsonlogic_to_string(item);
+            if (!JSONLOGIC_IS_STRING(needle)) {
+                // memory allocation failed
+                assert(false);
+                jsonlogic_decref(needle);
+                return JsonLogic_False;
+            }
+            const JsonLogic_String *strneedle = JSONLOGIC_CAST_STRING(needle);
+            // there are much more efficient string search algorithms
+            for (size_t index = 0; index + strneedle->size < string->size; ++ index) {
+                if (memcmp(strneedle->str, string->str + index, strneedle->size * sizeof(JsonLogic_Char)) == 0) {
+                    jsonlogic_decref(needle);
+                    return JsonLogic_True;
+                }
+            }
+            jsonlogic_decref(needle);
+            return JsonLogic_False;
+        }
+        default:
+            return JsonLogic_False;
+    }
 }
