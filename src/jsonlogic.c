@@ -528,16 +528,134 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
         jsonlogic_decref(context);
 
+        jsonlogic_decref(items);
         RETURN(JsonLogic_Null);
     } else if (JSONLOGIC_IS_OP(opstr, ALL)) {
-        // TODO
-        RETURN(JsonLogic_Null);
+        // to be sane and logical it should return true on empty array,
+        // but JsonLogic is not logical here:
+        // https://github.com/jwadhams/json-logic-js/blob/c1dd82f5b15d8a553bb7a0cfa841ab8a11a9c227/logic.js#L318
+        if (value_count == 0) {
+            RETURN(JsonLogic_False);
+        }
+
+        JsonLogic_Handle items = jsonlogic_apply_custom(
+            jsonlogic_incref(values[0]),
+            jsonlogic_incref(input),
+            operations,
+            operation_count);
+        if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
+            jsonlogic_decref(items);
+            RETURN(JsonLogic_False);
+        }
+
+        JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
+
+        const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
+        if (array->size == 0) {
+            jsonlogic_decref(items);
+            RETURN(JsonLogic_False);
+        }
+
+        for (size_t index = 0; index < array->size; ++ index) {
+            JsonLogic_Handle item = array->items[index];
+            JsonLogic_Handle condition = jsonlogic_apply_custom(
+                jsonlogic_incref(logic),
+                jsonlogic_incref(item),
+                operations,
+                operation_count
+            );
+            if (!jsonlogic_to_bool(condition)) {
+                jsonlogic_decref(condition);
+                jsonlogic_decref(items);
+                RETURN(JsonLogic_False);
+            }
+            jsonlogic_decref(condition);
+        }
+
+        jsonlogic_decref(items);
+        RETURN(JsonLogic_True);
     } else if (JSONLOGIC_IS_OP(opstr, SOME)) {
-        // TODO
-        RETURN(JsonLogic_Null);
+        if (value_count == 0) {
+            RETURN(JsonLogic_False);
+        }
+
+        JsonLogic_Handle items = jsonlogic_apply_custom(
+            jsonlogic_incref(values[0]),
+            jsonlogic_incref(input),
+            operations,
+            operation_count);
+        if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
+            jsonlogic_decref(items);
+            RETURN(JsonLogic_False);
+        }
+
+        JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
+
+        const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
+        if (array->size == 0) {
+            jsonlogic_decref(items);
+            RETURN(JsonLogic_False);
+        }
+
+        for (size_t index = 0; index < array->size; ++ index) {
+            JsonLogic_Handle item = array->items[index];
+            JsonLogic_Handle condition = jsonlogic_apply_custom(
+                jsonlogic_incref(logic),
+                jsonlogic_incref(item),
+                operations,
+                operation_count
+            );
+            if (jsonlogic_to_bool(condition)) {
+                jsonlogic_decref(condition);
+                jsonlogic_decref(items);
+                RETURN(JsonLogic_True);
+            }
+            jsonlogic_decref(condition);
+        }
+
+        jsonlogic_decref(items);
+        RETURN(JsonLogic_False);
     } else if (JSONLOGIC_IS_OP(opstr, NONE)) {
-        // TODO
-        RETURN(JsonLogic_Null);
+        if (value_count == 0) {
+            RETURN(JsonLogic_True);
+        }
+
+        JsonLogic_Handle items = jsonlogic_apply_custom(
+            jsonlogic_incref(values[0]),
+            jsonlogic_incref(input),
+            operations,
+            operation_count);
+        if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
+            jsonlogic_decref(items);
+            RETURN(JsonLogic_True);
+        }
+
+        JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
+
+        const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
+        if (array->size == 0) {
+            jsonlogic_decref(items);
+            RETURN(JsonLogic_True);
+        }
+
+        for (size_t index = 0; index < array->size; ++ index) {
+            JsonLogic_Handle item = array->items[index];
+            JsonLogic_Handle condition = jsonlogic_apply_custom(
+                jsonlogic_incref(logic),
+                jsonlogic_incref(item),
+                operations,
+                operation_count
+            );
+            if (jsonlogic_to_bool(condition)) {
+                jsonlogic_decref(condition);
+                jsonlogic_decref(items);
+                RETURN(JsonLogic_False);
+            }
+            jsonlogic_decref(condition);
+        }
+
+        jsonlogic_decref(items);
+        RETURN(JsonLogic_True);
     }
 
     JsonLogic_Operation opfunc = jsonlogic_operation_get(operations, operation_count, opstr->str, opstr->size);
