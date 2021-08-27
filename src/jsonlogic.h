@@ -12,6 +12,11 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_NaN;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Null;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_True;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_False;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_Success;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_OutOfMemory;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalOperation;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalArgument;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_InternalError;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
@@ -71,7 +76,18 @@ JSONLOGIC_EXPORT const JsonLogic_Char *jsonlogic_get_utf16(JsonLogic_Handle stri
 
 JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const JsonLogic_Char *str, size_t size);
 
-JSONLOGIC_EXPORT JsonLogic_Type jsonlogic_typeof(JsonLogic_Handle handle);
+typedef uint64_t JsonLogic_Error;
+
+JSONLOGIC_EXPORT JsonLogic_Type  jsonlogic_get_type(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_get_error (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT const char     *jsonlogic_get_error_message(JsonLogic_Error error);
+
+JSONLOGIC_EXPORT bool jsonlogic_is_error  (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_null   (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_number (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_array  (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_object (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_boolean(JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_add(JsonLogic_Handle a, JsonLogic_Handle b);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_sub(JsonLogic_Handle a, JsonLogic_Handle b);

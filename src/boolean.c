@@ -4,7 +4,7 @@
 #include <math.h>
 
 JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
-    if (handle.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
         return handle.number == 0.0 || isnan(handle.number) ?
             JsonLogic_False :
             JsonLogic_True;
@@ -28,17 +28,21 @@ JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
                 JsonLogic_True :
                 JsonLogic_False;
 
+        case JsonLogic_Type_Error:
+            return handle;
+
         default:
             return JsonLogic_True;
     }
 }
 
 bool jsonlogic_to_bool(JsonLogic_Handle handle) {
+    // interpretes errors as false
     return jsonlogic_to_boolean(handle).intptr == JsonLogic_True.intptr;
 }
 
 JsonLogic_Handle jsonlogic_not(JsonLogic_Handle handle) {
-    if (handle.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
         return handle.number == 0.0 || isnan(handle.number) ?
             JsonLogic_True :
             JsonLogic_False;
@@ -63,6 +67,9 @@ JsonLogic_Handle jsonlogic_not(JsonLogic_Handle handle) {
             return JSONLOGIC_CAST_ARRAY(handle)->size > 0 ?
                 JsonLogic_False :
                 JsonLogic_True;
+
+        case JsonLogic_Type_Error:
+            return handle;
 
         default:
             return JsonLogic_False;

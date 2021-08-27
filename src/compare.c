@@ -4,14 +4,20 @@
 #include <assert.h>
 
 JsonLogic_Handle jsonlogic_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
+        if (JSONLOGIC_IS_NUMBER(b)) {
+            return a.number == b.number ? JsonLogic_True : JsonLogic_False;
+        } else {
+            return JsonLogic_False;
+        }
+    } else {
+        return JsonLogic_False;
+    }
+
     JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;
     JsonLogic_Type btype = b.intptr & JsonLogic_TypeMask;
     if (atype != btype) {
         return JsonLogic_False;
-    }
-
-    if (a.intptr < JsonLogic_MaxNumber) {
-        return a.number == b.number ? JsonLogic_True : JsonLogic_False;
     }
 
     switch (atype) {
@@ -28,21 +34,30 @@ JsonLogic_Handle jsonlogic_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) 
         case JsonLogic_Type_Object:
             return a.intptr == b.intptr ? JsonLogic_True : JsonLogic_False;
 
+        case JsonLogic_Type_Error:
+            return a;
+
         default:
             assert(false);
-            return JsonLogic_Null;
+            return JsonLogic_Error_InternalError;
     }
 }
 
 JsonLogic_Handle jsonlogic_strict_not_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
+        if (JSONLOGIC_IS_NUMBER(b)) {
+            return a.number != b.number ? JsonLogic_True : JsonLogic_False;
+        } else {
+            return JsonLogic_True;
+        }
+    } else {
+        return JsonLogic_True;
+    }
+
     JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;
     JsonLogic_Type btype = b.intptr & JsonLogic_TypeMask;
     if (atype != btype) {
         return JsonLogic_True;
-    }
-
-    if (a.intptr < JsonLogic_MaxNumber) {
-        return a.number != b.number ? JsonLogic_True : JsonLogic_False;
     }
 
     switch (atype) {
@@ -59,14 +74,38 @@ JsonLogic_Handle jsonlogic_strict_not_equal(JsonLogic_Handle a, JsonLogic_Handle
         case JsonLogic_Type_Object:
             return a.intptr != b.intptr ? JsonLogic_True : JsonLogic_False;
 
+        case JsonLogic_Type_Error:
+            return a;
+
         default:
             assert(false);
-            return JsonLogic_Null;
+            return JsonLogic_Error_InternalError;
     }
 }
 
 // not sure if I got that right
 JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
+        if (JSONLOGIC_IS_NUMBER(b)) {
+            // shortcut probable case?
+            return a.number == b.number ? JsonLogic_True : JsonLogic_False;
+        }
+        if (JSONLOGIC_IS_ERROR(b)) {
+            return b;
+        }
+        double bnum = jsonlogic_to_double(b);
+        return a.number == bnum ? JsonLogic_True : JsonLogic_False;
+    }
+
+    if (JSONLOGIC_IS_NUMBER(b)) {
+        double anum = jsonlogic_to_double(a);
+        return anum == b.number ? JsonLogic_True : JsonLogic_False;
+    }
+
+    if (JSONLOGIC_IS_ERROR(a)) {
+        return a;
+    }
+
     JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;
     JsonLogic_Type btype = b.intptr & JsonLogic_TypeMask;
     if (atype == btype) {
@@ -77,17 +116,8 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
         return JsonLogic_False;
     }
 
-    if (a.intptr < JsonLogic_MaxNumber) {
-        double bnum = jsonlogic_to_double(b);
-        return a.number == bnum ? JsonLogic_True : JsonLogic_False;
-    }
-
     switch (atype) {
         case JsonLogic_Type_String:
-            if (b.intptr < JsonLogic_MaxNumber) {
-                double anum = jsonlogic_to_double(a);
-                return anum == b.number ? JsonLogic_True : JsonLogic_False;
-            }
             switch (btype) {
                 case JsonLogic_Type_Boolean:
                 {
@@ -105,13 +135,9 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
                 }
                 default:
                     assert(false);
-                    return JsonLogic_Null;
+                    return JsonLogic_Error_InternalError;
             }
         case JsonLogic_Type_Boolean:
-            if (b.intptr < JsonLogic_MaxNumber) {
-                double anum = jsonlogic_to_double(a);
-                return anum == b.number ? JsonLogic_True : JsonLogic_False;
-            }
             switch (btype) {
                 case JsonLogic_Type_Array:
                 case JsonLogic_Type_Object:
@@ -123,15 +149,10 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
                 }
                 default:
                     assert(false);
-                    return JsonLogic_Null;
+                    return JsonLogic_Error_InternalError;
             }
         case JsonLogic_Type_Array:
         case JsonLogic_Type_Object:
-            if (b.intptr < JsonLogic_MaxNumber) {
-                double anum = jsonlogic_to_double(a);
-                double bnum = jsonlogic_to_double(b);
-                return anum == bnum ? JsonLogic_True : JsonLogic_False;
-            }
             switch (btype) {
                 case JsonLogic_Type_Array:
                 case JsonLogic_Type_Object:
@@ -152,29 +173,40 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
                 }
                 default:
                     assert(false);
-                    return JsonLogic_Null;
+                    return JsonLogic_Error_InternalError;
             }
+        case JsonLogic_Type_Error:
+            return a;
+
         default:
             assert(false);
-            return JsonLogic_Null;
+            return JsonLogic_Error_InternalError;
     }
 }
 
+JsonLogic_Handle jsonlogic_not_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
+    JsonLogic_Handle result = jsonlogic_equal(a, b);
+    if (JSONLOGIC_IS_ERROR(result)) {
+        return result;
+    }
+    return JSONLOGIC_IS_TRUE(result) ? JsonLogic_False : JsonLogic_True;
+}
+
 int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
-    if (a.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
         double bnum = jsonlogic_to_double(b);
         return a.number < bnum ? -1 : a.number > bnum ? 1 : 0;
     }
 
-    if (b.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(b)) {
         double anum = jsonlogic_to_double(a);
         return anum < b.number ? -1 : anum > b.number ? 1 : 0;
     }
 
-    if ((a.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(a)) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
-        if (!JSONLOGIC_IS_STRING(bstr)) {
-            JSONLOGIC_ERROR_MEMORY();
+        if (JSONLOGIC_IS_ERROR(bstr)) {
+            jsonlogic_decref(bstr);
             return 0;
         }
         int result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr));
@@ -182,10 +214,10 @@ int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
-    if ((b.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(b)) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
-        if (!JSONLOGIC_IS_STRING(astr)) {
-            JSONLOGIC_ERROR_MEMORY();
+        if (JSONLOGIC_IS_ERROR(astr)) {
+            jsonlogic_decref(astr);
             return 0;
         }
         int result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b));
@@ -193,25 +225,24 @@ int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
-    return 0;
+    return a.intptr < b.intptr ? -1 : a.intptr > b.intptr ? 1 : 0;
 }
 
 JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b) {
-    if (a.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
         double bnum = jsonlogic_to_double(b);
         return a.number < bnum ? JsonLogic_True : JsonLogic_False;
     }
 
-    if (b.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(b)) {
         double anum = jsonlogic_to_double(a);
         return anum < b.number ? JsonLogic_True : JsonLogic_False;
     }
 
-    if ((a.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(a)) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
-        if (!JSONLOGIC_IS_STRING(bstr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(bstr)) {
+            return bstr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) < 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -219,11 +250,10 @@ JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
-    if ((b.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(b)) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
-        if (!JSONLOGIC_IS_STRING(astr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(astr)) {
+            return astr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) < 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -231,25 +261,32 @@ JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
+    if (JSONLOGIC_IS_ERROR(a)) {
+        return a;
+    }
+
+    if (JSONLOGIC_IS_ERROR(b)) {
+        return b;
+    }
+
     return JsonLogic_False;
 }
 
 JsonLogic_Handle jsonlogic_gt(JsonLogic_Handle a, JsonLogic_Handle b) {
-    if (a.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
         double bnum = jsonlogic_to_double(b);
         return a.number > bnum ? JsonLogic_True : JsonLogic_False;
     }
 
-    if (b.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(b)) {
         double anum = jsonlogic_to_double(a);
         return anum > b.number ? JsonLogic_True : JsonLogic_False;
     }
 
-    if ((a.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(a)) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
-        if (!JSONLOGIC_IS_STRING(bstr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(bstr)) {
+            return bstr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) > 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -257,11 +294,10 @@ JsonLogic_Handle jsonlogic_gt(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
-    if ((b.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(b)) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
-        if (!JSONLOGIC_IS_STRING(astr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(astr)) {
+            return astr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) > 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -269,25 +305,32 @@ JsonLogic_Handle jsonlogic_gt(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
+    if (JSONLOGIC_IS_ERROR(a)) {
+        return a;
+    }
+
+    if (JSONLOGIC_IS_ERROR(b)) {
+        return b;
+    }
+
     return JsonLogic_False;
 }
 
 JsonLogic_Handle jsonlogic_le(JsonLogic_Handle a, JsonLogic_Handle b) {
-    if (a.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
         double bnum = jsonlogic_to_double(b);
         return a.number <= bnum ? JsonLogic_True : JsonLogic_False;
     }
 
-    if (b.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(b)) {
         double anum = jsonlogic_to_double(a);
         return anum <= b.number ? JsonLogic_True : JsonLogic_False;
     }
 
-    if ((a.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(a)) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
-        if (!JSONLOGIC_IS_STRING(bstr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(bstr)) {
+            return bstr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) <= 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -295,11 +338,10 @@ JsonLogic_Handle jsonlogic_le(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
-    if ((b.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(b)) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
-        if (!JSONLOGIC_IS_STRING(astr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(astr)) {
+            return astr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) <= 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -307,25 +349,32 @@ JsonLogic_Handle jsonlogic_le(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
+    if (JSONLOGIC_IS_ERROR(a)) {
+        return a;
+    }
+
+    if (JSONLOGIC_IS_ERROR(b)) {
+        return b;
+    }
+
     return jsonlogic_equal(a, b);
 }
 
 JsonLogic_Handle jsonlogic_ge(JsonLogic_Handle a, JsonLogic_Handle b) {
-    if (a.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(a)) {
         double bnum = jsonlogic_to_double(b);
         return a.number >= bnum ? JsonLogic_True : JsonLogic_False;
     }
 
-    if (b.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(b)) {
         double anum = jsonlogic_to_double(a);
         return anum >= b.number ? JsonLogic_True : JsonLogic_False;
     }
 
-    if ((a.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(a)) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
-        if (!JSONLOGIC_IS_STRING(bstr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(bstr)) {
+            return bstr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr)) >= 0 ?
             JsonLogic_True : JsonLogic_False;
@@ -333,16 +382,23 @@ JsonLogic_Handle jsonlogic_ge(JsonLogic_Handle a, JsonLogic_Handle b) {
         return result;
     }
 
-    if ((b.intptr & JsonLogic_TypeMask) == JsonLogic_Type_String) {
+    if (JSONLOGIC_IS_STRING(b)) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
-        if (!JSONLOGIC_IS_STRING(astr)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(astr)) {
+            return astr;
         }
         JsonLogic_Handle result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b)) >= 0 ?
             JsonLogic_True : JsonLogic_False;
         jsonlogic_decref(astr);
         return result;
+    }
+
+    if (JSONLOGIC_IS_ERROR(a)) {
+        return a;
+    }
+
+    if (JSONLOGIC_IS_ERROR(b)) {
+        return b;
     }
 
     return jsonlogic_equal(a, b);

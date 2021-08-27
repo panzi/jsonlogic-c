@@ -52,7 +52,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
     for (size_t index = 0; index < count; ++ index) {
         JsonLogic_Object_Entry entry = va_arg(ap, JsonLogic_Object_Entry);
         JsonLogic_Handle key = jsonlogic_to_string(entry.key);
-        if (!JSONLOGIC_IS_STRING(key)) {
+        if (JSONLOGIC_IS_ERROR(key)) {
             jsonlogic_decref(key);
             for (size_t free_index = 0; free_index < index; ++ free_index) {
                 JsonLogic_Object_Entry *entry = &object->entries[free_index];
@@ -62,8 +62,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
             free(object);
             va_end(ap);
 
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+            return key;
         }
         jsonlogic_incref(entry.value);
         object->entries[index] = (JsonLogic_Object_Entry){
@@ -84,7 +83,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
             if (jsonlogic_string_equals(prev, key)) {
                 jsonlogic_object_free(object);
                 JSONLOGIC_ERROR("%s", "duplicated key in object");
-                return JsonLogic_Null;
+                return JsonLogic_Error_IllegalArgument;
             }
             prev = key;
         }
@@ -112,9 +111,8 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 index = jsonlogic_string_to_index(stringkey);
             } else {
                 JsonLogic_Handle strkey = jsonlogic_to_string(key);
-                if (!JSONLOGIC_IS_STRING(strkey)) {
-                    JSONLOGIC_ERROR_MEMORY();
-                    return JsonLogic_Null;
+                if (JSONLOGIC_IS_ERROR(strkey)) {
+                    return strkey;
                 }
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
                 if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
@@ -141,9 +139,8 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 index = jsonlogic_string_to_index(stringkey);
             } else {
                 JsonLogic_Handle strkey = jsonlogic_to_string(key);
-                if (!JSONLOGIC_IS_STRING(strkey)) {
-                    JSONLOGIC_ERROR_MEMORY();
-                    return JsonLogic_Null;
+                if (JSONLOGIC_IS_ERROR(strkey)) {
+                    return strkey;
                 }
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
                 if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
@@ -170,8 +167,11 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
             }
             return jsonlogic_incref(object->entries[index].value);
         }
+        case JsonLogic_Type_Error:
+            return handle;
+
         default:
-            return JsonLogic_Null;
+            return JsonLogic_Error_InternalError;
     }
 }
 
@@ -210,9 +210,7 @@ size_t jsonlogic_object_get_index(JsonLogic_Object *object, JsonLogic_Handle key
         return 0;
     }
     JsonLogic_Handle strkey = jsonlogic_to_string(key);
-    if (!JSONLOGIC_IS_STRING(strkey)) {
-        // memory allocation failed
-        assert(false);
+    if (JSONLOGIC_IS_ERROR(strkey)) {
         return SIZE_MAX;
     }
     const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);

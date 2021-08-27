@@ -12,7 +12,7 @@
 
 JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
     for (;;) {
-        if (handle.intptr < JsonLogic_MaxNumber) {
+        if (JSONLOGIC_IS_NUMBER(handle)) {
             return handle;
         }
 
@@ -69,7 +69,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     char *buf = malloc(size + 1);
                     if (buf == NULL) {
                         JSONLOGIC_ERROR_MEMORY();
-                        return JsonLogic_NaN;
+                        return JsonLogic_Error_OutOfMemory;
                     }
                     for (size_t index = 0; index < size; ++ index) {
                         JsonLogic_Char ch = str[index];
@@ -105,14 +105,18 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
             case JsonLogic_Type_Boolean:
                 return (JsonLogic_Handle){ .number = JSONLOGIC_IS_TRUE(handle) ? 1.0 : 0.0 };
 
+            case JsonLogic_Type_Error:
+                return handle;
+
             default:
-                return JsonLogic_NaN;
+                assert(false);
+                return JsonLogic_Error_InternalError;
         }
     }
 }
 
 inline double jsonlogic_to_double(JsonLogic_Handle handle) {
-    // since all special values are some sort of NaN we can ignore here that there can be JsonLogic_Null
+    // since all special values are some sort of NaN we can ignore here that there can be JsonLogic_Error_*
     return jsonlogic_to_number(handle).number;
 }
 

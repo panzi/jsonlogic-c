@@ -79,10 +79,8 @@ JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item
         {
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(list);
             const JsonLogic_Handle needle = jsonlogic_to_string(item);
-            if (!JSONLOGIC_IS_STRING(needle)) {
-                JSONLOGIC_ERROR_MEMORY();
-                jsonlogic_decref(needle);
-                return JsonLogic_False;
+            if (JSONLOGIC_IS_ERROR(needle)) {
+                return needle;
             }
             const JsonLogic_String *strneedle = JSONLOGIC_CAST_STRING(needle);
             // there are much more efficient string search algorithms
@@ -95,6 +93,9 @@ JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item
             jsonlogic_decref(needle);
             return JsonLogic_False;
         }
+        case JsonLogic_Type_Error:
+            return list;
+
         default:
             return JsonLogic_False;
     }

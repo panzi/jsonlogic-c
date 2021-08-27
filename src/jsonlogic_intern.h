@@ -9,7 +9,7 @@
 #define JsonLogic_MaxNumber ((uintptr_t)0xfff8000000000000)
 
 #if defined(NDEBUG)
-    #define JSONLOGIC_DEBUG(...)
+    #define JSONLOGIC_DEBUG(...) 0
     #define JSONLOGIC_ERROR(...)
     #define JSONLOGIC_ASSERT(...)
 #else
@@ -17,7 +17,7 @@
 
     #define JSONLOGIC_DEBUG(FMT, ...) \
         fprintf(stderr, "*** error: %s:%u: in %s: " FMT "\n", \
-            __FILE__, __LINE__, __func__, __VA_ARGS__);
+            __FILE__, __LINE__, __func__, __VA_ARGS__)
 
     #if defined(JSONLOGIC_NO_ABORT_ON_ERROR)
         #define JSONLOGIC_ERROR(...) JSONLOGIC_DEBUG(__VA_ARGS__)
@@ -46,6 +46,12 @@ struct JsonLogic_Array;
 struct JsonLogic_String;
 struct JsonLogic_Object;
 
+#define JSONLOGIC_ERROR_SUCCESS            (JsonLogic_Type_Error | 0)
+#define JSONLOGIC_ERROR_OUT_OF_MEMORY      (JsonLogic_Type_Error | 1)
+#define JSONLOGIC_ERROR_ILLEGAL_OPERATION  (JsonLogic_Type_Error | 2)
+#define JSONLOGIC_ERROR_ILLEGAL_ARGUMENT   (JsonLogic_Type_Error | 3)
+#define JSONLOGIC_ERROR_INTERNAL_ERROR     (JsonLogic_Type_Error | 4)
+
 #define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)((handle).intptr & JsonLogic_PtrMask))
 #define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) ((handle).intptr & JsonLogic_PtrMask))
 #define JSONLOGIC_CAST_OBJECT(handle) ((JsonLogic_Object*)((handle).intptr & JsonLogic_PtrMask))
@@ -58,6 +64,18 @@ struct JsonLogic_Object;
 #define JSONLOGIC_IS_NUMBER(handle)  ((handle).intptr < JsonLogic_MaxNumber)
 #define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == (JsonLogic_Type_Boolean | 1))
 #define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == (JsonLogic_Type_Boolean | 0))
+
+
+#define JSONLOGIC_IS_ERROR_(handle)   (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Error)
+
+#ifndef NDEBUG
+    #define JSONLOGIC_IS_ERROR(handle) JSONLOGIC_IS_ERROR_(handle)
+#else
+    #define JSONLOGIC_IS_ERROR(handle) \
+        (JSONLOGIC_IS_ERROR_(handle) && \
+         JSONLOGIC_DEBUG("trace: %s", jsonlogic_get_error_message(jsonlogic_get_error(handle))), \
+         JSONLOGIC_IS_ERROR_(handle))
+#endif
 
 #define JSONLOGIC_DECL_UTF16(NAME) \
     JSONLOGIC_PRIVATE extern const size_t NAME##_SIZE; \

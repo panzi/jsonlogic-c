@@ -95,8 +95,8 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
 
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * utf16_size);
     if (string == NULL) {
-        JSONLOGIC_ERROR_MEMORY()
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
     string->refcount = 1;
     string->size     = utf16_size;
@@ -126,7 +126,7 @@ JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, si
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * size);
     if (string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
     string->refcount = 1;
     string->size     = size;
@@ -137,6 +137,14 @@ JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, si
 }
 
 static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, JsonLogic_Handle index, JsonLogic_Handle size) {
+    if (JSONLOGIC_IS_ERROR(index)) {
+        return index;
+    }
+
+    if (JSONLOGIC_IS_ERROR(size)) {
+        return size;
+    }
+
     size_t sz_index;
     size_t sz_size;
 
@@ -183,7 +191,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
 
     if (new_string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
 
     new_string->refcount = 1;
@@ -197,9 +205,8 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
 JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle index, JsonLogic_Handle size) {
     if (!JSONLOGIC_IS_STRING(handle)) {
         JsonLogic_Handle temp = jsonlogic_to_string(handle);
-        if (!JSONLOGIC_IS_STRING(temp)) {
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Null;
+        if (JSONLOGIC_IS_ERROR(temp)) {
+            return temp;
         }
         JsonLogic_Handle result = jsonlogic_string_substr(JSONLOGIC_CAST_STRING(temp), index, size);
         jsonlogic_decref(temp);
@@ -309,7 +316,7 @@ bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value) {
 }
 
 bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
-    if (handle.intptr < JsonLogic_MaxNumber) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
         return jsonlogic_buffer_append_double(buf, handle.number);
     }
 
@@ -350,6 +357,10 @@ bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
         case JsonLogic_Type_Object:
             return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_OBJECT_STRING, JSONLOGIC_OBJECT_STRING_SIZE);
 
+        case JsonLogic_Type_Error:
+            jsonlogic_buffer_append_latin1(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
+            return false;
+
         default:
             assert(false);
             return false;
@@ -389,18 +400,22 @@ JsonLogic_Handle jsonlogic_to_string(JsonLogic_Handle handle) {
         return handle;
     }
 
+    if (JSONLOGIC_IS_ERROR(handle)) {
+        return handle;
+    }
+
     JsonLogic_Buffer buf = JSONLOGIC_BUFFER_INIT;
     if (!jsonlogic_buffer_append(&buf, handle)) {
         jsonlogic_buffer_free(&buf);
-        JSONLOGIC_ERROR_MEMORY()
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
 
     JsonLogic_String *string = jsonlogic_buffer_take(&buf);
     jsonlogic_buffer_free(&buf);
     if (string == NULL) {
-        JSONLOGIC_ERROR_MEMORY()
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
 
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };

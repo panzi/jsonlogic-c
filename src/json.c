@@ -211,6 +211,10 @@ static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle h
             }
             return true;
 
+        case JsonLogic_Type_Error:
+            jsonlogic_buffer_append_latin1(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
+            return false;
+
         default:
             assert(false);
             return false;
@@ -218,6 +222,10 @@ static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle h
 }
 
 JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value) {
+    if (JSONLOGIC_IS_ERROR(value)) {
+        return value;
+    }
+
     JsonLogic_Buffer buf = JSONLOGIC_BUFFER_INIT;
     
     if (!jsonlogic_stringify_intern(&buf, value)) {

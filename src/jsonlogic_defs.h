@@ -33,10 +33,7 @@ typedef uint64_t JsonLogic_Type;
 #define JsonLogic_Type_String   ((JsonLogic_Type) 0xfffb000000000000)
 #define JsonLogic_Type_Array    ((JsonLogic_Type) 0xfffc000000000000)
 #define JsonLogic_Type_Object   ((JsonLogic_Type) 0xfffd000000000000)
-
-#ifdef __cplusplus
-}
-#endif
+#define JsonLogic_Type_Error    ((JsonLogic_Type) 0xfffe000000000000)
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
     #ifdef WIN_EXPORT
@@ -62,6 +59,10 @@ typedef uint64_t JsonLogic_Type;
         #define JSONLOGIC_EXPORT extern
         #define JSONLOGIC_PRIVATE
     #endif
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 
