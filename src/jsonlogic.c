@@ -874,29 +874,29 @@ JsonLogic_Handle jsonlogic_op_GE(JsonLogic_Handle data, JsonLogic_Handle args[],
 
 JsonLogic_Handle jsonlogic_op_CAT(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc > 0) {
-        JsonLogic_Buffer buf = JSONLOGIC_BUFFER_INIT;
+        JsonLogic_StrBuf buf = JSONLOGIC_BUFFER_INIT;
 
-        if (!jsonlogic_buffer_append(&buf, args[0])) {
-            jsonlogic_buffer_free(&buf);
+        if (!jsonlogic_strbuf_append(&buf, args[0])) {
+            jsonlogic_strbuf_free(&buf);
             JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Error_OutOfMemory;
         }
 
         for (size_t index = 1; index < argc; ++ index) {
-            if (!jsonlogic_buffer_append_utf16(&buf, (JsonLogic_Char[]){','}, 1)) {
-                jsonlogic_buffer_free(&buf);
+            if (!jsonlogic_strbuf_append_utf16(&buf, (JsonLogic_Char[]){','}, 1)) {
+                jsonlogic_strbuf_free(&buf);
                 JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Error_OutOfMemory;
             }
             JsonLogic_Handle item = args[index];
-            if (!JSONLOGIC_IS_NULL(item) && !jsonlogic_buffer_append(&buf, item)) {
-                jsonlogic_buffer_free(&buf);
+            if (!JSONLOGIC_IS_NULL(item) && !jsonlogic_strbuf_append(&buf, item)) {
+                jsonlogic_strbuf_free(&buf);
                 JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Error_OutOfMemory;
             }
         }
 
-        return jsonlogic_string_into_handle(jsonlogic_buffer_take(&buf));
+        return jsonlogic_string_into_handle(jsonlogic_strbuf_take(&buf));
     } else {
         return jsonlogic_string_from_latin1("");
     }

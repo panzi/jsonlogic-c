@@ -231,7 +231,7 @@ const JsonLogic_Char *jsonlogic_get_utf16(JsonLogic_Handle handle, size_t *sizep
     return string->str;
 }
 
-bool jsonlogic_buffer_ensure(JsonLogic_Buffer *buf, size_t want_free_size) {
+JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_size) {
     size_t used = buf->data == NULL ? 0 : buf->data->size;
     size_t has_free_size = buf->size - used;
 
@@ -240,19 +240,18 @@ bool jsonlogic_buffer_ensure(JsonLogic_Buffer *buf, size_t want_free_size) {
         size_t new_size = buf->size + (add_size < JSONLOGIC_CHUNK_SIZE ? JSONLOGIC_CHUNK_SIZE : add_size);
         JsonLogic_String *new_string = realloc(buf->data, sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * new_size);
         if (new_string == NULL) {
-            return false;
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
         buf->data = new_string;
         buf->size = new_size;
     }
-    return true;
+    return JSONLOGIC_ERROR_SUCCESS;
 }
 
-bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str) {
+JsonLogic_Error jsonlogic_strbuf_append_latin1(JsonLogic_StrBuf *buf, const char *str) {
     size_t size = strlen(str);
-    if (!jsonlogic_buffer_ensure(buf, size)) {
-        return false;
-    }
+    TRY(jsonlogic_strbuf_ensure(buf, size));
 
     size_t outindex = buf->data->size;
     for (size_t index = 0; index < size; ++ index) {
@@ -260,13 +259,11 @@ bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str) {
     }
     buf->data->size += size;
 
-    return false;
+    return JSONLOGIC_ERROR_SUCCESS;
 }
 
-bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, const JsonLogic_Char *str, size_t size) {
-    if (!jsonlogic_buffer_ensure(buf, size)) {
-        return false;
-    }
+JsonLogic_Error jsonlogic_strbuf_append_utf16(JsonLogic_StrBuf *buf, const JsonLogic_Char *str, size_t size) {
+    TRY(jsonlogic_strbuf_ensure(buf, size));
 
     size_t outindex = buf->data->size;
     for (size_t index = 0; index < size; ++ index) {
@@ -274,7 +271,7 @@ bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, const JsonLogic_Char *
     }
     buf->data->size += size;
 
-    return true;
+    return JSONLOGIC_ERROR_SUCCESS;
 }
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_OBJECT_STRING,       '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
@@ -286,16 +283,16 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_INFINITY_STRING,     'I', 'n', 'f', 'i', 'n', 'i',
 JSONLOGIC_DEF_UTF16(JSONLOGIC_POS_INFINITY_STRING, '+', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
 JSONLOGIC_DEF_UTF16(JSONLOGIC_NEG_INFINITY_STRING, '-', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
 
-bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value) {
+JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double value) {
     if (isnan(value)) {
-        return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NAN_STRING, JSONLOGIC_NAN_STRING_SIZE);
+        return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_NAN_STRING, JSONLOGIC_NAN_STRING_SIZE);
     }
 
     if (isinf(value)) {
         if (value > 0) {
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_INFINITY_STRING, JSONLOGIC_INFINITY_STRING_SIZE);
+            return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_INFINITY_STRING, JSONLOGIC_INFINITY_STRING_SIZE);
         } else {
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE);
+            return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE);
         }
     }
 
@@ -305,69 +302,66 @@ bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value) {
         size_t size = (size_t)count + 1;
         char *latin1 = malloc(size);
         if (latin1 == NULL) {
-            return false;
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
         snprintf(latin1, size, "%g", value);
-        bool result = jsonlogic_buffer_append_latin1(buf, latin1);
+        bool result = jsonlogic_strbuf_append_latin1(buf, latin1);
         free(latin1);
         return result;
     }
-    return jsonlogic_buffer_append_latin1(buf, latin1);
+    return jsonlogic_strbuf_append_latin1(buf, latin1);
 }
 
-bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
+JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
-        return jsonlogic_buffer_append_double(buf, handle.number);
+        return jsonlogic_strbuf_append_double(buf, handle.number);
     }
 
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         {
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
-            return jsonlogic_buffer_append_utf16(buf, string->str, string->size);
+            return jsonlogic_strbuf_append_utf16(buf, string->str, string->size);
         }
         case JsonLogic_Type_Boolean:
             if (handle.intptr == JsonLogic_False.intptr) {
-                return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_FALSE_STRING, JSONLOGIC_FALSE_STRING_SIZE);
+                return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_FALSE_STRING, JSONLOGIC_FALSE_STRING_SIZE);
             } else {
-                return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_TRUE_STRING, JSONLOGIC_TRUE_STRING_SIZE);
+                return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_TRUE_STRING, JSONLOGIC_TRUE_STRING_SIZE);
             }
         case JsonLogic_Type_Null:
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
+            return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
 
         case JsonLogic_Type_Array:
         {
             JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
             if (array->size > 0) {
-                if (!jsonlogic_buffer_append(buf, array->items[0])) {
-                    return false;
-                }
+                TRY(jsonlogic_strbuf_append(buf, array->items[0]));
                 for (size_t index = 1; index < array->size; ++ index) {
-                    if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){','}, 1)) {
-                        return false;
-                    }
+                    TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){','}, 1));
                     JsonLogic_Handle item = array->items[index];
-                    if (!JSONLOGIC_IS_NULL(item) && !jsonlogic_buffer_append(buf, item)) {
-                        return false;
+                    if (!JSONLOGIC_IS_NULL(item)) {
+                        TRY(jsonlogic_strbuf_append(buf, item));
                     }
                 }
             }
             return true;
         }
         case JsonLogic_Type_Object:
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_OBJECT_STRING, JSONLOGIC_OBJECT_STRING_SIZE);
+            return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_OBJECT_STRING, JSONLOGIC_OBJECT_STRING_SIZE);
 
         case JsonLogic_Type_Error:
-            jsonlogic_buffer_append_latin1(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
-            return false;
+            jsonlogic_strbuf_append_latin1(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
+            return handle.intptr;
 
         default:
             assert(false);
-            return false;
+            return JSONLOGIC_ERROR_INTERNAL_ERROR;
     }
 }
 
-JsonLogic_String *jsonlogic_buffer_take(JsonLogic_Buffer *buf) {
+JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf) {
     JsonLogic_String *string = buf->data;
     if (string == NULL) {
         string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char));
@@ -388,7 +382,7 @@ JsonLogic_String *jsonlogic_buffer_take(JsonLogic_Buffer *buf) {
     return string;
 }
 
-void jsonlogic_buffer_free(JsonLogic_Buffer *buf) {
+void jsonlogic_strbuf_free(JsonLogic_StrBuf *buf) {
     free(buf->data);
     buf->data = NULL;
     buf->size = 0;
@@ -404,15 +398,15 @@ JsonLogic_Handle jsonlogic_to_string(JsonLogic_Handle handle) {
         return handle;
     }
 
-    JsonLogic_Buffer buf = JSONLOGIC_BUFFER_INIT;
-    if (!jsonlogic_buffer_append(&buf, handle)) {
-        jsonlogic_buffer_free(&buf);
-        JSONLOGIC_ERROR_MEMORY();
-        return JsonLogic_Error_OutOfMemory;
+    JsonLogic_StrBuf buf = JSONLOGIC_BUFFER_INIT;
+    JsonLogic_Error error = jsonlogic_strbuf_append(&buf, handle);
+    if (error != JSONLOGIC_ERROR_SUCCESS) {
+        jsonlogic_strbuf_free(&buf);
+        return (JsonLogic_Handle){ .intptr = error };
     }
 
-    JsonLogic_String *string = jsonlogic_buffer_take(&buf);
-    jsonlogic_buffer_free(&buf);
+    JsonLogic_String *string = jsonlogic_strbuf_take(&buf);
+    jsonlogic_strbuf_free(&buf);
     if (string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;

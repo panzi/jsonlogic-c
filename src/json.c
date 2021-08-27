@@ -46,20 +46,18 @@ static inline JsonLogic_Char jsonlogic_to_hex(uint8_t half_byte) {
     return half_byte > 9 ? 'a' + half_byte : '0' + half_byte;
 }
 
-static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle handle) {
+static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
         if (isnan(handle.number) || isinf(handle.number)) {
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
+            return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
         }
 
-        return jsonlogic_buffer_append_double(buf, handle.number);
+        return jsonlogic_strbuf_append_double(buf, handle.number);
     }
 
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
-            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '"' }, 1)) {
-                return false;
-            }
+            TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '"' }, 1));
 
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
 
@@ -68,45 +66,31 @@ static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle h
 
                 switch (ch) {
                     case '"':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', '"' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', '"' }, 2));
                         break;
 
                     case '\\':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', '\\' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', '\\' }, 2));
                         break;
 
                     case '\b':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'b' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'b' }, 2));
                         break;
 
                     case '\f':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'f' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'f' }, 2));
                         break;
 
                     case '\n':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'n' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'n' }, 2));
                         break;
 
                     case '\r':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'r' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', 'r' }, 2));
                         break;
 
                     case '\t':
-                        if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '\\', 't' }, 2)) {
-                            return false;
-                        }
+                        TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '\\', 't' }, 2));
                         break;
 
                     default:
@@ -119,37 +103,28 @@ static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle h
                                 jsonlogic_to_hex( ch        & 0xF),
                             };
 
-                            if (!jsonlogic_buffer_append_utf16(buf, hex, sizeof(hex) / sizeof(hex[0]))) {
-                                return false;
-                            }
+                            TRY(jsonlogic_strbuf_append_utf16(buf, hex, sizeof(hex) / sizeof(hex[0])));
                         } else {
-                            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ ch }, 1)) {
-                                return false;
-                            }
+                            TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ ch }, 1));
                         }
                         break;
                 }
             }
 
-            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '"' }, 1)) {
-                return false;
-            }
-            return false;
+            return jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '"' }, 1);
 
         case JsonLogic_Type_Boolean:
             if (handle.intptr == JsonLogic_False.intptr) {
-                return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_FALSE_STRING, JSONLOGIC_FALSE_STRING_SIZE);
+                return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_FALSE_STRING, JSONLOGIC_FALSE_STRING_SIZE);
             } else {
-                return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_TRUE_STRING, JSONLOGIC_TRUE_STRING_SIZE);
+                return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_TRUE_STRING, JSONLOGIC_TRUE_STRING_SIZE);
             }
         case JsonLogic_Type_Null:
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
+            return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
 
         case JsonLogic_Type_Array:
         {
-            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '[' }, 1)) {
-                return false;
-            }
+            TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '[' }, 1));
 
             JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
             if (array->size > 0) {
@@ -157,67 +132,39 @@ static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle h
                     return false;
                 }
                 for (size_t index = 1; index < array->size; ++ index) {
-                    if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){','}, 1)) {
-                        return false;
-                    }
+                    TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){','}, 1));
                     JsonLogic_Handle item = array->items[index];
-                    if (!jsonlogic_stringify_intern(buf, item)) {
-                        return false;
-                    }
+                    TRY(jsonlogic_stringify_intern(buf, item));
                 }
             }
 
-            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ ']' }, 1)) {
-                return false;
-            }
-            return true;
+            return jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ ']' }, 1);
         }
         case JsonLogic_Type_Object:
-            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '{' }, 1)) {
-                return false;
-            }
+            TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '{' }, 1));
 
             JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
             if (object->size > 0) {
-                if (!jsonlogic_stringify_intern(buf, object->entries[0].key)) {
-                    return false;
-                }
-
-                if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ ':' }, 1)) {
-                    return false;
-                }
-
-                if (!jsonlogic_stringify_intern(buf, object->entries[0].value)) {
-                    return false;
-                }
+                TRY(jsonlogic_stringify_intern(buf, object->entries[0].key));
+                TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ ':' }, 1));
+                TRY(jsonlogic_stringify_intern(buf, object->entries[0].value));
 
                 for (size_t index = 1; index < object->size; ++ index) {
-                    if (!jsonlogic_stringify_intern(buf, object->entries[index].key)) {
-                        return false;
-                    }
-
-                    if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ ':' }, 1)) {
-                        return false;
-                    }
-
-                    if (!jsonlogic_stringify_intern(buf, object->entries[index].value)) {
-                        return false;
-                    }
+                    TRY(jsonlogic_stringify_intern(buf, object->entries[index].key));
+                    TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ ':' }, 1));
+                    TRY(jsonlogic_stringify_intern(buf, object->entries[index].value));
                 }
             }
 
-            if (!jsonlogic_buffer_append_utf16(buf, (JsonLogic_Char[]){ '}' }, 1)) {
-                return false;
-            }
-            return true;
+            return jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){ '}' }, 1);
 
         case JsonLogic_Type_Error:
-            jsonlogic_buffer_append_latin1(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
-            return false;
+            jsonlogic_strbuf_append_latin1(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
+            return handle.intptr;
 
         default:
             assert(false);
-            return false;
+            return JSONLOGIC_ERROR_INTERNAL_ERROR;
     }
 }
 
@@ -226,13 +173,14 @@ JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value) {
         return value;
     }
 
-    JsonLogic_Buffer buf = JSONLOGIC_BUFFER_INIT;
+    JsonLogic_StrBuf buf = JSONLOGIC_BUFFER_INIT;
     
-    if (!jsonlogic_stringify_intern(&buf, value)) {
-        jsonlogic_buffer_free(&buf);
-        return JsonLogic_Null;
+    JsonLogic_Error error = jsonlogic_stringify_intern(&buf, value);
+    if (error != JSONLOGIC_ERROR_SUCCESS) {
+        jsonlogic_strbuf_free(&buf);
+        return (JsonLogic_Handle){ .intptr = error };
     }
 
-    return jsonlogic_string_into_handle(jsonlogic_buffer_take(&buf));
+    return jsonlogic_string_into_handle(jsonlogic_strbuf_take(&buf));
 }
 

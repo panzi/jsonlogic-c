@@ -65,7 +65,6 @@ struct JsonLogic_Object;
 #define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == (JsonLogic_Type_Boolean | 1))
 #define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == (JsonLogic_Type_Boolean | 0))
 
-
 #define JSONLOGIC_IS_ERROR_(handle)   (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Error)
 
 #ifndef NDEBUG
@@ -151,12 +150,12 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
 }
 
-typedef struct JsonLogic_Buffer {
+typedef struct JsonLogic_StrBuf {
     size_t size;
     JsonLogic_String *data;
-} JsonLogic_Buffer;
+} JsonLogic_StrBuf;
 
-#define JSONLOGIC_BUFFER_INIT ((JsonLogic_Buffer){ .size = 0, .data = NULL })
+#define JSONLOGIC_BUFFER_INIT ((JsonLogic_StrBuf){ .size = 0, .data = NULL })
 #define JSONLOGIC_CHUNK_SIZE 256
 
 JSONLOGIC_PRIVATE bool jsonlogic_string_equals (const JsonLogic_String *a, const JsonLogic_String *b);
@@ -166,13 +165,20 @@ JSONLOGIC_PRIVATE size_t jsonlogic_string_to_index(const JsonLogic_String *strin
 
 JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size);
 
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_ensure(JsonLogic_Buffer *buf, size_t want_free_size);
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_latin1(JsonLogic_Buffer *buf, const char *str);
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_utf16 (JsonLogic_Buffer *buf, const JsonLogic_Char *str, size_t size);
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value);
-JSONLOGIC_PRIVATE bool jsonlogic_buffer_append(JsonLogic_Buffer *buf, JsonLogic_Handle handle);
-JSONLOGIC_PRIVATE JsonLogic_String *jsonlogic_buffer_take(JsonLogic_Buffer *buf);
-JSONLOGIC_PRIVATE void jsonlogic_buffer_free(JsonLogic_Buffer *buf);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_size);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_latin1(JsonLogic_StrBuf *buf, const char *str);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_utf16 (JsonLogic_StrBuf *buf, const JsonLogic_Char *str, size_t size);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double value);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle handle);
+JSONLOGIC_PRIVATE JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf);
+JSONLOGIC_PRIVATE void jsonlogic_strbuf_free(JsonLogic_StrBuf *buf);
+
+#define TRY(EXPR) { \
+        const JsonLogic_Error json_logic_error__ = (EXPR); \
+        if (json_logic_error__ != JSONLOGIC_ERROR_SUCCESS) { \
+            return json_logic_error__; \
+        } \
+    }
 
 #ifdef __cplusplus
 }
