@@ -8,6 +8,35 @@
 #define JsonLogic_TypeMask  ((uintptr_t)0xffff000000000000)
 #define JsonLogic_MaxNumber ((uintptr_t)0xfff8000000000000)
 
+#if defined(NDEBUG)
+    #define JSONLOGIC_DEBUG(...)
+    #define JSONLOGIC_ERROR(...)
+    #define JSONLOGIC_ASSERT(...)
+#else
+    #include <stdio.h>
+
+    #define JSONLOGIC_DEBUG(FMT, ...) \
+        fprintf(stderr, "*** error: %s:%u: in %s: " FMT "\n", \
+            __FILE__, __LINE__, __func__, __VA_ARGS__);
+
+    #if defined(JSONLOGIC_NO_ABORT_ON_ERROR)
+        #define JSONLOGIC_ERROR(...) JSONLOGIC_DEBUG(__VA_ARGS__)
+    #else
+        #include <stdlib.h>
+
+        #define JSONLOGIC_ERROR(...) \
+            JSONLOGIC_DEBUG(__VA_ARGS__); \
+            abort();
+    #endif
+
+    #define JSONLOGIC_ASSERT(EXPR, ...) \
+        if (!(EXPR)) { JSONLOGIC_ERROR(__VA_ARGS__); }
+
+#endif
+
+#define JSONLOGIC_ERROR_MEMORY() \
+    JSONLOGIC_ERROR("%s", "memory allocation failed")
+
 #ifdef __cplusplus
 extern "C" {
 #endif

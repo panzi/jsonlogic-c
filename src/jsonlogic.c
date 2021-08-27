@@ -274,8 +274,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(logic);
         JsonLogic_Array *new_array = jsonlogic_array_with_capacity(array->size);
         if (new_array == NULL) {
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
         for (size_t index = 0; index < array->size; ++ index) {
@@ -401,8 +400,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Array *filtered = jsonlogic_array_with_capacity(array->size);
         if (filtered == NULL) {
             jsonlogic_decref(items);
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
 
@@ -443,8 +441,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Array *mapped = jsonlogic_array_with_capacity(array->size);
         if (mapped == NULL) {
             jsonlogic_decref(items);
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
 
@@ -494,8 +491,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         );
         if (!JSONLOGIC_IS_OBJECT(context)) {
             jsonlogic_decref(items);
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
         JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(context);
@@ -661,8 +657,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
     if (opfunc == NULL) {
         opfunc = jsonlogic_builtins_get(opstr->str, opstr->size);
         if (opfunc == NULL) {
-            // illegal operation
-            assert(false);
+            JSONLOGIC_ERROR("%s", "illegal operation");
             return JsonLogic_Null;
         }
     }
@@ -674,8 +669,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
     if (value_count > ARGC) {
         args = malloc(sizeof(JsonLogic_Handle) * value_count);
         if (args == NULL) {
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
     } else {
@@ -826,23 +820,20 @@ JsonLogic_Handle jsonlogic_op_CAT(JsonLogic_Handle data, JsonLogic_Handle args[]
 
         if (!jsonlogic_buffer_append(&buf, args[0])) {
             jsonlogic_buffer_free(&buf);
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
 
         for (size_t index = 1; index < argc; ++ index) {
             if (!jsonlogic_buffer_append_utf16(&buf, (JsonLogic_Char[]){','}, 1)) {
                 jsonlogic_buffer_free(&buf);
-                // memory allocation failed
-                assert(false);
+                JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Null;
             }
             JsonLogic_Handle item = args[index];
             if (!JSONLOGIC_IS_NULL(item) && !jsonlogic_buffer_append(&buf, item)) {
                 jsonlogic_buffer_free(&buf);
-                // memory allocation failed
-                assert(false);
+                JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Null;
             }
         }
@@ -869,15 +860,13 @@ JsonLogic_Handle jsonlogic_op_LOG(JsonLogic_Handle data, JsonLogic_Handle args[]
     JsonLogic_Handle value  = args[0];
     JsonLogic_Handle string = jsonlogic_stringify(value);
     if (!JSONLOGIC_IS_STRING(string)) {
-        // memory allocation failed
-        assert(false);
+        JSONLOGIC_ERROR_MEMORY();
         puts("null");
     } else {
         JsonLogic_String *str = JSONLOGIC_CAST_STRING(string);
         char *utf8 = jsonlogic_utf16_to_utf8(str->str, str->size);
         if (utf8 == NULL) {
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             puts("null");
         } else {
             puts(utf8);
@@ -1035,8 +1024,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
 
     JsonLogic_Handle key = jsonlogic_to_string(args[0]);
     if (!JSONLOGIC_IS_STRING(key)) {
-        // memory allocation failed
-        assert(false);
+        JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Null;
     }
     JsonLogic_Handle default_value = argc > 1 ? args[1] : JsonLogic_Null;

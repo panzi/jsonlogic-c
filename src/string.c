@@ -95,8 +95,7 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
 
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * utf16_size);
     if (string == NULL) {
-        // memory allocation failed
-        assert(false);
+        JSONLOGIC_ERROR_MEMORY()
         return JsonLogic_Null;
     }
     string->refcount = 1;
@@ -126,8 +125,7 @@ JsonLogic_Handle jsonlogic_string_from_utf16(const JsonLogic_Char *str) {
 JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, size_t size) {
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * size);
     if (string == NULL) {
-        // memory allocation failed
-        assert(false);
+        JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Null;
     }
     string->refcount = 1;
@@ -184,8 +182,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
     JsonLogic_String *new_string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * sz_size);
 
     if (new_string == NULL) {
-        // memory allocation failed
-        assert(false);
+        JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Null;
     }
 
@@ -201,8 +198,7 @@ JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle inde
     if (!JSONLOGIC_IS_STRING(handle)) {
         JsonLogic_Handle temp = jsonlogic_to_string(handle);
         if (JSONLOGIC_IS_NULL(temp)) {
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
         JsonLogic_Handle result = jsonlogic_string_substr(JSONLOGIC_CAST_STRING(temp), index, size);
@@ -396,12 +392,14 @@ JsonLogic_Handle jsonlogic_to_string(JsonLogic_Handle handle) {
     JsonLogic_Buffer buf = JSONLOGIC_BUFFER_INIT;
     if (!jsonlogic_buffer_append(&buf, handle)) {
         jsonlogic_buffer_free(&buf);
+        JSONLOGIC_ERROR_MEMORY()
         return JsonLogic_Null;
     }
 
     JsonLogic_String *string = jsonlogic_buffer_take(&buf);
     jsonlogic_buffer_free(&buf);
     if (string == NULL) {
+        JSONLOGIC_ERROR_MEMORY()
         return JsonLogic_Null;
     }
 

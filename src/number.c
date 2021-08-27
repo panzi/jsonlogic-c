@@ -68,8 +68,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 } else {
                     char *buf = malloc(size + 1);
                     if (buf == NULL) {
-                        // memory allocation failed
-                        assert(false);
+                        JSONLOGIC_ERROR_MEMORY();
                         return JsonLogic_NaN;
                     }
                     for (size_t index = 0; index < size; ++ index) {
@@ -104,7 +103,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 return (JsonLogic_Handle){ .number = 0.0 };
 
             case JsonLogic_Type_Boolean:
-                return (JsonLogic_Handle){ .number = handle.intptr == JsonLogic_True.intptr ? 1.0 : 0.0 };
+                return (JsonLogic_Handle){ .number = JSONLOGIC_IS_TRUE(handle) ? 1.0 : 0.0 };
 
             default:
                 return JsonLogic_NaN;

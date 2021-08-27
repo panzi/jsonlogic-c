@@ -61,8 +61,8 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
             }
             free(object);
             va_end(ap);
-            // memory allocation failed
-            assert(false);
+
+            JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
         jsonlogic_incref(entry.value);
@@ -83,8 +83,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
             const JsonLogic_String *key = JSONLOGIC_CAST_STRING(object->entries[index].key);
             if (jsonlogic_string_equals(prev, key)) {
                 jsonlogic_object_free(object);
-                // since qsort() isn't stable, wouldn't know what to delete
-                assert(false);
+                JSONLOGIC_ERROR("%s", "duplicated key in object");
                 return JsonLogic_Null;
             }
             prev = key;

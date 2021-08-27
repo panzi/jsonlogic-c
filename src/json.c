@@ -37,8 +37,8 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size) {
     // TODO
 
 
+    JSONLOGIC_ERROR("%s", "not implemented");
 
-    assert(false);
     return JsonLogic_Null;
 }
 

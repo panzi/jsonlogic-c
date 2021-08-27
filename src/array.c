@@ -80,8 +80,7 @@ JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(list);
             const JsonLogic_Handle needle = jsonlogic_to_string(item);
             if (!JSONLOGIC_IS_STRING(needle)) {
-                // memory allocation failed
-                assert(false);
+                JSONLOGIC_ERROR_MEMORY();
                 jsonlogic_decref(needle);
                 return JsonLogic_False;
             }
@@ -112,8 +111,7 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
 
         JsonLogic_Array *new_array = realloc(array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * size);
         if (new_array == NULL) {
-            // memory allocation failed
-            assert(false);
+            JSONLOGIC_DEBUG("%s", "shrinking realloc() failed");
         } else {
             array = new_array;
         }
