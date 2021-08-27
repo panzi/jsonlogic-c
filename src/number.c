@@ -4,6 +4,12 @@
 #include <math.h>
 #include <assert.h>
 
+#define JSONLOGIC_IS_NUM(ch) \
+    ((ch) == 'e' || (ch) == 'E' || (ch) == '.' || (ch) == '+' || (ch) == '-' || ((ch) >= '0' && (ch) <= '9'))
+
+#define JSONLOGIC_IS_SPACE(ch) \
+    ((ch) >= '\t' && (ch) <= '\r')
+
 JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
     for (;;) {
         if (handle.intptr < JsonLogic_MaxNumber) {
@@ -18,36 +24,63 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 if (string->size == 0) {
                     return (JsonLogic_Handle){ .number = 0.0 };
                 }
-                for (size_t index = 0; index < string->size; ++ index) {
-                    JsonLogic_Char ch = string->str[index];
-                    if (ch != 'e' && ch != 'E' && ch != '.' && ch != '+' && ch != '-' && !(ch >= '0' && ch <= '9')) {
-                        return JsonLogic_NaN;
-                    }
+
+                const JsonLogic_Char *str = string->str;
+                size_t size = string->size;
+
+                while (size > 0 && JSONLOGIC_IS_SPACE(*str)) {
+                    ++ str;
+                    -- size;
+                }
+
+                while (size > 0 && JSONLOGIC_IS_SPACE(str[size - 1])) {
+                    -- size;
+                }
+
+                if (jsonlogic_utf16_equals(str, size, JSONLOGIC_INFINITY_STRING, JSONLOGIC_INFINITY_STRING_SIZE)) {
+                    return (JsonLogic_Handle){ .number = INFINITY };
+                }
+
+                if (jsonlogic_utf16_equals(str, size, JSONLOGIC_POS_INFINITY_STRING, JSONLOGIC_POS_INFINITY_STRING_SIZE)) {
+                    return (JsonLogic_Handle){ .number = INFINITY };
+                }
+
+                if (jsonlogic_utf16_equals(str, size, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE)) {
+                    return (JsonLogic_Handle){ .number = -INFINITY };
                 }
 
                 char *endptr = NULL;
                 char buf[128];
-                if (string->size < sizeof(buf)) {
-                    for (size_t index = 0; index < string->size; ++ index) {
-                        buf[index] = string->str[index];
+                if (size < sizeof(buf)) {
+                    for (size_t index = 0; index < size; ++ index) {
+                        JsonLogic_Char ch = str[index];
+                        if (!JSONLOGIC_IS_NUM(ch)) {
+                            return JsonLogic_NaN;
+                        }
+                        buf[index] = ch;
                     }
-                    buf[string->size] = 0;
+                    buf[size] = 0;
                     double value = strtod(buf, &endptr);
                     if (*endptr) {
                         return JsonLogic_NaN;
                     }
                     return (JsonLogic_Handle){ .number = value };
                 } else {
-                    char *buf = malloc(string->size + 1);
+                    char *buf = malloc(size + 1);
                     if (buf == NULL) {
                         // memory allocation failed
                         assert(false);
                         return JsonLogic_NaN;
                     }
-                    for (size_t index = 0; index < string->size; ++ index) {
-                        buf[index] = string->str[index];
+                    for (size_t index = 0; index < size; ++ index) {
+                        JsonLogic_Char ch = str[index];
+                        if (!JSONLOGIC_IS_NUM(ch)) {
+                            free(buf);
+                            return JsonLogic_NaN;
+                        }
+                        buf[index] = ch;
                     }
-                    buf[string->size] = 0;
+                    buf[size] = 0;
                     double value = strtod(buf, &endptr);
                     free(buf);
                     if (*endptr) {

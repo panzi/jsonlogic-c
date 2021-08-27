@@ -274,12 +274,13 @@ bool jsonlogic_buffer_append_utf16(JsonLogic_Buffer *buf, const JsonLogic_Char *
     return true;
 }
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_OBJECT_STRING,   '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NULL_STRING,     'n', 'u', 'l', 'l')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_TRUE_STRING,     't', 'r', 'u', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_FALSE_STRING,    'f', 'a', 'l', 's', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NAN_STRING,      'N', 'a', 'N')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_POS_INFINITY_STRING, 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_OBJECT_STRING,       '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NULL_STRING,         'n', 'u', 'l', 'l')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_TRUE_STRING,         't', 'r', 'u', 'e')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_FALSE_STRING,        'f', 'a', 'l', 's', 'e')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NAN_STRING,          'N', 'a', 'N')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_INFINITY_STRING,     'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_POS_INFINITY_STRING, '+', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
 JSONLOGIC_DEF_UTF16(JSONLOGIC_NEG_INFINITY_STRING, '-', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
 
 bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value) {
@@ -289,7 +290,7 @@ bool jsonlogic_buffer_append_double(JsonLogic_Buffer *buf, double value) {
 
     if (isinf(value)) {
         if (value > 0) {
-            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_POS_INFINITY_STRING, JSONLOGIC_POS_INFINITY_STRING_SIZE);
+            return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_INFINITY_STRING, JSONLOGIC_INFINITY_STRING_SIZE);
         } else {
             return jsonlogic_buffer_append_utf16(buf, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE);
         }
