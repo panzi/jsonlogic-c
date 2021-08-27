@@ -112,7 +112,8 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 index = jsonlogic_string_to_index(stringkey);
             } else {
                 JsonLogic_Handle strkey = jsonlogic_to_string(key);
-                if (JSONLOGIC_IS_NULL(strkey)) {
+                if (!JSONLOGIC_IS_STRING(strkey)) {
+                    JSONLOGIC_ERROR_MEMORY();
                     return JsonLogic_Null;
                 }
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
@@ -140,7 +141,8 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                 index = jsonlogic_string_to_index(stringkey);
             } else {
                 JsonLogic_Handle strkey = jsonlogic_to_string(key);
-                if (JSONLOGIC_IS_NULL(strkey)) {
+                if (!JSONLOGIC_IS_STRING(strkey)) {
+                    JSONLOGIC_ERROR_MEMORY();
                     return JsonLogic_Null;
                 }
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);

@@ -197,7 +197,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
 JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle index, JsonLogic_Handle size) {
     if (!JSONLOGIC_IS_STRING(handle)) {
         JsonLogic_Handle temp = jsonlogic_to_string(handle);
-        if (JSONLOGIC_IS_NULL(temp)) {
+        if (!JSONLOGIC_IS_STRING(temp)) {
             JSONLOGIC_ERROR_MEMORY();
             return JsonLogic_Null;
         }
