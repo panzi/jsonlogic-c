@@ -270,30 +270,26 @@ JsonLogic_Handle jsonlogic_apply_custom(
         const size_t operation_count) {
     JsonLogic_Handle result = JsonLogic_Null;
 
-#define RETURN(VALUE) \
-    result = (VALUE); \
-    goto cleanup;
-
     if (JSONLOGIC_IS_ARRAY(logic)) {
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(logic);
         JsonLogic_Array *new_array = jsonlogic_array_with_capacity(array->size);
         if (new_array == NULL) {
             // memory allocation failed
             assert(false);
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
         for (size_t index = 0; index < array->size; ++ index) {
             new_array->items[index] = jsonlogic_apply_custom(
-                jsonlogic_incref(array->items[index]),
-                jsonlogic_incref(input),
+                array->items[index],
+                input,
                 operations, operation_count);
         }
-        RETURN(jsonlogic_array_into_handle(new_array));
+        return jsonlogic_array_into_handle(new_array);
     }
 
     if (!JSONLOGIC_IS_LOGIC(logic)) {
         jsonlogic_incref(logic);
-        RETURN(logic);
+        return logic;
     }
 
     const JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(logic);
@@ -302,7 +298,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
     if (!JSONLOGIC_IS_STRING(op)) {
         jsonlogic_incref(logic);
-        RETURN(logic);
+        return logic;
     }
 
     size_t value_count;
@@ -321,85 +317,85 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
     if (JSONLOGIC_IS_OP(opstr, IF) || JSONLOGIC_IS_OP(opstr, ALT_IF)) {
         if (value_count == 0) {
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
         size_t index = 0;
         while (index < value_count - 1) {
             JsonLogic_Handle value = jsonlogic_apply_custom(
-                jsonlogic_incref(values[index ++]),
-                jsonlogic_incref(input),
+                values[index ++],
+                input,
                 operations,
                 operation_count);
             bool condition = jsonlogic_to_bool(value);
             jsonlogic_decref(value);
             if (condition) {
-                RETURN(jsonlogic_apply_custom(
-                    jsonlogic_incref(values[index ++]),
-                    jsonlogic_incref(input),
+                return jsonlogic_apply_custom(
+                    values[index ++],
+                    input,
                     operations,
-                    operation_count));
+                    operation_count);
             }
         }
         if (index < value_count) {
-            RETURN(jsonlogic_apply_custom(
-                jsonlogic_incref(values[index]),
-                jsonlogic_incref(input),
+            return jsonlogic_apply_custom(
+                values[index],
+                input,
                 operations,
-                operation_count));
+                operation_count);
         }
-        RETURN(JsonLogic_Null);
+        return JsonLogic_Null;
     } else if (JSONLOGIC_IS_OP(opstr, AND)) {
         if (value_count == 0) {
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
         for (size_t index = 0; index < value_count - 1; ++ index) {
             JsonLogic_Handle value = jsonlogic_apply_custom(
-                jsonlogic_incref(values[index]),
-                jsonlogic_incref(input),
+                values[index],
+                input,
                 operations,
                 operation_count);
             if (!jsonlogic_to_bool(value)) {
-                RETURN(value);
+                return value;
             }
             jsonlogic_decref(value);
         }
-        RETURN(jsonlogic_apply_custom(
-            jsonlogic_incref(values[value_count - 1]),
-            jsonlogic_incref(input),
+        return jsonlogic_apply_custom(
+            values[value_count - 1],
+            input,
             operations,
-            operation_count));
+            operation_count);
     } else if (JSONLOGIC_IS_OP(opstr, OR)) {
         if (value_count == 0) {
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
         for (size_t index = 0; index < value_count - 1; ++ index) {
             JsonLogic_Handle value = jsonlogic_apply_custom(
-                jsonlogic_incref(values[index]),
-                jsonlogic_incref(input),
+                values[index],
+                input,
                 operations,
                 operation_count);
             if (jsonlogic_to_bool(value)) {
-                RETURN(value);
+                return value;
             }
             jsonlogic_decref(value);
         }
-        RETURN(jsonlogic_apply_custom(
-            jsonlogic_incref(values[value_count - 1]),
-            jsonlogic_incref(input),
+        return jsonlogic_apply_custom(
+            values[value_count - 1],
+            input,
             operations,
-            operation_count));
+            operation_count);
     } else if (JSONLOGIC_IS_OP(opstr, FILTER)) {
         if (value_count == 0) {
-            RETURN(jsonlogic_empty_array());
+            return jsonlogic_empty_array();
         }
         JsonLogic_Handle items = jsonlogic_apply_custom(
-            jsonlogic_incref(values[0]),
-            jsonlogic_incref(input),
+            values[0],
+            input,
             operations,
             operation_count);
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 2 || !jsonlogic_to_bool(values[1])) {
             jsonlogic_decref(items);
-            RETURN(jsonlogic_empty_array());
+            return jsonlogic_empty_array();
         }
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         JsonLogic_Array *filtered = jsonlogic_array_with_capacity(array->size);
@@ -407,7 +403,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
             jsonlogic_decref(items);
             // memory allocation failed
             assert(false);
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
 
         JsonLogic_Handle logic = values[1];
@@ -416,8 +412,8 @@ JsonLogic_Handle jsonlogic_apply_custom(
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                jsonlogic_incref(logic),
-                jsonlogic_incref(item),
+                logic,
+                item,
                 operations,
                 operation_count);
             if (jsonlogic_to_bool(condition)) {
@@ -429,19 +425,19 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
         jsonlogic_decref(items);
         filtered = jsonlogic_array_truncate(filtered, filtered_index);
-        RETURN(jsonlogic_array_into_handle(filtered));
+        return jsonlogic_array_into_handle(filtered);
     } else if (JSONLOGIC_IS_OP(opstr, MAP)) {
         if (value_count == 0) {
-            RETURN(jsonlogic_empty_array());
+            return jsonlogic_empty_array();
         }
         JsonLogic_Handle items = jsonlogic_apply_custom(
-            jsonlogic_incref(values[0]),
-            jsonlogic_incref(input),
+            values[0],
+            input,
             operations,
             operation_count);
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
-            RETURN(jsonlogic_empty_array());
+            return jsonlogic_empty_array();
         }
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         JsonLogic_Array *mapped = jsonlogic_array_with_capacity(array->size);
@@ -449,7 +445,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
             jsonlogic_decref(items);
             // memory allocation failed
             assert(false);
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
 
         JsonLogic_Handle logic = value_count < 2 ? JsonLogic_Null : values[1];
@@ -457,8 +453,8 @@ JsonLogic_Handle jsonlogic_apply_custom(
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle value = jsonlogic_apply_custom(
-                jsonlogic_incref(logic),
-                jsonlogic_incref(item),
+                logic,
+                item,
                 operations,
                 operation_count);
             jsonlogic_incref(value);
@@ -466,10 +462,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
         }
 
         jsonlogic_decref(items);
-        RETURN(jsonlogic_array_into_handle(mapped));
+        return jsonlogic_array_into_handle(mapped);
     } else if (JSONLOGIC_IS_OP(opstr, REDUCE)) {
         if (value_count == 0) {
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
         JsonLogic_Handle logic = JsonLogic_Null;
         JsonLogic_Handle init  = JsonLogic_Null;
@@ -481,15 +477,15 @@ JsonLogic_Handle jsonlogic_apply_custom(
         }
 
         JsonLogic_Handle items = jsonlogic_apply_custom(
-            jsonlogic_incref(values[0]),
-            jsonlogic_incref(input),
+            values[0],
+            input,
             operations,
             operation_count);
 
         if (!JSONLOGIC_IS_ARRAY(items)) {
-            jsonlogic_decref(items);
             jsonlogic_incref(init);
-            RETURN(init);
+            jsonlogic_decref(items);
+            return init;
         }
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         JsonLogic_Handle context = jsonlogic_object_from(
@@ -500,10 +496,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
             jsonlogic_decref(items);
             // memory allocation failed
             assert(false);
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
         JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(context);
-        JsonLogic_Handle accumulator = init;
+        JsonLogic_Handle accumulator = jsonlogic_incref(init);
 
         size_t accumulator_index = jsonlogic_object_get_index_utf16(object, JSONLOGIC_ACCUMULATOR, JSONLOGIC_ACCUMULATOR_SIZE);
         assert(accumulator_index < object->size);
@@ -515,37 +511,40 @@ JsonLogic_Handle jsonlogic_apply_custom(
             object->entries[accumulator_index].value = accumulator;
             object->entries[current_index].value     = array->items[index];
 
-            accumulator = jsonlogic_apply_custom(
-                jsonlogic_incref(logic),
-                jsonlogic_incref(context),
+            JsonLogic_Handle new_accumulator = jsonlogic_apply_custom(
+                logic,
+                context,
                 operations,
                 operation_count
             );
+
+            jsonlogic_decref(accumulator);
+            accumulator = new_accumulator;
 
             object->entries[accumulator_index].value = JsonLogic_Null;
             object->entries[current_index].value     = JsonLogic_Null;
         }
 
         jsonlogic_decref(context);
-
         jsonlogic_decref(items);
-        RETURN(JsonLogic_Null);
+
+        return accumulator;
     } else if (JSONLOGIC_IS_OP(opstr, ALL)) {
         // to be sane and logical it should return true on empty array,
         // but JsonLogic is not logical here:
         // https://github.com/jwadhams/json-logic-js/blob/c1dd82f5b15d8a553bb7a0cfa841ab8a11a9c227/logic.js#L318
         if (value_count == 0) {
-            RETURN(JsonLogic_False);
+            return JsonLogic_False;
         }
 
         JsonLogic_Handle items = jsonlogic_apply_custom(
-            jsonlogic_incref(values[0]),
-            jsonlogic_incref(input),
+            values[0],
+            input,
             operations,
             operation_count);
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
-            RETURN(JsonLogic_False);
+            return JsonLogic_False;
         }
 
         JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
@@ -553,40 +552,40 @@ JsonLogic_Handle jsonlogic_apply_custom(
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         if (array->size == 0) {
             jsonlogic_decref(items);
-            RETURN(JsonLogic_False);
+            return JsonLogic_False;
         }
 
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                jsonlogic_incref(logic),
-                jsonlogic_incref(item),
+                logic,
+                item,
                 operations,
                 operation_count
             );
             if (!jsonlogic_to_bool(condition)) {
                 jsonlogic_decref(condition);
                 jsonlogic_decref(items);
-                RETURN(JsonLogic_False);
+                return JsonLogic_False;
             }
             jsonlogic_decref(condition);
         }
 
         jsonlogic_decref(items);
-        RETURN(JsonLogic_True);
+        return JsonLogic_True;
     } else if (JSONLOGIC_IS_OP(opstr, SOME)) {
         if (value_count == 0) {
-            RETURN(JsonLogic_False);
+            return JsonLogic_False;
         }
 
         JsonLogic_Handle items = jsonlogic_apply_custom(
-            jsonlogic_incref(values[0]),
-            jsonlogic_incref(input),
+            values[0],
+            input,
             operations,
             operation_count);
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
-            RETURN(JsonLogic_False);
+            return JsonLogic_False;
         }
 
         JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
@@ -594,40 +593,40 @@ JsonLogic_Handle jsonlogic_apply_custom(
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         if (array->size == 0) {
             jsonlogic_decref(items);
-            RETURN(JsonLogic_False);
+            return JsonLogic_False;
         }
 
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                jsonlogic_incref(logic),
-                jsonlogic_incref(item),
+                logic,
+                item,
                 operations,
                 operation_count
             );
             if (jsonlogic_to_bool(condition)) {
                 jsonlogic_decref(condition);
                 jsonlogic_decref(items);
-                RETURN(JsonLogic_True);
+                return JsonLogic_True;
             }
             jsonlogic_decref(condition);
         }
 
         jsonlogic_decref(items);
-        RETURN(JsonLogic_False);
+        return JsonLogic_False;
     } else if (JSONLOGIC_IS_OP(opstr, NONE)) {
         if (value_count == 0) {
-            RETURN(JsonLogic_True);
+            return JsonLogic_True;
         }
 
         JsonLogic_Handle items = jsonlogic_apply_custom(
-            jsonlogic_incref(values[0]),
-            jsonlogic_incref(input),
+            values[0],
+            input,
             operations,
             operation_count);
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
-            RETURN(JsonLogic_True);
+            return JsonLogic_True;
         }
 
         JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
@@ -635,27 +634,27 @@ JsonLogic_Handle jsonlogic_apply_custom(
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         if (array->size == 0) {
             jsonlogic_decref(items);
-            RETURN(JsonLogic_True);
+            return JsonLogic_True;
         }
 
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                jsonlogic_incref(logic),
-                jsonlogic_incref(item),
+                logic,
+                item,
                 operations,
                 operation_count
             );
             if (jsonlogic_to_bool(condition)) {
                 jsonlogic_decref(condition);
                 jsonlogic_decref(items);
-                RETURN(JsonLogic_False);
+                return JsonLogic_False;
             }
             jsonlogic_decref(condition);
         }
 
         jsonlogic_decref(items);
-        RETURN(JsonLogic_True);
+        return JsonLogic_True;
     }
 
     JsonLogic_Operation opfunc = jsonlogic_operation_get(operations, operation_count, opstr->str, opstr->size);
@@ -664,30 +663,42 @@ JsonLogic_Handle jsonlogic_apply_custom(
         if (opfunc == NULL) {
             // illegal operation
             assert(false);
-            RETURN(JsonLogic_Null);
+            return JsonLogic_Null;
         }
     }
 
-    JsonLogic_Handle *args = malloc(sizeof(JsonLogic_Handle) * value_count);
-    if (args == NULL) {
-        // memory allocation failed
-        assert(false);
-        RETURN(JsonLogic_Null);
+#define ARGC 8
+    JsonLogic_Handle argbuf[ARGC];
+    JsonLogic_Handle *args;
+
+    if (value_count > ARGC) {
+        args = malloc(sizeof(JsonLogic_Handle) * value_count);
+        if (args == NULL) {
+            // memory allocation failed
+            assert(false);
+            return JsonLogic_Null;
+        }
+    } else {
+        args = argbuf;
     }
+
     for (size_t index = 0; index < value_count; ++ index) {
         args[index] = jsonlogic_apply_custom(
-            jsonlogic_incref(values[index]),
-            jsonlogic_incref(input),
+            values[index],
+            input,
             operations,
             operation_count);
     }
 
     result = opfunc(input, args, value_count);
-    free(args);
 
-cleanup:
-    jsonlogic_decref(logic);
-    jsonlogic_decref(input);
+    for (size_t index = 0; index < value_count; ++ index) {
+        jsonlogic_decref(args[index]);
+    }
+
+    if (value_count > ARGC) {
+        free(args);
+    }
 
     return result;
 }
@@ -855,8 +866,8 @@ JsonLogic_Handle jsonlogic_op_LOG(JsonLogic_Handle data, JsonLogic_Handle args[]
         puts("null");
         return JsonLogic_Null;
     }
-    JsonLogic_Handle value = args[0];
-    JsonLogic_Handle string = jsonlogic_to_string(value);
+    JsonLogic_Handle value  = args[0];
+    JsonLogic_Handle string = jsonlogic_stringify(value);
     if (!JSONLOGIC_IS_STRING(string)) {
         // memory allocation failed
         assert(false);
@@ -909,16 +920,14 @@ JsonLogic_Handle jsonlogic_op_MERGE(JsonLogic_Handle data, JsonLogic_Handle args
     for (size_t index = 0; index < argc; ++ index) {
         JsonLogic_Handle item = args[index];
         if (JSONLOGIC_IS_ARRAY(item)) {
-            JsonLogic_Array *child_array = JSONLOGIC_CAST_ARRAY(item);
+            const JsonLogic_Array *child_array = JSONLOGIC_CAST_ARRAY(item);
 
             for (size_t child_index = 0; child_index < child_array->size; ++ child_index) {
                 JsonLogic_Handle child_item = child_array->items[child_index];
-                jsonlogic_incref(child_item);
-                array->items[array_index ++] = child_item;
+                array->items[array_index ++] = jsonlogic_incref(child_item);
             }
         } else {
-            jsonlogic_incref(item);
-            array->items[array_index ++] = item;
+            array->items[array_index ++] = jsonlogic_incref(item);
         }
     }
     assert(array_index == array_size);
@@ -945,10 +954,10 @@ JsonLogic_Handle jsonlogic_op_MISSING(JsonLogic_Handle data, JsonLogic_Handle ar
     if (argc > 0 && JSONLOGIC_IS_ARRAY(args[0])) {
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(args[0]);
         key_count = array->size;
-        keys = array->items;
+        keys      = array->items;
     } else {
         key_count = argc;
-        keys = args;
+        keys      = args;
     }
 
     JsonLogic_Array *missing = jsonlogic_array_with_capacity(key_count);
@@ -958,7 +967,7 @@ JsonLogic_Handle jsonlogic_op_MISSING(JsonLogic_Handle data, JsonLogic_Handle ar
 
     size_t missing_index = 0;
     for (size_t index = 0; index < key_count; ++ index) {
-        JsonLogic_Handle key = keys[index];
+        JsonLogic_Handle key   = keys[index];
         JsonLogic_Handle value = jsonlogic_op_VAR(data, (JsonLogic_Handle[]){ key }, 1);
 
         if (JSONLOGIC_IS_NULL(value) || (JSONLOGIC_IS_STRING(value) && JSONLOGIC_CAST_STRING(value)->size == 0)) {
@@ -991,11 +1000,10 @@ JsonLogic_Handle jsonlogic_op_MISSING_SOME(JsonLogic_Handle data, JsonLogic_Hand
         jsonlogic_decref(missing);
         return JsonLogic_Null;
     }
-    const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(missing);
+    JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(missing);
 
     if (options_length - array->size >= need_count) {
-        jsonlogic_decref(missing);
-        return jsonlogic_empty_array();
+        missing = jsonlogic_array_into_handle(jsonlogic_array_truncate(array, 0));
     }
 
     return missing;

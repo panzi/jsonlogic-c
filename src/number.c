@@ -21,7 +21,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 for (size_t index = 0; index < string->size; ++ index) {
                     JsonLogic_Char ch = string->str[index];
                     if (ch != 'e' && ch != 'E' && ch != '.' && ch != '+' && ch != '-' && !(ch >= '0' && ch <= '9')) {
-                        return (JsonLogic_Handle){ .number = NAN };
+                        return JsonLogic_NaN;
                     }
                 }
 
@@ -34,7 +34,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     buf[string->size] = 0;
                     double value = strtod(buf, &endptr);
                     if (*endptr) {
-                        return (JsonLogic_Handle){ .number = NAN };
+                        return JsonLogic_NaN;
                     }
                     return (JsonLogic_Handle){ .number = value };
                 } else {
