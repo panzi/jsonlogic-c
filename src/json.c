@@ -9,9 +9,35 @@
 JsonLogic_Handle jsonlogic_parse(const char *str) {
     return jsonlogic_parse_sized(str, strlen(str));
 }
+/*
+typedef enum JsonLogic_ParserState {
+    JsonLogic_ParserState_Start,
+    JsonLogic_ParserState_End,
+    JsonLogic_ParserState_String,
+    JsonLogic_ParserState_StringEsc,
+    JsonLogic_ParserState_StringUni1,
+    JsonLogic_ParserState_StringUni2,
+    JsonLogic_ParserState_StringUni3,
+    JsonLogic_ParserState_StringUni4,
+    JsonLogic_ParserState_StringUni5,
+    JsonLogic_ParserState_StringUni6,
+    JsonLogic_ParserState_Array,
+    // ...
+    JsonLogic_ParserState_Error,
+    JsonLogic_ParserState_Max,
+} JsonLogic_ParserState;
 
+static const JsonLogic_ParserState JsonLogic_Parser[JsonLogic_ParserState_Max][256] = {
+    [JsonLogic_ParserState_Error] = {
+        JsonLogic_ParserState_Error
+    }
+};
+*/
 JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size) {
     // TODO
+
+
+
     assert(false);
     return JsonLogic_Null;
 }
@@ -85,10 +111,8 @@ static bool jsonlogic_stringify_intern(JsonLogic_Buffer *buf, JsonLogic_Handle h
 
                     default:
                         if (ch >= 0x010000) {
-                            JsonLogic_Char hex[8] = {
+                            JsonLogic_Char hex[6] = {
                                 '\\', 'u',
-                                jsonlogic_to_hex((ch >> 20) & 0xF),
-                                jsonlogic_to_hex((ch >> 16) & 0xF),
                                 jsonlogic_to_hex((ch >> 12) & 0xF),
                                 jsonlogic_to_hex((ch >>  8) & 0xF),
                                 jsonlogic_to_hex((ch >>  4) & 0xF),
