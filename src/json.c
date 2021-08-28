@@ -49,11 +49,11 @@ static inline char16_t jsonlogic_to_hex(uint8_t half_byte) {
 
 static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
-        if (isnan(handle.number) || isinf(handle.number)) {
+        if (isfinite(handle.number)) {
+            return jsonlogic_strbuf_append_double(buf, handle.number);
+        } else {
             return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_NULL_STRING, JSONLOGIC_NULL_STRING_SIZE);
         }
-
-        return jsonlogic_strbuf_append_double(buf, handle.number);
     }
 
     switch (handle.intptr & JsonLogic_TypeMask) {
