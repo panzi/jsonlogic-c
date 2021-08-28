@@ -432,7 +432,7 @@ double jsonlogic_now() {
         return JsonLogic_Error_InternalError.number;
     }
 
-    return jsonlogic_number_from((double)tv * 1000);
+    return (double)tv * 1000;
 #else
     struct timeval tv;
     if (gettimeofday(&tv, NULL) != 0) {
