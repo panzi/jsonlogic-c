@@ -2,6 +2,7 @@
 #define JSONLOGIC_TYPEDEFS_H
 #pragma once
 
+#include <uchar.h>
 #include <stdint.h>
 #include <stddef.h>
 #include <stdbool.h>
@@ -24,7 +25,6 @@ typedef struct JsonLogic_Object_Entry {
     JsonLogic_Handle value;
 } JsonLogic_Object_Entry;
 
-typedef uint16_t JsonLogic_Char;
 typedef uint64_t JsonLogic_Type;
 
 #define JsonLogic_Type_Number   ((JsonLogic_Type) 1)

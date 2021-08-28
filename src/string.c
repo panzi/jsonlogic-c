@@ -9,7 +9,7 @@
 #define JSONLOGIC_CODEPOINT_MAX 0x10FFFF
 
 JsonLogic_Handle jsonlogic_empty_string() {
-    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char));
+    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t));
     if (string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -26,7 +26,7 @@ JsonLogic_Handle jsonlogic_string_from_latin1(const char *str) {
 }
 
 JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size) {
-    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * size);
+    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * size);
     if (string == NULL) {
         return JsonLogic_Null;
     }
@@ -106,7 +106,7 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
         }
     });
 
-    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * utf16_size);
+    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * utf16_size);
     if (string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -128,15 +128,15 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
 }
 
-JsonLogic_Handle jsonlogic_string_from_utf16(const JsonLogic_Char *str) {
-    const JsonLogic_Char *ptr = str;
+JsonLogic_Handle jsonlogic_string_from_utf16(const char16_t *str) {
+    const char16_t *ptr = str;
     while (*ptr) ++ ptr;
     size_t size = ptr - str;
     return jsonlogic_string_from_utf16_sized(str, size);
 }
 
-JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, size_t size) {
-    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * size);
+JsonLogic_Handle jsonlogic_string_from_utf16_sized(const char16_t *str, size_t size) {
+    JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * size);
     if (string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -144,7 +144,7 @@ JsonLogic_Handle jsonlogic_string_from_utf16_sized(const JsonLogic_Char *str, si
     string->refcount = 1;
     string->size     = size;
 
-    memcpy(string->str, str, size * sizeof(JsonLogic_Char));
+    memcpy(string->str, str, size * sizeof(char16_t));
 
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
 }
@@ -200,7 +200,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
         }
     }
 
-    JsonLogic_String *new_string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * sz_size);
+    JsonLogic_String *new_string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * sz_size);
 
     if (new_string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
@@ -210,7 +210,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
     new_string->refcount = 1;
     new_string->size     = sz_size;
 
-    memcpy(new_string->str, string->str + sz_index, sz_size * sizeof(JsonLogic_Char));
+    memcpy(new_string->str, string->str + sz_index, sz_size * sizeof(char16_t));
 
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)new_string) | JsonLogic_Type_String };
 }
@@ -231,7 +231,7 @@ JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle inde
     return jsonlogic_string_substr(string, index, size);
 }
 
-const JsonLogic_Char *jsonlogic_get_utf16(JsonLogic_Handle handle, size_t *sizeptr) {
+const char16_t *jsonlogic_get_utf16(JsonLogic_Handle handle, size_t *sizeptr) {
     if (!JSONLOGIC_IS_STRING(handle)) {
         return NULL;
     }
@@ -251,7 +251,7 @@ JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_
     if (has_free_size < want_free_size) {
         size_t add_size = want_free_size - has_free_size;
         size_t new_size = buf->capacity + (add_size < JSONLOGIC_CHUNK_SIZE ? JSONLOGIC_CHUNK_SIZE : add_size);
-        JsonLogic_String *new_string = realloc(buf->string, sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * new_size);
+        JsonLogic_String *new_string = realloc(buf->string, sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * new_size);
         if (new_string == NULL) {
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
@@ -275,7 +275,7 @@ JsonLogic_Error jsonlogic_strbuf_append_latin1(JsonLogic_StrBuf *buf, const char
     return JSONLOGIC_ERROR_SUCCESS;
 }
 
-JsonLogic_Error jsonlogic_strbuf_append_utf16(JsonLogic_StrBuf *buf, const JsonLogic_Char *str, size_t size) {
+JsonLogic_Error jsonlogic_strbuf_append_utf16(JsonLogic_StrBuf *buf, const char16_t *str, size_t size) {
     TRY(jsonlogic_strbuf_ensure(buf, size));
 
     size_t outindex = buf->string->size;
@@ -287,14 +287,14 @@ JsonLogic_Error jsonlogic_strbuf_append_utf16(JsonLogic_StrBuf *buf, const JsonL
     return JSONLOGIC_ERROR_SUCCESS;
 }
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_OBJECT_STRING,       '[', 'o', 'b', 'j', 'e', 'c', 't', ' ', 'O', 'b', 'j', 'e', 'c', 't', ']')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NULL_STRING,         'n', 'u', 'l', 'l')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_TRUE_STRING,         't', 'r', 'u', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_FALSE_STRING,        'f', 'a', 'l', 's', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NAN_STRING,          'N', 'a', 'N')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_INFINITY_STRING,     'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_POS_INFINITY_STRING, '+', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NEG_INFINITY_STRING, '-', 'I', 'n', 'f', 'i', 'n', 'i', 't', 'y')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_OBJECT_STRING,       u"[object Object]")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NULL_STRING,         u"null")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_TRUE_STRING,         u"true")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_FALSE_STRING,        u"false")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NAN_STRING,          u"NaN")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_INFINITY_STRING,     u"Infinity")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_POS_INFINITY_STRING, u"+Infinity")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NEG_INFINITY_STRING, u"-Infinity")
 
 JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double value) {
     if (isnan(value)) {
@@ -352,7 +352,7 @@ JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle 
             if (array->size > 0) {
                 TRY(jsonlogic_strbuf_append(buf, array->items[0]));
                 for (size_t index = 1; index < array->size; ++ index) {
-                    TRY(jsonlogic_strbuf_append_utf16(buf, (JsonLogic_Char[]){','}, 1));
+                    TRY(jsonlogic_strbuf_append_utf16(buf, u",", 1));
                     JsonLogic_Handle item = array->items[index];
                     if (!JSONLOGIC_IS_NULL(item)) {
                         TRY(jsonlogic_strbuf_append(buf, item));
@@ -377,7 +377,7 @@ JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle 
 JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf) {
     JsonLogic_String *string = buf->string;
     if (string == NULL) {
-        string = malloc(sizeof(JsonLogic_String) - sizeof(JsonLogic_Char));
+        string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t));
         if (string == NULL) {
             JSONLOGIC_ERROR_MEMORY();
         } else {
@@ -386,7 +386,7 @@ JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf) {
         }
     } else {
         // shrink to fit
-        string = realloc(string, sizeof(JsonLogic_String) - sizeof(JsonLogic_Char) + sizeof(JsonLogic_Char) * string->size);
+        string = realloc(string, sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * string->size);
         if (string == NULL) {
             // should not happen
             JSONLOGIC_ERROR_MEMORY();
@@ -436,24 +436,24 @@ bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *
         return false;
     }
 
-    return memcmp(a->str, b->str, a->size * sizeof(JsonLogic_Char)) == 0;
+    return memcmp(a->str, b->str, a->size * sizeof(char16_t)) == 0;
 }
 
 
-bool jsonlogic_utf16_equals(const JsonLogic_Char *a, size_t asize, const JsonLogic_Char *b, size_t bsize) {
+bool jsonlogic_utf16_equals(const char16_t *a, size_t asize, const char16_t *b, size_t bsize) {
     if (asize != bsize) {
         return false;
     }
 
-    return memcmp(a, b, asize * sizeof(JsonLogic_Char)) == 0;
+    return memcmp(a, b, asize * sizeof(char16_t)) == 0;
 }
 
-int jsonlogic_utf16_compare(const JsonLogic_Char *a, size_t asize, const JsonLogic_Char *b, size_t bsize) {
+int jsonlogic_utf16_compare(const char16_t *a, size_t asize, const char16_t *b, size_t bsize) {
     size_t minsize = asize < bsize ? asize : bsize;
 
     for (size_t index = 0; index < minsize; ++ index) {
-        JsonLogic_Char ach = a[index];
-        JsonLogic_Char bch = b[index];
+        char16_t ach = a[index];
+        char16_t bch = b[index];
 
         int cmp = ach - bch;
         if (cmp != 0) {
@@ -479,11 +479,11 @@ size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
         if (value >= SIZE_MAX / 10) {
             return SIZE_MAX;
         }
-        JsonLogic_Char ch = string->str[index];
-        if (ch < '0' || ch > '1') {
+        char16_t ch = string->str[index];
+        if (ch < u'0' || ch > u'1') {
             return SIZE_MAX;
         }
-        int ord = ch - '0';
+        int ord = ch - u'0';
         value *= 10;
         if (value > SIZE_MAX - ord) {
             return SIZE_MAX;
@@ -496,11 +496,11 @@ size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
 
 #define JSONLOGIC_DECODE_UTF16(STR, SIZE, CODE) \
     for (size_t index = 0; index < (SIZE);) { \
-        JsonLogic_Char w1 = (STR)[index ++]; \
+        char16_t w1 = (STR)[index ++]; \
         switch (w1 & 0xfc00) { \
             case 0xd800: \
                 if (index < (SIZE)) { \
-                    JsonLogic_Char w2 = (STR)[index ++]; \
+                    char16_t w2 = (STR)[index ++]; \
                     \
                     if ((w2 & 0xfc00) == 0xdc00) { \
                         uint32_t hi = w1 & 0x3FF; \
@@ -543,7 +543,7 @@ size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
         (BUF)[(INDEX) ++] = (CODEPOINT); \
     }
 
-char *jsonlogic_utf16_to_utf8(const JsonLogic_Char *str, size_t size) {
+char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
     size_t utf8_size = 1;
     JSONLOGIC_DECODE_UTF16(str, size, {
         if (codepoint > 0x10000) {
@@ -571,7 +571,7 @@ char *jsonlogic_utf16_to_utf8(const JsonLogic_Char *str, size_t size) {
     return utf8;
 }
 
-int jsonlogic_print_utf16(FILE *stream, const JsonLogic_Char *str, size_t size) {
+int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size) {
     JSONLOGIC_DECODE_UTF16(str, size, {
         char utf8[6];
         size_t utf8_index = 0;
@@ -584,7 +584,7 @@ int jsonlogic_print_utf16(FILE *stream, const JsonLogic_Char *str, size_t size) 
     return size;
 }
 
-const JsonLogic_Char *jsonlogic_find_char(const JsonLogic_Char *str, size_t size, JsonLogic_Char ch) {
+const char16_t *jsonlogic_find_char(const char16_t *str, size_t size, char16_t ch) {
     for (size_t index = 0; index < size; ++ index) {
         if (str[index] == ch) {
             return str + index;

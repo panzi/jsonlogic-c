@@ -93,11 +93,11 @@ struct JsonLogic_Object;
 
 #define JSONLOGIC_DECL_UTF16(NAME) \
     JSONLOGIC_PRIVATE extern const size_t NAME##_SIZE; \
-    JSONLOGIC_PRIVATE extern const JsonLogic_Char NAME[];
+    JSONLOGIC_PRIVATE extern const char16_t NAME[];
 
-#define JSONLOGIC_DEF_UTF16(NAME, ...) \
-    const size_t NAME##_SIZE = sizeof((char[]){__VA_ARGS__}); \
-    const JsonLogic_Char NAME[sizeof((char[]){__VA_ARGS__})] = { __VA_ARGS__ };
+#define JSONLOGIC_DEF_UTF16(NAME, STR) \
+    const size_t NAME##_SIZE = sizeof(STR) / sizeof(STR[0]) - 1; \
+    const char16_t NAME[] = STR;
 
 JSONLOGIC_DECL_UTF16(JSONLOGIC_NULL_STRING)
 JSONLOGIC_DECL_UTF16(JSONLOGIC_FALSE_STRING)
@@ -110,7 +110,7 @@ JSONLOGIC_DECL_UTF16(JSONLOGIC_NEG_INFINITY_STRING)
 typedef struct JsonLogic_String {
     size_t refcount;
     size_t size;
-    JsonLogic_Char str[1];
+    char16_t str[1];
 } JsonLogic_String;
 
 typedef struct JsonLogic_Array {
@@ -137,7 +137,7 @@ extern "C" {
 
 JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_with_capacity(size_t size);
 
-JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const JsonLogic_Char *key, size_t key_size);
+JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t *key, size_t key_size);
 JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index(JsonLogic_Object *object, JsonLogic_Handle key);
 
 JSONLOGIC_PRIVATE void jsonlogic_string_free(JsonLogic_String *string);
@@ -174,7 +174,7 @@ JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *arr
 
 #define JSONLOGIC_CHUNK_SIZE 256
 
-JSONLOGIC_PRIVATE int jsonlogic_print_utf16(FILE *stream, const JsonLogic_Char *str, size_t size);
+JSONLOGIC_PRIVATE int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
 
 typedef struct JsonLogic_StrBuf {
     size_t capacity;
@@ -185,7 +185,7 @@ typedef struct JsonLogic_StrBuf {
 
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_size);
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_latin1(JsonLogic_StrBuf *buf, const char *str);
-JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_utf16 (JsonLogic_StrBuf *buf, const JsonLogic_Char *str, size_t size);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_utf16 (JsonLogic_StrBuf *buf, const char16_t *str, size_t size);
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double value);
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle handle);
 JSONLOGIC_PRIVATE JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf);
@@ -213,10 +213,10 @@ JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, Js
 JSONLOGIC_PRIVATE JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf);
 JSONLOGIC_PRIVATE void jsonlogic_objbuf_free(JsonLogic_ObjBuf *buf);
 
-JSONLOGIC_PRIVATE const JsonLogic_Char *jsonlogic_find_char(const JsonLogic_Char *str, size_t size, JsonLogic_Char ch);
+JSONLOGIC_PRIVATE const char16_t *jsonlogic_find_char(const char16_t *str, size_t size, char16_t ch);
 
 typedef struct JsonLogic_Builtin {
-    const JsonLogic_Char *key;
+    const char16_t *key;
     size_t                key_size;
     JsonLogic_Operation   operation;
 } JsonLogic_Builtin;

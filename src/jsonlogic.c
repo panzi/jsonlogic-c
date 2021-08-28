@@ -5,8 +5,8 @@
 #include <assert.h>
 #include <math.h>
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, 'a', 'c', 'c', 'u', 'm', 'u', 'l', 'a', 't', 'o', 'r')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     'c', 'u', 'r', 'r', 'e', 'n', 't')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
 
 const JsonLogic_Handle JsonLogic_NaN   = { .number = NAN };
 const JsonLogic_Handle JsonLogic_Null  = { .intptr = JsonLogic_Type_Null };
@@ -147,7 +147,7 @@ static int jsonlogic_operation_entry_compare(const void *leftptr, const void *ri
     return jsonlogic_utf16_compare(left->key, left->key_size, right->key, right->key_size);
 }
 
-JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const JsonLogic_Char *key, size_t key_size) {
+JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const char16_t *key, size_t key_size) {
     if (count == 0) {
         return NULL;
     }
@@ -178,41 +178,41 @@ void jsonlogic_operations_sort(JsonLogic_Operation_Entry operations[], size_t co
     qsort(operations, count, sizeof(JsonLogic_Operation_Entry), jsonlogic_operation_entry_compare);
 }
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NOT,          '!')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_TO_BOOL,      '!', '!')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NE,           '!', '=')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_STRICT_NE,    '!', '=', '=')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MOD,          '%')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MUL,          '*')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ADD,          '+')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_SUB,          '-')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_DIV,          '/')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_LT,           '<')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_LE,           '<', '=')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_EQ,           '=', '=')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_STRICT_EQ,    '=', '=', '=')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_GT,           '>')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_GE,           '>', '=')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ALT_IF,       '?', ':')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ALL,          'a', 'l', 'l')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_AND,          'a', 'n', 'd')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_CAT,          'c', 'a', 't')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_FILTER,       'f', 'i', 'l', 't', 'e', 'r')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_IF,           'i', 'f')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_IN,           'i', 'n')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_LOG,          'l', 'o', 'g')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MAP,          'm', 'a', 'p')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MAX,          'm', 'a', 'x')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MERGE,        'm', 'e', 'r', 'g', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MIN,          'm', 'i', 'n')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MISSING,      'm', 'i', 's', 's', 'i', 'n', 'g')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MISSING_SOME, 'm', 'i', 's', 's', 'i', 'n', 'g', '_', 's', 'o', 'm', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NONE,         'n', 'o', 'n', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_OR,           'o', 'r')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_REDUCE,       'r', 'e', 'd', 'u', 'c', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_SOME,         's', 'o', 'm', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_SUBSTR,       's', 'u', 'b', 's', 't', 'r')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_VAR,          'v', 'a', 'r')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NOT,          u"!")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_TO_BOOL,      u"!!")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NE,           u"!=")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_STRICT_NE,    u"!==")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MOD,          u"%")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MUL,          u"*")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_ADD,          u"+")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_SUB,          u"-")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_DIV,          u"/")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_LT,           u"<")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_LE,           u"<=")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_EQ,           u"==")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_STRICT_EQ,    u"===")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_GT,           u">")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_GE,           u">=")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_ALT_IF,       u"?:")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_ALL,          u"all")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_AND,          u"and")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_CAT,          u"cat")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_FILTER,       u"filter")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_IF,           u"if")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_IN,           u"in")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_LOG,          u"log")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MAP,          u"map")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MAX,          u"max")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MERGE,        u"merge")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MIN,          u"min")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MISSING,      u"missing")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MISSING_SOME, u"missing_some")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NONE,         u"none")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_OR,           u"or")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_REDUCE,       u"reduce")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_SOME,         u"some")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_SUBSTR,       u"substr")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_VAR,          u"var")
 
 static JsonLogic_Handle jsonlogic_op_NOT         (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_op_TO_BOOL     (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
@@ -844,7 +844,7 @@ JsonLogic_Handle jsonlogic_op_CAT(JsonLogic_Handle data, JsonLogic_Handle args[]
         }
 
         for (size_t index = 1; index < argc; ++ index) {
-            if (!jsonlogic_strbuf_append_utf16(&buf, (JsonLogic_Char[]){','}, 1)) {
+            if (!jsonlogic_strbuf_append_utf16(&buf, u",", 1)) {
                 jsonlogic_strbuf_free(&buf);
                 JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Error_OutOfMemory;
@@ -1044,9 +1044,9 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
 
     const JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(key);
 
-    const JsonLogic_Char *pos = strkey->str;
+    const char16_t *pos = strkey->str;
     size_t keysize = strkey->size;
-    const JsonLogic_Char *next = jsonlogic_find_char(pos, keysize, '.');
+    const char16_t *next = jsonlogic_find_char(pos, keysize, u'.');
     if (next == NULL) {
         JsonLogic_Handle value = jsonlogic_get_item(data, key);
         if (JSONLOGIC_IS_NULL(value)) {
@@ -1073,7 +1073,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
             return default_value;
         }
         -- keysize;
-        next = jsonlogic_find_char(pos, keysize, '.');
+        next = jsonlogic_find_char(pos, keysize, u'.');
         if (next == NULL) {
             next = pos + keysize;
         }

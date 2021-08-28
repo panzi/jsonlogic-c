@@ -90,7 +90,7 @@ JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item
             const JsonLogic_String *strneedle = JSONLOGIC_CAST_STRING(needle);
             // there are much more efficient string search algorithms
             for (size_t index = 0; index + strneedle->size < string->size; ++ index) {
-                if (memcmp(strneedle->str, string->str + index, strneedle->size * sizeof(JsonLogic_Char)) == 0) {
+                if (memcmp(strneedle->str, string->str + index, strneedle->size * sizeof(char16_t)) == 0) {
                     jsonlogic_decref(needle);
                     return JsonLogic_True;
                 }

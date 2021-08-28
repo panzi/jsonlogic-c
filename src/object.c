@@ -94,7 +94,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
 }
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, 'l', 'e', 'n', 'g', 't', 'h')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, u"length")
 
 JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle key) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
@@ -177,7 +177,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
     }
 }
 
-size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const JsonLogic_Char *key, size_t key_size) {
+size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t *key, size_t key_size) {
     size_t left  = 0;
     size_t right = object->size - 1;
     while (left != right) {

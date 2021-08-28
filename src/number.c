@@ -5,10 +5,10 @@
 #include <assert.h>
 
 #define JSONLOGIC_IS_NUM(ch) \
-    ((ch) == 'e' || (ch) == 'E' || (ch) == '.' || (ch) == '+' || (ch) == '-' || ((ch) >= '0' && (ch) <= '9'))
+    ((ch) == u'e' || (ch) == u'E' || (ch) == u'.' || (ch) == u'+' || (ch) == u'-' || ((ch) >= u'0' && (ch) <= u'9'))
 
 #define JSONLOGIC_IS_SPACE(ch) \
-    ((ch) >= '\t' && (ch) <= '\r')
+    ((ch) >= u'\t' && (ch) <= u'\r')
 
 JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
     for (;;) {
@@ -25,7 +25,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     return (JsonLogic_Handle){ .number = 0.0 };
                 }
 
-                const JsonLogic_Char *str = string->str;
+                const char16_t *str = string->str;
                 size_t size = string->size;
 
                 while (size > 0 && JSONLOGIC_IS_SPACE(*str)) {
@@ -53,7 +53,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 char buf[128];
                 if (size < sizeof(buf)) {
                     for (size_t index = 0; index < size; ++ index) {
-                        JsonLogic_Char ch = str[index];
+                        char16_t ch = str[index];
                         if (!JSONLOGIC_IS_NUM(ch)) {
                             return JsonLogic_NaN;
                         }
@@ -72,7 +72,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                         return JsonLogic_Error_OutOfMemory;
                     }
                     for (size_t index = 0; index < size; ++ index) {
-                        JsonLogic_Char ch = str[index];
+                        char16_t ch = str[index];
                         if (!JSONLOGIC_IS_NUM(ch)) {
                             free(buf);
                             return JsonLogic_NaN;

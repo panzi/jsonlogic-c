@@ -30,11 +30,11 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_latin1      (const char 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_utf8        (const char *str);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_utf8_sized  (const char *str, size_t size);
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_utf16       (const JsonLogic_Char *str);
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_utf16_sized (const JsonLogic_Char *str, size_t size);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_utf16       (const char16_t *str);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_utf16_sized (const char16_t *str, size_t size);
 
-JSONLOGIC_EXPORT bool jsonlogic_utf16_equals( const JsonLogic_Char *a, size_t asize, const JsonLogic_Char *b, size_t bsize);
-JSONLOGIC_EXPORT int  jsonlogic_utf16_compare(const JsonLogic_Char *a, size_t asize, const JsonLogic_Char *b, size_t bsize);
+JSONLOGIC_EXPORT bool jsonlogic_utf16_equals( const char16_t *a, size_t asize, const char16_t *b, size_t bsize);
+JSONLOGIC_EXPORT int  jsonlogic_utf16_compare(const char16_t *a, size_t asize, const char16_t *b, size_t bsize);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_number_from(double value);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_boolean_from(bool value);
@@ -73,9 +73,9 @@ JSONLOGIC_EXPORT bool   jsonlogic_to_bool  (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT double jsonlogic_to_double(JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle string, JsonLogic_Handle index, JsonLogic_Handle size);
-JSONLOGIC_EXPORT const JsonLogic_Char *jsonlogic_get_utf16(JsonLogic_Handle string, size_t *sizeptr);
+JSONLOGIC_EXPORT const char16_t *jsonlogic_get_utf16(JsonLogic_Handle string, size_t *sizeptr);
 
-JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const JsonLogic_Char *str, size_t size);
+JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size);
 
 typedef uint64_t JsonLogic_Error;
 
@@ -119,13 +119,13 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLo
 typedef JsonLogic_Handle (*JsonLogic_Operation)(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 typedef struct JsonLogic_Operation_Entry {
-    const JsonLogic_Char *key;
+    const char16_t *key;
     size_t key_size;
     JsonLogic_Operation operation;
 } JsonLogic_Operation_Entry;
 
 JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry operations[], size_t count);
-JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const JsonLogic_Char *key, size_t key_size);
+JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const char16_t *key, size_t key_size);
 
 /**
  * @brief 

@@ -19,13 +19,13 @@
 #define JSONLOGIC_EXTRA(NAME) \
     { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = (jsonlogic_extra_##NAME) }
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_COMBINATIONS, 'c', 'o', 'm', 'b', 'i', 'n', 'a', 't', 'i', 'o', 'n', 's')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_DAYS,         'd', 'a', 'y', 's')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_HOURS,        'h', 'o', 'u', 'r', 's')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NOW,          'n', 'o', 'w')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_PARSE_TIME,   'p', 'a', 'r', 's', 'e', 'T', 'i', 'm', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_TIME_SINCE,   't', 'i', 'm', 'e', 'S', 'i', 'n', 'c', 'e')
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ZIP,          'z', 'i', 'p')
+JSONLOGIC_DEF_UTF16(JSONLOGIC_COMBINATIONS, u"combinations")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_DAYS,         u"days")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_HOURS,        u"hours")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_NOW,          u"now")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_PARSE_TIME,   u"parseTime")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_TIME_SINCE,   u"timeSince")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_ZIP,          u"zip")
 
 static JsonLogic_Handle jsonlogic_extra_COMBINATIONS(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_DAYS        (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
@@ -46,14 +46,14 @@ static const JsonLogic_Operation_Entry JsonLogic_Extras[JSONLOGIC_EXTRAS_COUNT] 
     JSONLOGIC_EXTRA(ZIP),
 };
 
-#define IS_NUM(CH) ((CH) >= '0' && (CH) <= '9')
+#define IS_NUM(CH) ((CH) >= u'0' && (CH) <= u'9')
 
-const JsonLogic_Char *jsonlogic_parse_uint(const JsonLogic_Char *str, const JsonLogic_Char *endptr, uint32_t *valueptr) {
+const char16_t *jsonlogic_parse_uint(const char16_t *str, const char16_t *endptr, uint32_t *valueptr) {
     uint32_t value = 0;
-    const JsonLogic_Char *ptr = str;
+    const char16_t *ptr = str;
 
     while (ptr < endptr) {
-        JsonLogic_Char ch = *ptr;
+        char16_t ch = *ptr;
         if (!IS_NUM(ch)) {
             break;
         }
@@ -64,7 +64,7 @@ const JsonLogic_Char *jsonlogic_parse_uint(const JsonLogic_Char *str, const Json
         }
 
         value *= 10;
-        uint32_t num = ch - '0';
+        uint32_t num = ch - u'0';
 
         if (UINT16_MAX - num < value) {
             value = UINT32_MAX;
@@ -85,7 +85,7 @@ const JsonLogic_Char *jsonlogic_parse_uint(const JsonLogic_Char *str, const Json
 
 #define DBOULE_ILLEGAL_ARGUMENT ((JsonLogic_Handle){ .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT }.number)
 
-double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
+double jsonlogic_parse_date_time(const char16_t *str, size_t size) {
     // Only a subset of ISO 8601 date-time strings are supported:
     // YYYY-MM-DD['T'hh:mm[:ss[.sss]]['Z'|(+|-)[ZZ:ZZ]]]
     // YYYYMMDD['T'hhmm[ss[.sss]]['Z'|(+|-)[ZZZZ]]]
@@ -107,20 +107,20 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
     uint32_t msec   = 0;
     int32_t  tzoff  = 0;
 
-    const JsonLogic_Char *end  = str + size;
-    const JsonLogic_Char *pos  = str;
-    const JsonLogic_Char *next = pos;
+    const char16_t *end  = str + size;
+    const char16_t *pos  = str;
+    const char16_t *next = pos;
 
-    if (str[4] == '-') {
+    if (str[4] == u'-') {
         next = jsonlogic_parse_uint(pos, end, &year);
-        if (next == pos || next >= end || *next != '-') {
+        if (next == pos || next >= end || *next != u'-') {
             JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
             return DBOULE_ILLEGAL_ARGUMENT;
         }
         pos = next + 1;
 
         next = jsonlogic_parse_uint(pos, end, &month);
-        if (next == pos || next >= end || *next != '-') {
+        if (next == pos || next >= end || *next != u'-') {
             JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
             return DBOULE_ILLEGAL_ARGUMENT;
         }
@@ -128,14 +128,14 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
 
         next = jsonlogic_parse_uint(pos, end, &day);
         if (next < end) {
-            if (next == pos || *next != 'T') {
+            if (next == pos || *next != u'T') {
                 JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
                 return DBOULE_ILLEGAL_ARGUMENT;
             }
             pos = next + 1;
 
             next = jsonlogic_parse_uint(pos, end, &hour);
-            if (next == pos || next >= end || *next != ':') {
+            if (next == pos || next >= end || *next != u':') {
                 JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
                 return DBOULE_ILLEGAL_ARGUMENT;
             }
@@ -148,7 +148,7 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                     return DBOULE_ILLEGAL_ARGUMENT;
                 }
 
-                if (next < end && *next == ':') {
+                if (next < end && *next == u':') {
                     pos = next + 1;
 
                     next = jsonlogic_parse_uint(pos, end, &second);
@@ -157,7 +157,7 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                         return DBOULE_ILLEGAL_ARGUMENT;
                     }
 
-                    if (next < end && *next == '.') {
+                    if (next < end && *next == u'.') {
                         pos = next + 1;
 
                         next = jsonlogic_parse_uint(pos, end, &second);
@@ -170,13 +170,13 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                 pos = next;
 
                 if (pos < end) {
-                    if (*pos == 'Z') {
+                    if (*pos == u'Z') {
                         pos ++;
                     } else {
                         int32_t sign = 1;
                         switch (*pos) {
-                            case '+': sign =  1; break;
-                            case '-': sign = -1; break;
+                            case u'+': sign =  1; break;
+                            case u'-': sign = -1; break;
 
                             default:
                                 JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
@@ -188,7 +188,7 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                         uint32_t tzminute = 0;
 
                         next = jsonlogic_parse_uint(pos, end, &tzhour);
-                        if (next != pos + 2 || next >= end || *next != ':') {
+                        if (next != pos + 2 || next >= end || *next != u':') {
                             JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
                             return DBOULE_ILLEGAL_ARGUMENT;
                         }
@@ -232,7 +232,7 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                 return DBOULE_ILLEGAL_ARGUMENT;
             }
 
-            if (next == pos || *next != 'T') {
+            if (next == pos || *next != u'T') {
                 JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
                 return DBOULE_ILLEGAL_ARGUMENT;
             }
@@ -265,7 +265,7 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                         return DBOULE_ILLEGAL_ARGUMENT;
                     }
 
-                    if (next < end && *next == '.') {
+                    if (next < end && *next == u'.') {
                         pos = next + 1;
 
                         if (pos + 3 > end) {
@@ -282,13 +282,13 @@ double jsonlogic_parse_date_time(const JsonLogic_Char *str, size_t size) {
                 pos = next;
 
                 if (pos < end) {
-                    if (*next == 'Z') {
+                    if (*next == u'Z') {
                         pos ++;
                     } else {
                         int32_t sign = 1;
                         switch (*pos) {
-                            case '+': sign =  1; break;
-                            case '-': sign = -1; break;
+                            case u'+': sign =  1; break;
+                            case u'-': sign = -1; break;
 
                             default:
                                 JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
