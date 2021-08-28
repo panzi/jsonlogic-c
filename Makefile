@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-std=c99 -Wall -Werror -pedantic -O3 -DWIN_EXPORT
+CFLAGS=-std=c11 -Wall -Werror -pedantic -O3 -DWIN_EXPORT
 BUILD_DIR=build
 LIB_OBJS=$(BUILD_DIR)/obj/jsonlogic.o \
          $(BUILD_DIR)/obj/string.o \
@@ -8,6 +8,7 @@ LIB_OBJS=$(BUILD_DIR)/obj/jsonlogic.o \
          $(BUILD_DIR)/obj/number.o \
          $(BUILD_DIR)/obj/compare.o \
          $(BUILD_DIR)/obj/json.o \
+         $(BUILD_DIR)/obj/extras.o \
          $(BUILD_DIR)/obj/object.o
 LIBS=-lm
 

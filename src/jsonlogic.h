@@ -39,6 +39,7 @@ JSONLOGIC_EXPORT int  jsonlogic_utf16_compare(const JsonLogic_Char *a, size_t as
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_number_from(double value);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_boolean_from(bool value);
 
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_string();
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_array();
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_object();
 
@@ -118,7 +119,8 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLo
 typedef JsonLogic_Handle (*JsonLogic_Operation)(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 typedef struct JsonLogic_Operation_Entry {
-    JsonLogic_Handle key;
+    const JsonLogic_Char *key;
+    size_t key_size;
     JsonLogic_Operation operation;
 } JsonLogic_Operation_Entry;
 

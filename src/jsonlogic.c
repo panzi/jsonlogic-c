@@ -5,10 +5,6 @@
 #include <assert.h>
 #include <math.h>
 
-#ifndef static_assert
-    #define static_assert(...) _Static_assert(__VA_ARGS__)
-#endif
-
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, 'a', 'c', 'c', 'u', 'm', 'u', 'l', 'a', 't', 'o', 'r')
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     'c', 'u', 'r', 'r', 'e', 'n', 't')
 
@@ -148,7 +144,7 @@ static int jsonlogic_operation_entry_compare(const void *leftptr, const void *ri
     const JsonLogic_Operation_Entry *left  = leftptr;
     const JsonLogic_Operation_Entry *right = rightptr;
 
-    return jsonlogic_comapre(left->key, right->key);
+    return jsonlogic_utf16_compare(left->key, left->key_size, right->key, right->key_size);
 }
 
 JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const JsonLogic_Char *key, size_t key_size) {
@@ -162,25 +158,17 @@ JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry oper
         // (x + y - 1) / y
         // ceiling integer division (assumes this all isn't overlowing)
         size_t mid = (left + right + 1) / 2;
-        JsonLogic_Handle opkey = operations[mid].key;
-        if (JSONLOGIC_IS_STRING(opkey)) {
-            const JsonLogic_String *opkey_string = JSONLOGIC_CAST_STRING(opkey);
-            if (jsonlogic_utf16_compare(opkey_string->str, opkey_string->size, key, key_size) > 0) {
-                right = mid - 1;
-            } else {
-                left = mid;
-            }
+        const JsonLogic_Operation_Entry *entry = &operations[mid];
+        if (jsonlogic_utf16_compare(entry->key, entry->key_size, key, key_size) > 0) {
+            right = mid - 1;
         } else {
             left = mid;
         }
     }
 
     const JsonLogic_Operation_Entry *entry = &operations[left];
-    if (JSONLOGIC_IS_STRING(entry->key)) {
-        const JsonLogic_String *opkey_string = JSONLOGIC_CAST_STRING(entry->key);
-        if (jsonlogic_utf16_compare(opkey_string->str, opkey_string->size, key, key_size) == 0) {
-            return entry->operation;
-        }
+    if (jsonlogic_utf16_compare(entry->key, entry->key_size, key, key_size) == 0) {
+        return entry->operation;
     }
 
     return NULL;
@@ -226,12 +214,6 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_SOME,         's', 'o', 'm', 'e')
 JSONLOGIC_DEF_UTF16(JSONLOGIC_SUBSTR,       's', 'u', 'b', 's', 't', 'r')
 JSONLOGIC_DEF_UTF16(JSONLOGIC_VAR,          'v', 'a', 'r')
 
-typedef struct JsonLogic_Builtin {
-    const JsonLogic_Char *key;
-    size_t                key_size;
-    JsonLogic_Operation   operation;
-} JsonLogic_Builtin;
-
 static JsonLogic_Handle jsonlogic_op_NOT         (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_op_TO_BOOL     (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_op_NE          (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
@@ -262,7 +244,7 @@ static JsonLogic_Handle jsonlogic_op_VAR         (JsonLogic_Handle data, JsonLog
     { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = (jsonlogic_op_##NAME) }
 
 #define JSONLOGIC_BUILTIN_COUNT 25
-const JsonLogic_Builtin JsonLogic_Builtins[JSONLOGIC_BUILTIN_COUNT] = {
+const JsonLogic_Operation_Entry JsonLogic_Builtins[JSONLOGIC_BUILTIN_COUNT] = {
     JSONLOGIC_BUILTIN(NOT         ),
     JSONLOGIC_BUILTIN(TO_BOOL     ),
     JSONLOGIC_BUILTIN(NE          ),
@@ -289,27 +271,6 @@ const JsonLogic_Builtin JsonLogic_Builtins[JSONLOGIC_BUILTIN_COUNT] = {
     JSONLOGIC_BUILTIN(SUBSTR      ),
     JSONLOGIC_BUILTIN(VAR         ),
 };
-
-JsonLogic_Operation jsonlogic_builtins_get(const JsonLogic_Char *key, size_t key_size) {
-    size_t left = 0;
-    size_t right = JSONLOGIC_BUILTIN_COUNT - 1;
-    while (left != right) {
-        // (x + y - 1) / y
-        // ceiling integer division (assumes this all isn't overlowing)
-        size_t mid = (left + right + 1) / 2;
-        const JsonLogic_Builtin *builtin = &JsonLogic_Builtins[mid];
-        if (jsonlogic_utf16_compare(builtin->key, builtin->key_size, key, key_size) > 0) {
-            right = mid - 1;
-        } else {
-            left = mid;
-        }
-    }
-    const JsonLogic_Builtin *builtin = &JsonLogic_Builtins[left];
-    if (jsonlogic_utf16_equals(builtin->key, builtin->key_size, key, key_size)) {
-        return builtin->operation;
-    }
-    return NULL;
-}
 
 JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input) {
     return jsonlogic_apply_custom(logic, input, NULL, 0);
@@ -713,7 +674,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
     JsonLogic_Operation opfunc = jsonlogic_operation_get(operations, operation_count, opstr->str, opstr->size);
     if (opfunc == NULL) {
-        opfunc = jsonlogic_builtins_get(opstr->str, opstr->size);
+        opfunc = jsonlogic_operation_get(JsonLogic_Builtins, JSONLOGIC_BUILTIN_COUNT, opstr->str, opstr->size);
         if (opfunc == NULL) {
             JSONLOGIC_ERROR("%s", "illegal operation");
             return JsonLogic_Error_IllegalOperation;
@@ -874,7 +835,7 @@ JsonLogic_Handle jsonlogic_op_GE(JsonLogic_Handle data, JsonLogic_Handle args[],
 
 JsonLogic_Handle jsonlogic_op_CAT(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc > 0) {
-        JsonLogic_StrBuf buf = JSONLOGIC_BUFFER_INIT;
+        JsonLogic_StrBuf buf = JSONLOGIC_STRBUF_INIT;
 
         if (!jsonlogic_strbuf_append(&buf, args[0])) {
             jsonlogic_strbuf_free(&buf);
@@ -898,7 +859,7 @@ JsonLogic_Handle jsonlogic_op_CAT(JsonLogic_Handle data, JsonLogic_Handle args[]
 
         return jsonlogic_string_into_handle(jsonlogic_strbuf_take(&buf));
     } else {
-        return jsonlogic_string_from_latin1("");
+        return jsonlogic_empty_string();
     }
 }
 
@@ -1062,15 +1023,6 @@ JsonLogic_Handle jsonlogic_op_SUBSTR(JsonLogic_Handle data, JsonLogic_Handle arg
         case 2:  return jsonlogic_substr(args[0], args[1], JsonLogic_Null);
         default: return jsonlogic_substr(args[0], args[1], args[2]);
     }
-}
-
-const JsonLogic_Char *jsonlogic_find_char(const JsonLogic_Char *str, size_t size, JsonLogic_Char ch) {
-    for (size_t index = 0; index < size; ++ index) {
-        if (str[index] == ch) {
-            return str + index;
-        }
-    }
-    return NULL;
 }
 
 JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {

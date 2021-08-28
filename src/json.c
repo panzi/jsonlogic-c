@@ -173,7 +173,7 @@ JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value) {
         return value;
     }
 
-    JsonLogic_StrBuf buf = JSONLOGIC_BUFFER_INIT;
+    JsonLogic_StrBuf buf = JSONLOGIC_STRBUF_INIT;
     
     JsonLogic_Error error = jsonlogic_stringify_intern(&buf, value);
     if (error != JSONLOGIC_ERROR_SUCCESS) {

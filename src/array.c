@@ -8,6 +8,7 @@
 JsonLogic_Handle jsonlogic_empty_array() {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
     if (array == NULL) {
+        JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Null;
     }
 
@@ -20,6 +21,7 @@ JsonLogic_Handle jsonlogic_empty_array() {
 JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * size);
     if (array == NULL) {
+        JSONLOGIC_ERROR_MEMORY();
         return NULL;
     }
 
@@ -36,6 +38,7 @@ JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
 JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * count);
     if (array == NULL) {
+        JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Null;
     }
 
@@ -57,10 +60,12 @@ JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
 }
 
 void jsonlogic_array_free(JsonLogic_Array *array) {
-    for (size_t index = 0; index < array->size; ++ index) {
-        jsonlogic_decref(array->items[index]);
+    if (array != NULL) {
+        for (size_t index = 0; index < array->size; ++ index) {
+            jsonlogic_decref(array->items[index]);
+        }
+        free(array);
     }
-    free(array);
 }
 
 JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item) {
@@ -121,4 +126,50 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
     }
 
     return array;
+}
+
+JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Handle handle) {
+    if (buf->capacity == 0 || buf->capacity == buf->array->size) {
+        size_t new_capacity = buf->capacity + JSONLOGIC_CHUNK_SIZE;
+        JsonLogic_Array *new_array = realloc(buf->array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * new_capacity);
+        if (new_array == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+        }
+        buf->array    = new_array;
+        buf->capacity = new_capacity;
+    }
+    buf->array->items[buf->array->size] = jsonlogic_incref(handle);
+    ++ buf->array->size;
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *buf) {
+    JsonLogic_Array *array = buf->array;
+    if (array == NULL) {
+        array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
+        if (array == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+        } else {
+            array->refcount = 1;
+            array->size     = 0;
+        }
+    } else {
+        // shrink to fit
+        array = realloc(array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * array->size);
+        if (array == NULL) {
+            // should not happen
+            JSONLOGIC_ERROR_MEMORY();
+            array = buf->array;
+        }
+    }
+    buf->capacity = 0;
+    buf->array = NULL;
+    return array;
+}
+
+void jsonlogic_arraybuf_free(JsonLogic_ArrayBuf *buf) {
+    jsonlogic_array_free(buf->array);
+    buf->array    = NULL;
+    buf->capacity = 0;
 }
