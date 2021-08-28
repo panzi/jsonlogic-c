@@ -121,7 +121,8 @@ install: $(LIB) $(SO) $(INC) $(BIN)
 uninstall:
 	rm $(PREFIX)/lib/libjsonlogic.a \
 	   $(PREFIX)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT) \
-	   $(PREFIX)/include/jsonlogic_typedefs.h \
+	   $(PREFIX)/include/jsonlogic_defs.h \
+	   $(PREFIX)/include/jsonlogic_extras.h \
 	   $(PREFIX)/include/jsonlogic.h
 
 $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.o $(LIB)
@@ -157,10 +158,11 @@ $(SO): $(SO_OBJS)
 	@mkdir -p $(BUILD_DIR)/lib
 	$(CC) $(CFLAGS) -shared $^ $(LIB_DIRS) $(LIBS) -o $@
 
-$(INC): src/jsonlogic.h src/jsonlogic_typedefs.h
+$(INC): src/jsonlogic.h src/jsonlogic_defs.h src/jsonlogic_extras.h
 	@mkdir -p $(BUILD_DIR)/include
 	cp src/jsonlogic.h $(BUILD_DIR)/include/jsonlogic.h
-	cp src/jsonlogic_typedefs.h $(BUILD_DIR)/include/jsonlogic_typedefs.h
+	cp src/jsonlogic_defs.h $(BUILD_DIR)/include/jsonlogic_defs.h
+	cp src/jsonlogic_extras.h $(BUILD_DIR)/include/jsonlogic_extras.h
 
 clean:
 	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) || true
