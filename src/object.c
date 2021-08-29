@@ -184,30 +184,22 @@ size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t
         return 0;
     }
     size_t left  = 0;
-    size_t right = object->size - 1;
-    while (left != right) {
-        // (x + y - 1) / y
-        // ceiling integer division (assumes this all isn't overflowing)
-        size_t mid = (left + right + 1) / 2;
+    size_t right = object->size;
+    while (left < right) {
+        size_t mid = (left + right - 1) / 2;
         const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
-        if (jsonlogic_utf16_compare(
-                entrykey->str,
-                entrykey->size,
-                key,
-                key_size) > 0) {
-            right = mid - 1;
-        } else {
-            left = mid;
-        }
-    }
-    const JsonLogic_Object_Entry *entry = &object->entries[left];
-    const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(entry->key);
-    if (jsonlogic_utf16_equals(
+        int cmp = jsonlogic_utf16_compare(
             entrykey->str,
             entrykey->size,
             key,
-            key_size)) {
-        return left;
+            key_size);
+        if (cmp < 0) {
+            left = mid + 1;
+        } else if (cmp > 0) {
+            right = mid;
+        } else {
+            return left;
+        }
     }
     return object->size;
 }

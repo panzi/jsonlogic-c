@@ -143,23 +143,21 @@ JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry oper
         return NULL;
     }
 
-    size_t left = 0;
-    size_t right = count - 1;
-    while (left != right) {
-        // (x + y - 1) / y
-        // ceiling integer division (assumes this all isn't overflowing)
-        size_t mid = (left + right + 1) / 2;
+    size_t left  = 0;
+    size_t right = count;
+    while (left < right) {
+        size_t mid = (left + right - 1) / 2;
         const JsonLogic_Operation_Entry *entry = &operations[mid];
-        if (jsonlogic_utf16_compare(entry->key, entry->key_size, key, key_size) > 0) {
-            right = mid - 1;
+        int cmp = jsonlogic_utf16_compare(
+            entry->key, entry->key_size,
+            key, key_size);
+        if (cmp < 0) {
+            left  = mid + 1;
+        } else if (cmp > 0) {
+            right = mid;
         } else {
-            left = mid;
+            return entry->operation;
         }
-    }
-
-    const JsonLogic_Operation_Entry *entry = &operations[left];
-    if (jsonlogic_utf16_compare(entry->key, entry->key_size, key, key_size) == 0) {
-        return entry->operation;
     }
 
     return NULL;
