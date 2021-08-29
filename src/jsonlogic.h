@@ -93,13 +93,17 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle string, Json
 JSONLOGIC_EXPORT const char16_t *jsonlogic_get_utf16(JsonLogic_Handle string, size_t *sizeptr);
 
 JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size);
+JSONLOGIC_EXPORT int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
+JSONLOGIC_EXPORT int jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size);
+JSONLOGIC_EXPORT bool jsonlogic_print(FILE *stream, JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_println(FILE *stream, JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT const char    *jsonlogic_get_type_name(JsonLogic_Type type);
 
 JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT const char     *jsonlogic_get_error_message(JsonLogic_Error error);
-JSONLOGIC_EXPORT const char *jsonlogic_get_linestart(const char *str, size_t index);
+JSONLOGIC_EXPORT const char     *jsonlogic_get_linestart(const char *str, size_t index);
 JSONLOGIC_EXPORT void jsonlogic_print_parse_error(FILE *stream, const char *str, JsonLogic_Error error, JsonLogic_LineInfo info);
 JSONLOGIC_EXPORT void jsonlogic_print_parse_error_sized(FILE *stream, const char *str, size_t size, JsonLogic_Error error, JsonLogic_LineInfo info);
 

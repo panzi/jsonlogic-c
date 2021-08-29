@@ -1,6 +1,7 @@
 #include "jsonlogic_intern.h"
 
 #include <assert.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -593,6 +594,12 @@ int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size) {
     return size;
 }
 
+int jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size) {
+    bool result = jsonlogic_print_utf16(stream, str, size);
+    fputc('\n', stream);
+    return result;
+}
+
 const char16_t *jsonlogic_find_char(const char16_t *str, size_t size, char16_t ch) {
     for (size_t index = 0; index < size; ++ index) {
         if (str[index] == ch) {
@@ -659,11 +666,13 @@ JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double v
     size_t has_free = buf->capacity - buf->used;
     int count = snprintf(buf->string + buf->used, has_free, "%g", value);
     if (count < 0) {
-        JSONLOGIC_DEBUG("snprintf() error: %s", strerror(errno));
+        JSONLOGIC_DEBUG("snprintf(buf, %" PRIuPTR ", \"%%g\", %g) error: %s", has_free, value, strerror(errno));
         return JSONLOGIC_ERROR_INTERNAL_ERROR;
-    } else if (count > has_free) {
-        TRY(jsonlogic_utf8buf_ensure(buf, count));
-        snprintf(buf->string + buf->used, count, "%g", value);
+    } else if (count >= has_free) {
+        // snprintf() always writes the terminating NULL byte (if maxlen > 0)
+        size_t need_free = (size_t)count + 1;
+        TRY(jsonlogic_utf8buf_ensure(buf, need_free));
+        snprintf(buf->string + buf->used, need_free, "%g", value);
     }
     buf->used += (size_t)count;
 
@@ -676,6 +685,7 @@ char *jsonlogic_utf8buf_take(JsonLogic_Utf8Buf *buf) {
         utf8 = malloc(1);
         if (utf8 == NULL) {
             JSONLOGIC_ERROR_MEMORY();
+            return NULL;
         } else {
             utf8[0] = 0;
         }
@@ -705,4 +715,26 @@ void jsonlogic_utf8buf_free(JsonLogic_Utf8Buf *buf) {
     free(buf->string);
     buf->capacity = 0;
     buf->used     = 0;
+}
+
+bool jsonlogic_print(FILE *stream, JsonLogic_Handle handle) {
+    if (JSONLOGIC_IS_ERROR(handle)) {
+        fputs(jsonlogic_get_error_message(handle.intptr), stream);
+        return false;
+    }
+    char *utf8 = jsonlogic_stringify_utf8(handle);
+    if (utf8 == NULL) {
+        fputs(strerror(errno), stream);
+        return false;
+    } else {
+        fputs(utf8, stream);
+        free(utf8);
+        return true;
+    }
+}
+
+bool jsonlogic_println(FILE *stream, JsonLogic_Handle handle) {
+    bool result = jsonlogic_print(stream, handle);
+    fputc('\n', stream);
+    return result;
 }

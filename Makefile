@@ -88,11 +88,11 @@ endif
 endif
 
 ifeq ($(RELEASE),ON)
-    CFLAGS    += -DNDEBUG
+    CFLAGS    += -DNDEBUG -O3
     BUILD_DIR := $(BUILD_DIR)/release
 else
 ifeq ($(RELEASE),OFF)
-    CFLAGS    += -g
+    CFLAGS    += -g -ftrapv -O0
     BUILD_DIR := $(BUILD_DIR)/debug
 else
     $(error illegal value for RELEASE=$(RELEASE))

@@ -235,11 +235,11 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     const JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(stringkey);
     JsonLogic_Object_Entry *entry;
 
-    size_t index = 0;
     if (buf->capacity == 0) {
         size_t new_capacity = JSONLOGIC_CHUNK_SIZE;
         JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
         if (new_object == NULL) {
+            jsonlogic_decref(stringkey);
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
@@ -252,59 +252,59 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         entry = new_object->entries;
     } else {
         JsonLogic_Object *object = buf->object;
-        if (object->size > 0) {
-            size_t left  = 0;
-            size_t right = object->size - 1;
-            while (left != right) {
-                // (x + y - 1) / y
-                // ceiling integer division (assumes this all isn't overflowing)
-                size_t mid = (left + right + 1) / 2;
-                const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
-                if (jsonlogic_utf16_compare(
-                        entrykey->str,
-                        entrykey->size,
-                        strkey->str,
-                        strkey->size) > 0) {
-                    right = mid - 1;
-                } else {
-                    left = mid;
-                }
-            }
-
-            entry = &object->entries[left];
+        size_t left  = 0;
+        size_t right = object->size;
+        while (left < right) {
+            size_t mid = (left + right - 1) / 2;
+            entry = &object->entries[mid];
             const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(entry->key);
-            if (jsonlogic_utf16_equals(
-                    entrykey->str,
-                    entrykey->size,
-                    strkey->str,
-                    strkey->size)) {
+            int cmp = jsonlogic_utf16_compare(
+                entrykey->str,
+                entrykey->size,
+                strkey->str,
+                strkey->size);
+            if (cmp < 0) {
+                left  = mid + 1;
+            } else if (cmp > 0) {
+                right = mid;
+            } else {
                 jsonlogic_decref(stringkey);
                 jsonlogic_decref(entry->value);
                 entry->value = jsonlogic_incref(value);
                 return JSONLOGIC_ERROR_SUCCESS;
             }
-            index = left;
         }
 
-        if (buf->capacity == buf->object->size) {
+        assert(left <= object->size);
+
+        if (buf->capacity == object->size) {
             size_t new_capacity = buf->capacity + JSONLOGIC_CHUNK_SIZE;
-            JsonLogic_Object *new_object = realloc(buf->object, sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
+            JsonLogic_Object *new_object = realloc(object, sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
             if (new_object == NULL) {
+                jsonlogic_decref(stringkey);
                 JSONLOGIC_ERROR_MEMORY();
                 return JSONLOGIC_ERROR_OUT_OF_MEMORY;
             }
             buf->object   = new_object;
             buf->capacity = new_capacity;
-            entry = &new_object->entries[index];
         }
+        entry = &buf->object->entries[left];
 
+        memmove(entry + 1, entry, sizeof(JsonLogic_Object_Entry) * (buf->object->size - left));
     }
 
-    memmove(entry + 1, entry, sizeof(JsonLogic_Object_Entry) * (buf->object->size - index));
     buf->object->size ++;
 
-    entry->key = stringkey;
+    entry->key   = stringkey;
     entry->value = jsonlogic_incref(value);
+
+    fprintf(stderr, "inserted: key=");
+    jsonlogic_print(stderr, entry->key);
+    fprintf(stderr, ", value=");
+    jsonlogic_print(stderr, entry->value);
+    fprintf(stderr, "\nnew object=");
+    jsonlogic_print(stderr, jsonlogic_object_into_handle(buf->object));
+    fprintf(stderr, "\n\n");
 
     return JSONLOGIC_ERROR_SUCCESS;
 }

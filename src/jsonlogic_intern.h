@@ -174,8 +174,6 @@ JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *arr
 
 #define JSONLOGIC_CHUNK_SIZE 256
 
-JSONLOGIC_PRIVATE int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
-
 typedef struct JsonLogic_StrBuf {
     size_t capacity;
     JsonLogic_String *string;
