@@ -12,6 +12,7 @@
 JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic_String *string);
 JsonLogic_Error jsonlogic_strbuf_append_ascii(JsonLogic_StrBuf *buf, const char *str);
 JsonLogic_Error jsonlogic_utf8buf_append_ascii(JsonLogic_Utf8Buf *buf, const char *str);
+int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b);
 
 JsonLogic_Handle jsonlogic_empty_string() {
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t));
@@ -462,17 +463,13 @@ int jsonlogic_utf16_compare(const char16_t *a, size_t asize, const char16_t *b, 
         char16_t ach = a[index];
         char16_t bch = b[index];
 
-        int cmp = ach - bch;
+        int cmp = (int)ach - (int)bch;
         if (cmp != 0) {
             return cmp;
         }
     }
 
     return asize > bsize ? 1 : asize < bsize ? -1 : 0;
-}
-
-int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b) {
-    return jsonlogic_utf16_compare(a->str, a->size, b->str, b->size);
 }
 
 void jsonlogic_string_free(JsonLogic_String *string) {

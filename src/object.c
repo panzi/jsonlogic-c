@@ -180,11 +180,14 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
 }
 
 size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t *key, size_t key_size) {
+    if (object->size == 0) {
+        return 0;
+    }
     size_t left  = 0;
     size_t right = object->size - 1;
     while (left != right) {
         // (x + y - 1) / y
-        // ceiling integer division (assumes this all isn't overlowing)
+        // ceiling integer division (assumes this all isn't overflowing)
         size_t mid = (left + right + 1) / 2;
         const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
         if (jsonlogic_utf16_compare(
@@ -232,6 +235,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     const JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(stringkey);
     JsonLogic_Object_Entry *entry;
 
+    size_t index = 0;
     if (buf->capacity == 0) {
         size_t new_capacity = JSONLOGIC_CHUNK_SIZE;
         JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
@@ -239,47 +243,50 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
+        new_object->refcount = 1;
+        new_object->size     = 0;
+
         buf->object   = new_object;
         buf->capacity = new_capacity;
-
-        new_object->refcount = 1;
-        new_object->size     = 1;
 
         entry = new_object->entries;
     } else {
         JsonLogic_Object *object = buf->object;
-        size_t left  = 0;
-        size_t right = object->size - 1;
-        while (left != right) {
-            // (x + y - 1) / y
-            // ceiling integer division (assumes this all isn't overlowing)
-            size_t mid = (left + right + 1) / 2;
-            const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
-            if (jsonlogic_utf16_compare(
+        if (object->size > 0) {
+            size_t left  = 0;
+            size_t right = object->size - 1;
+            while (left != right) {
+                // (x + y - 1) / y
+                // ceiling integer division (assumes this all isn't overflowing)
+                size_t mid = (left + right + 1) / 2;
+                const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
+                if (jsonlogic_utf16_compare(
+                        entrykey->str,
+                        entrykey->size,
+                        strkey->str,
+                        strkey->size) > 0) {
+                    right = mid - 1;
+                } else {
+                    left = mid;
+                }
+            }
+
+            entry = &object->entries[left];
+            const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(entry->key);
+            if (jsonlogic_utf16_equals(
                     entrykey->str,
                     entrykey->size,
                     strkey->str,
-                    strkey->size) > 0) {
-                right = mid - 1;
-            } else {
-                left = mid;
+                    strkey->size)) {
+                jsonlogic_decref(stringkey);
+                jsonlogic_decref(entry->value);
+                entry->value = jsonlogic_incref(value);
+                return JSONLOGIC_ERROR_SUCCESS;
             }
+            index = left;
         }
 
-        entry = &object->entries[left];
-        const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(entry->key);
-        if (jsonlogic_utf16_equals(
-                entrykey->str,
-                entrykey->size,
-                strkey->str,
-                strkey->size)) {
-            jsonlogic_decref(stringkey);
-            jsonlogic_decref(entry->value);
-            entry->value = jsonlogic_incref(value);
-            return JSONLOGIC_ERROR_SUCCESS;
-        }
-
-        if (buf->capacity == 0 || buf->capacity == buf->object->size) {
+        if (buf->capacity == buf->object->size) {
             size_t new_capacity = buf->capacity + JSONLOGIC_CHUNK_SIZE;
             JsonLogic_Object *new_object = realloc(buf->object, sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
             if (new_object == NULL) {
@@ -288,12 +295,13 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             }
             buf->object   = new_object;
             buf->capacity = new_capacity;
+            entry = &new_object->entries[index];
         }
 
-        buf->object->size ++;
     }
 
-    memmove(entry + 1, entry, sizeof(*entry));
+    memmove(entry + 1, entry, sizeof(JsonLogic_Object_Entry) * (buf->object->size - index));
+    buf->object->size ++;
 
     entry->key = stringkey;
     entry->value = jsonlogic_incref(value);

@@ -162,8 +162,11 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
 }
 
-JSONLOGIC_PRIVATE bool jsonlogic_string_equals (const JsonLogic_String *a, const JsonLogic_String *b);
-JSONLOGIC_PRIVATE int  jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b);
+JSONLOGIC_PRIVATE bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *b);
+
+JSONLOGIC_EXPORT inline int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b) {
+    return jsonlogic_utf16_compare(a->str, a->size, b->str, b->size);
+}
 
 JSONLOGIC_PRIVATE size_t jsonlogic_string_to_index(const JsonLogic_String *string);
 

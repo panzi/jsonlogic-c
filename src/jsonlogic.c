@@ -147,7 +147,7 @@ JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry oper
     size_t right = count - 1;
     while (left != right) {
         // (x + y - 1) / y
-        // ceiling integer division (assumes this all isn't overlowing)
+        // ceiling integer division (assumes this all isn't overflowing)
         size_t mid = (left + right + 1) / 2;
         const JsonLogic_Operation_Entry *entry = &operations[mid];
         if (jsonlogic_utf16_compare(entry->key, entry->key_size, key, key_size) > 0) {
