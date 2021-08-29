@@ -290,14 +290,6 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     entry->key   = stringkey;
     entry->value = jsonlogic_incref(value);
 
-    fprintf(stderr, "inserted: key=");
-    jsonlogic_print(stderr, entry->key);
-    fprintf(stderr, ", value=");
-    jsonlogic_print(stderr, entry->value);
-    fprintf(stderr, "\nnew object=");
-    jsonlogic_print(stderr, jsonlogic_object_into_handle(buf->object));
-    fprintf(stderr, "\n\n");
-
     return JSONLOGIC_ERROR_SUCCESS;
 }
 
