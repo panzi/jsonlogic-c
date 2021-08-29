@@ -10,6 +10,8 @@
 #define JSONLOGIC_IS_SPACE(ch) \
     ((ch) >= u'\t' && (ch) <= u'\r')
 
+const JsonLogic_Handle JsonLogic_NaN = { .number = NAN };
+
 JsonLogic_Handle jsonlogic_number_from(double value) {
     return (JsonLogic_Handle){ .number = value };
 }

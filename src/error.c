@@ -4,6 +4,12 @@
 #include <inttypes.h>
 #include <assert.h>
 
+const JsonLogic_Handle JsonLogic_Error_Success          = { .intptr = JSONLOGIC_ERROR_SUCCESS           };
+const JsonLogic_Handle JsonLogic_Error_OutOfMemory      = { .intptr = JSONLOGIC_ERROR_OUT_OF_MEMORY     };
+const JsonLogic_Handle JsonLogic_Error_IllegalOperation = { .intptr = JSONLOGIC_ERROR_ILLEGAL_OPERATION };
+const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = { .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT  };
+const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_ERROR_INTERNAL_ERROR    };
+
 JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
         return (JsonLogic_Error) handle.intptr;

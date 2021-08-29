@@ -8,15 +8,7 @@
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
 
-const JsonLogic_Handle JsonLogic_NaN   = { .number = NAN };
-const JsonLogic_Handle JsonLogic_Null  = { .intptr = JsonLogic_Type_Null };
-const JsonLogic_Handle JsonLogic_True  = { .intptr = JsonLogic_Type_Boolean | 1 };
-const JsonLogic_Handle JsonLogic_False = { .intptr = JsonLogic_Type_Boolean | 0 };
-const JsonLogic_Handle JsonLogic_Error_Success          = { .intptr = JSONLOGIC_ERROR_SUCCESS           };
-const JsonLogic_Handle JsonLogic_Error_OutOfMemory      = { .intptr = JSONLOGIC_ERROR_OUT_OF_MEMORY     };
-const JsonLogic_Handle JsonLogic_Error_IllegalOperation = { .intptr = JSONLOGIC_ERROR_ILLEGAL_OPERATION };
-const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = { .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT  };
-const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_ERROR_INTERNAL_ERROR    };
+const JsonLogic_Handle JsonLogic_Null = { .intptr = JsonLogic_Type_Null };
 
 JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle) {
     static_assert(sizeof(void*) <= 8, "This library only works on platforms where pointers use <= 48 bits (e.g. x86_64).");

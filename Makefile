@@ -62,8 +62,9 @@ BUILD_DIR := $(BUILD_DIR)/$(TARGET)
 
 LIB_DIRS=-L$(BUILD_DIR)/lib
 INC_DIRS=-Isrc
-EXAMPLES=$(BUILD_DIR)/examples/parse_json$(BIN_EXT)
-EXAMPLES_SHARED=$(BUILD_DIR)/examples-shared/parse_json$(BIN_EXT)
+EXAMPLES=$(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
+         $(BUILD_DIR)/examples/jsonlogic$(BIN_EXT)
+EXAMPLES_SHARED=$(patsubst $(BUILD_DIR)/examples/%,$(BUILD_DIR)/examples-shared/%,$(EXAMPLES))
 LIB=$(BUILD_DIR)/lib/libjsonlogic.a
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
 INC=$(BUILD_DIR)/include/jsonlogic.h
