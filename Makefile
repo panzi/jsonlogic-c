@@ -1,15 +1,15 @@
 CC=gcc
-CFLAGS=-std=c11 -Wall -Werror -pedantic -O3 -DWIN_EXPORT
+CFLAGS=-std=c11 -Wall -Werror -pedantic
 BUILD_DIR=build
-LIB_OBJS=$(BUILD_DIR)/obj/jsonlogic.o \
-         $(BUILD_DIR)/obj/string.o \
+LIB_OBJS=$(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/boolean.o \
-         $(BUILD_DIR)/obj/array.o \
-         $(BUILD_DIR)/obj/number.o \
+         $(BUILD_DIR)/obj/extras.o \
          $(BUILD_DIR)/obj/compare.o \
          $(BUILD_DIR)/obj/json.o \
-         $(BUILD_DIR)/obj/extras.o \
-         $(BUILD_DIR)/obj/object.o
+         $(BUILD_DIR)/obj/jsonlogic.o \
+         $(BUILD_DIR)/obj/number.o \
+         $(BUILD_DIR)/obj/object.o \
+         $(BUILD_DIR)/obj/string.o
 LIBS=-lm
 
 SO_OBJS=$(patsubst $(BUILD_DIR)/obj/%,$(BUILD_DIR)/shared-obj/%,$(LIB_OBJS))
@@ -37,7 +37,7 @@ endif
 endif
 
 ifeq ($(patsubst win%,win,$(TARGET)),win)
-    CFLAGS   += -Wno-pedantic-ms-format
+    CFLAGS   += -Wno-pedantic-ms-format -DWIN_EXPORT
     BIN_EXT   = .exe
     SO_EXT    = .dll
     SO_PREFIX =
@@ -61,8 +61,8 @@ BUILD_DIR := $(BUILD_DIR)/$(TARGET)
 
 LIB_DIRS=-L$(BUILD_DIR)/lib
 INC_DIRS=-Isrc
-EXAMPLES=$(BUILD_DIR)/examples/getrandom$(BIN_EXT)
-EXAMPLES_SHARED=$(BUILD_DIR)/examples-shared/getrandom$(BIN_EXT)
+EXAMPLES=$(BUILD_DIR)/examples/parse_json$(BIN_EXT)
+EXAMPLES_SHARED=$(BUILD_DIR)/examples-shared/parse_json$(BIN_EXT)
 LIB=$(BUILD_DIR)/lib/libjsonlogic.a
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
 INC=$(BUILD_DIR)/include/jsonlogic.h
@@ -133,11 +133,19 @@ $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.o $
 	@mkdir -p $(BUILD_DIR)/examples-shared
 	$(CC) $(CFLAGS) $< $(LIB_DIRS) -ljsonlogic $(LIBS) -o $@
 
-$(BUILD_DIR)/obj/%.o: src/%.c
+$(BUILD_DIR)/obj/%.o: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
 	$(CC) $(CFLAGS) $(INC_DIRS) $< -c -o $@
 
-$(BUILD_DIR)/shared-obj/%.o: src/%.c
+$(BUILD_DIR)/shared-obj/%.o: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
+	@mkdir -p $(BUILD_DIR)/shared-obj
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
+
+$(BUILD_DIR)/obj/json.o: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
+	@mkdir -p $(BUILD_DIR)/obj
+	$(CC) $(CFLAGS) $(INC_DIRS) $< -c -o $@
+
+$(BUILD_DIR)/shared-obj/json.o: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
 	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
 
@@ -148,6 +156,12 @@ $(BUILD_DIR)/obj/examples/%.o: examples/%.c
 $(BUILD_DIR)/shared-obj/examples/%.o: examples/%.c
 	@mkdir -p $(BUILD_DIR)/shared-obj/examples
 	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
+
+$(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.o
+	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+
+$(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.o
+	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
 
 $(LIB): $(LIB_OBJS)
 	@mkdir -p $(BUILD_DIR)/lib

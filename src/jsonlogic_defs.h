@@ -35,6 +35,12 @@ typedef uint64_t JsonLogic_Type;
 #define JsonLogic_Type_Object   ((JsonLogic_Type) 0xfffd000000000000)
 #define JsonLogic_Type_Error    ((JsonLogic_Type) 0xfffe000000000000)
 
+#define JSONLOGIC_ERROR_SUCCESS            (JsonLogic_Type_Error | 0)
+#define JSONLOGIC_ERROR_OUT_OF_MEMORY      (JsonLogic_Type_Error | 1)
+#define JSONLOGIC_ERROR_ILLEGAL_OPERATION  (JsonLogic_Type_Error | 2)
+#define JSONLOGIC_ERROR_ILLEGAL_ARGUMENT   (JsonLogic_Type_Error | 3)
+#define JSONLOGIC_ERROR_INTERNAL_ERROR     (JsonLogic_Type_Error | 4)
+
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
     #ifdef WIN_EXPORT
         // Exporting...

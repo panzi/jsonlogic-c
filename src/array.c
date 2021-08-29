@@ -5,6 +5,8 @@
 #include <stdarg.h>
 #include <string.h>
 
+JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array);
+
 JsonLogic_Handle jsonlogic_empty_array() {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
     if (array == NULL) {
@@ -15,7 +17,7 @@ JsonLogic_Handle jsonlogic_empty_array() {
     array->refcount = 1;
     array->size     = 0;
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
+    return jsonlogic_array_into_handle(array);
 }
 
 JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
@@ -56,7 +58,7 @@ JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
 
     va_end(ap);
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
+    return jsonlogic_array_into_handle(array);
 }
 
 void jsonlogic_array_free(JsonLogic_Array *array) {

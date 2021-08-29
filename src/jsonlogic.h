@@ -25,6 +25,7 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse(const char *str);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value);
+JSONLOGIC_EXPORT char *jsonlogic_stringify_utf8(JsonLogic_Handle value);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_latin1      (const char *str);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size);
@@ -80,7 +81,8 @@ JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size)
 typedef uint64_t JsonLogic_Error;
 
 JSONLOGIC_EXPORT JsonLogic_Type  jsonlogic_get_type(JsonLogic_Handle handle);
-JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_get_error (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT const char     *jsonlogic_get_type_name(JsonLogic_Type type);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT const char     *jsonlogic_get_error_message(JsonLogic_Error error);
 
 JSONLOGIC_EXPORT bool jsonlogic_is_error  (JsonLogic_Handle handle);

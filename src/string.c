@@ -4,9 +4,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <errno.h>
 #include <math.h>
 
 #define JSONLOGIC_CODEPOINT_MAX 0x10FFFF
+
+JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic_String *string);
+JsonLogic_Error jsonlogic_strbuf_append_ascii(JsonLogic_StrBuf *buf, const char *str);
+JsonLogic_Error jsonlogic_utf8buf_append_ascii(JsonLogic_Utf8Buf *buf, const char *str);
 
 JsonLogic_Handle jsonlogic_empty_string() {
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t));
@@ -311,7 +316,9 @@ JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double val
 
     char latin1[128];
     int count = snprintf(latin1, sizeof(buf), "%g", value);
-    if (count >= sizeof(latin1)) {
+    if (count < 0) {
+        return JSONLOGIC_ERROR_INTERNAL_ERROR;
+    } else if (count >= sizeof(latin1)) {
         size_t size = (size_t)count + 1;
         char *latin1 = malloc(size);
         if (latin1 == NULL) {
@@ -319,7 +326,7 @@ JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double val
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
         snprintf(latin1, size, "%g", value);
-        bool result = jsonlogic_strbuf_append_latin1(buf, latin1);
+        JsonLogic_Error result = jsonlogic_strbuf_append_latin1(buf, latin1);
         free(latin1);
         return result;
     }
@@ -543,8 +550,8 @@ size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
         (BUF)[(INDEX) ++] = (CODEPOINT); \
     }
 
-char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
-    size_t utf8_size = 1;
+static inline size_t jsonlogic_utf16_to_utf8_size(const char16_t *str, size_t size) {
+    size_t utf8_size = 0;
     JSONLOGIC_DECODE_UTF16(str, size, {
         if (codepoint > 0x10000) {
             utf8_size += 4;
@@ -556,8 +563,13 @@ char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
             utf8_size += 1;
         }
     });
+    return utf8_size;
+}
 
-    char *utf8 = malloc(utf8_size);
+char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
+    size_t utf8_size = jsonlogic_utf16_to_utf8_size(str, size);
+
+    char *utf8 = malloc(utf8_size + 1);
     if (utf8 == NULL) {
         return NULL;
     }
@@ -566,7 +578,7 @@ char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
     JSONLOGIC_DECODE_UTF16(str, size, JSONLOGIC_ENCODE_UTF8(codepoint, utf8, utf8_index));
 
     utf8[utf8_index] = 0;
-    assert(utf8_index + 1 == utf8_size);
+    assert(utf8_index == utf8_size);
 
     return utf8;
 }
@@ -591,4 +603,109 @@ const char16_t *jsonlogic_find_char(const char16_t *str, size_t size, char16_t c
         }
     }
     return NULL;
+}
+
+JsonLogic_Error jsonlogic_utf8buf_ensure(JsonLogic_Utf8Buf *buf, size_t want_free_size) {
+    size_t has_free_size = buf->capacity - buf->used;
+
+    if (has_free_size < want_free_size) {
+        size_t add_size = want_free_size - has_free_size;
+        size_t new_size = buf->capacity + (add_size < JSONLOGIC_CHUNK_SIZE ? JSONLOGIC_CHUNK_SIZE : add_size);
+        char *new_string = realloc(buf->string, new_size);
+        if (new_string == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+        }
+        buf->string   = new_string;
+        buf->capacity = new_size;
+    }
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+JsonLogic_Error jsonlogic_utf8buf_append_utf8(JsonLogic_Utf8Buf *buf, const char *str) {
+    size_t size = strlen(str);
+    TRY(jsonlogic_utf8buf_ensure(buf, size));
+
+    memcpy(buf->string + buf->used, str, size);
+    buf->used += size;
+
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+JsonLogic_Error jsonlogic_utf8buf_append_utf16(JsonLogic_Utf8Buf *buf, const char16_t *str, size_t size) {
+    size_t utf8_size = jsonlogic_utf16_to_utf8_size(str, size);
+    TRY(jsonlogic_utf8buf_ensure(buf, utf8_size));
+
+    char *utf8 = buf->string + buf->used;
+    size_t utf8_index = 0;
+    JSONLOGIC_DECODE_UTF16(str, size, JSONLOGIC_ENCODE_UTF8(codepoint, utf8, utf8_index));
+
+    assert(utf8_index == utf8_size);
+    buf->used += utf8_size;
+
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double value) {
+    if (isnan(value)) {
+        return jsonlogic_utf8buf_append_utf8(buf, "NaN");
+    }
+
+    if (isinf(value)) {
+        if (value > 0) {
+            return jsonlogic_utf8buf_append_utf8(buf, "Infinity");
+        } else {
+            return jsonlogic_utf8buf_append_utf8(buf, "-Infinity");
+        }
+    }
+
+    size_t has_free = buf->capacity - buf->used;
+    int count = snprintf(buf->string + buf->used, has_free, "%g", value);
+    if (count < 0) {
+        JSONLOGIC_DEBUG("snprintf() error: %s", strerror(errno));
+        return JSONLOGIC_ERROR_INTERNAL_ERROR;
+    } else if (count > has_free) {
+        TRY(jsonlogic_utf8buf_ensure(buf, count));
+        snprintf(buf->string + buf->used, count, "%g", value);
+    }
+    buf->used += (size_t)count;
+
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+char *jsonlogic_utf8buf_take(JsonLogic_Utf8Buf *buf) {
+    char *utf8;
+    if (buf->string == NULL) {
+        utf8 = malloc(1);
+        if (utf8 == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+        } else {
+            utf8[0] = 0;
+        }
+    } else {
+        if (jsonlogic_utf8buf_ensure(buf, 1) != JSONLOGIC_ERROR_SUCCESS) {
+            return NULL;
+        }
+        buf->string[buf->used ++] = 0;
+
+        // shrink to fit
+        utf8 = realloc(buf->string, buf->used);
+        if (utf8 == NULL) {
+            // should not happen
+            JSONLOGIC_ERROR_MEMORY();
+            utf8 = buf->string;
+        }
+    }
+
+    buf->string   = NULL;
+    buf->capacity = 0;
+    buf->used     = 0;
+
+    return utf8;
+}
+
+void jsonlogic_utf8buf_free(JsonLogic_Utf8Buf *buf) {
+    free(buf->string);
+    buf->capacity = 0;
+    buf->used     = 0;
 }

@@ -28,6 +28,34 @@ JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle) {
     return handle.intptr & JsonLogic_TypeMask;
 }
 
+const char *jsonlogic_get_type_name(JsonLogic_Type type) {
+    switch (type) {
+        case JsonLogic_Type_Array:
+            return "array";
+
+        case JsonLogic_Type_Boolean:
+            return "boolean";
+
+        case JsonLogic_Type_Error:
+            return "error";
+
+        case JsonLogic_Type_Null:
+            return "null";
+
+        case JsonLogic_Type_Number:
+            return "number";
+
+        case JsonLogic_Type_Object:
+            return "object";
+
+        case JsonLogic_Type_String:
+            return "string";
+
+        default:
+            return "(illegal handle)";
+    }
+}
+
 bool jsonlogic_is_error(JsonLogic_Handle handle) {
     return JSONLOGIC_IS_NUMBER(handle);
 }
@@ -873,24 +901,20 @@ JsonLogic_Handle jsonlogic_op_IN(JsonLogic_Handle data, JsonLogic_Handle args[],
 
 JsonLogic_Handle jsonlogic_op_LOG(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
-        puts("null");
+        fputs("null\n", stderr);
         return JsonLogic_Null;
     }
-    JsonLogic_Handle value  = args[0];
-    JsonLogic_Handle string = jsonlogic_stringify(value);
-    if (JSONLOGIC_IS_ERROR(string)) {
-        puts(jsonlogic_get_error_message(jsonlogic_get_error(string)));
+    JsonLogic_Handle value = args[0];
+    if (JSONLOGIC_IS_ERROR(value)) {
+        fprintf(stderr, "%s\n", jsonlogic_get_error_message(jsonlogic_get_error(value)));
+        return value;
+    }
+    char *utf8 = jsonlogic_stringify_utf8(value);
+    if (utf8 == NULL) {
+        fputs("error calling stringify\n", stderr);
     } else {
-        JsonLogic_String *str = JSONLOGIC_CAST_STRING(string);
-        char *utf8 = jsonlogic_utf16_to_utf8(str->str, str->size);
-        if (utf8 == NULL) {
-            JSONLOGIC_ERROR_MEMORY();
-            puts("null");
-        } else {
-            puts(utf8);
-            free(utf8);
-        }
-        jsonlogic_decref(string);
+        fprintf(stderr, "%s\n", utf8);
+        free(utf8);
     }
     return value;
 }

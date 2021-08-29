@@ -10,6 +10,10 @@
 #define JSONLOGIC_IS_SPACE(ch) \
     ((ch) >= u'\t' && (ch) <= u'\r')
 
+JsonLogic_Handle jsonlogic_number_from(double value) {
+    return (JsonLogic_Handle){ .number = value };
+}
+
 JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
     for (;;) {
         if (JSONLOGIC_IS_NUMBER(handle)) {

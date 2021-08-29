@@ -17,30 +17,33 @@
     #define JSONLOGIC_ERROR_UTF16(...)
     #define JSONLOGIC_ASSERT(...)
 #else
-    #define JSONLOGIC_DEBUG(FMT, ...) \
-        fprintf(stderr, "*** error: %s:%u: in %s: " FMT "\n", \
+    #define JSONLOGIC_DEBUG_(PREFIX, FMT, ...) \
+        fprintf(stderr, "" PREFIX "%s:%u: in %s: " FMT "\n", \
             __FILE__, __LINE__, __func__, __VA_ARGS__)
 
-    #define JSONLOGIC_DEBUG_UTF16(FMT, STR, SIZE, ...) \
+    #define JSONLOGIC_DEBUG_UTF16_(PREFIX, FMT, STR, SIZE, ...) \
         ( \
-            fprintf(stderr, "*** error: %s:%u: in %s: " FMT ": ", \
+            fprintf(stderr, "" PREFIX "%s:%u: in %s: " FMT ": ", \
                 __FILE__, __LINE__, __func__, __VA_ARGS__), \
             jsonlogic_print_utf16(stderr, (STR), (SIZE)), \
             fputc('\n', stderr) \
         )
 
+    #define JSONLOGIC_DEBUG(...) JSONLOGIC_DEBUG_("*** debug: ", __VA_ARGS__)
+    #define JSONLOGIC_DEBUG_UTF16(...) JSONLOGIC_DEBUG_UTF16_("*** debug: ", __VA_ARGS__)
+
     #if defined(JSONLOGIC_NO_ABORT_ON_ERROR)
-        #define JSONLOGIC_ERROR(...)       JSONLOGIC_DEBUG(__VA_ARGS__)
-        #define JSONLOGIC_ERROR_UTF16(...) JSONLOGIC_DEBUG_UTF16(__VA_ARGS__)
+        #define JSONLOGIC_ERROR(...)       JSONLOGIC_DEBUG_("*** error: ", __VA_ARGS__)
+        #define JSONLOGIC_ERROR_UTF16(...) JSONLOGIC_DEBUG_UTF16_("*** error: ", __VA_ARGS__)
     #else
         #include <stdlib.h>
 
         #define JSONLOGIC_ERROR(...) \
-            JSONLOGIC_DEBUG(__VA_ARGS__); \
+            JSONLOGIC_DEBUG_("*** error: ", __VA_ARGS__); \
             abort();
 
         #define JSONLOGIC_ERROR_UTF16(...) \
-            JSONLOGIC_DEBUG_UTF16(__VA_ARGS__); \
+            JSONLOGIC_DEBUG_UTF16_("*** error: ", __VA_ARGS__); \
             abort();
     #endif
 
@@ -60,12 +63,6 @@ union JsonLogic_Handle;
 struct JsonLogic_Array;
 struct JsonLogic_String;
 struct JsonLogic_Object;
-
-#define JSONLOGIC_ERROR_SUCCESS            (JsonLogic_Type_Error | 0)
-#define JSONLOGIC_ERROR_OUT_OF_MEMORY      (JsonLogic_Type_Error | 1)
-#define JSONLOGIC_ERROR_ILLEGAL_OPERATION  (JsonLogic_Type_Error | 2)
-#define JSONLOGIC_ERROR_ILLEGAL_ARGUMENT   (JsonLogic_Type_Error | 3)
-#define JSONLOGIC_ERROR_INTERNAL_ERROR     (JsonLogic_Type_Error | 4)
 
 #define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)((handle).intptr & JsonLogic_PtrMask))
 #define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) ((handle).intptr & JsonLogic_PtrMask))
@@ -184,12 +181,35 @@ typedef struct JsonLogic_StrBuf {
 #define JSONLOGIC_STRBUF_INIT ((JsonLogic_StrBuf){ .capacity = 0, .string = NULL })
 
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_size);
-JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_latin1(JsonLogic_StrBuf *buf, const char *str);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_latin1 (JsonLogic_StrBuf *buf, const char *str);
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_utf16 (JsonLogic_StrBuf *buf, const char16_t *str, size_t size);
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double value);
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle handle);
 JSONLOGIC_PRIVATE JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf);
 JSONLOGIC_PRIVATE void jsonlogic_strbuf_free(JsonLogic_StrBuf *buf);
+
+JSONLOGIC_PRIVATE inline JsonLogic_Error jsonlogic_strbuf_append_ascii(JsonLogic_StrBuf *buf, const char *str) {
+    return jsonlogic_strbuf_append_latin1(buf, str);
+}
+
+typedef struct JsonLogic_Utf8Buf {
+    size_t capacity;
+    size_t used;
+    char *string;
+} JsonLogic_Utf8Buf;
+
+#define JSONLOGIC_UTF8BUF_INIT ((JsonLogic_Utf8Buf){ .capacity = 0, .used = 0, .string = NULL })
+
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_utf8buf_ensure(JsonLogic_Utf8Buf *buf, size_t want_free_size);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_utf8buf_append_utf8  (JsonLogic_Utf8Buf *buf, const char *str);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_utf8buf_append_utf16 (JsonLogic_Utf8Buf *buf, const char16_t *str, size_t size);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double value);
+JSONLOGIC_PRIVATE char *jsonlogic_utf8buf_take(JsonLogic_Utf8Buf *buf);
+JSONLOGIC_PRIVATE void jsonlogic_utf8buf_free(JsonLogic_Utf8Buf *buf);
+
+JSONLOGIC_PRIVATE inline JsonLogic_Error jsonlogic_utf8buf_append_ascii(JsonLogic_Utf8Buf *buf, const char *str) {
+    return jsonlogic_utf8buf_append_utf8(buf, str);
+}
 
 typedef struct JsonLogic_ArrayBuf {
     size_t capacity;
@@ -207,7 +227,7 @@ typedef struct JsonLogic_ObjBuf {
     JsonLogic_Object *object;
 } JsonLogic_ObjBuf;
 
-#define JSONLOGIC_OBJBUF_INIT ((JsonLogic_ObjBuf){ .capacity = 0, .array = NULL })
+#define JSONLOGIC_OBJBUF_INIT ((JsonLogic_ObjBuf){ .capacity = 0, .object = NULL })
 
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key, JsonLogic_Handle value);
 JSONLOGIC_PRIVATE JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf);
