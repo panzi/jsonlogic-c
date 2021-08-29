@@ -57,7 +57,6 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
         JsonLogic_Object_Entry entry = va_arg(ap, JsonLogic_Object_Entry);
         JsonLogic_Handle key = jsonlogic_to_string(entry.key);
         if (JSONLOGIC_IS_ERROR(key)) {
-            jsonlogic_decref(key);
             for (size_t free_index = 0; free_index < index; ++ free_index) {
                 JsonLogic_Object_Entry *entry = &object->entries[free_index];
                 jsonlogic_decref(entry->key);
@@ -109,7 +108,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
             size_t index = SIZE_MAX;
             if (JSONLOGIC_IS_STRING(key)) {
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
-                if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
+                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
                     return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
                 }
                 index = jsonlogic_string_to_index(stringkey);
@@ -119,7 +118,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                     return strkey;
                 }
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
-                if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
+                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
                     jsonlogic_decref(strkey);
                     return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
                 }
@@ -137,7 +136,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
             size_t index = SIZE_MAX;
             if (JSONLOGIC_IS_STRING(key)) {
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
-                if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
+                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
                     return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
                 }
                 index = jsonlogic_string_to_index(stringkey);
@@ -147,7 +146,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
                     return strkey;
                 }
                 const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
-                if (stringkey->size == JSONLOGIC_LENGTH_SIZE && memcmp(stringkey->str, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE) == 0) {
+                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
                     jsonlogic_decref(strkey);
                     return jsonlogic_number_from(JSONLOGIC_CAST_ARRAY(handle)->size);
                 }
@@ -260,9 +259,10 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             } else if (cmp > 0) {
                 right = mid;
             } else {
+                jsonlogic_incref(value);
                 jsonlogic_decref(stringkey);
                 jsonlogic_decref(entry->value);
-                entry->value = jsonlogic_incref(value);
+                entry->value = value;
                 return JSONLOGIC_ERROR_SUCCESS;
             }
         }

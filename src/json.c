@@ -8,8 +8,11 @@
 #include <errno.h>
 #include <inttypes.h>
 
-#undef JSONLOGIC_ERROR_INTERNAL_ERROR
-#define JSONLOGIC_ERROR_INTERNAL_ERROR     (assert(false), (JsonLogic_Type_Error | 4))
+// #undef JSONLOGIC_ERROR_INTERNAL_ERROR
+// #define JSONLOGIC_ERROR_INTERNAL_ERROR     (assert(false), (JsonLogic_Type_Error | 4))
+// 
+// #undef JSONLOGIC_ERROR_ILLEGAL_ARGUMENT
+// #define JSONLOGIC_ERROR_ILLEGAL_ARGUMENT     (assert(false), (JsonLogic_Type_Error | 3))
 
 JsonLogic_Handle jsonlogic_parse(const char *str, JsonLogic_LineInfo *infoptr) {
     return jsonlogic_parse_sized(str, strlen(str), infoptr);
@@ -345,6 +348,9 @@ static const JsonLogic_NumberParser JsonLogic_Parser_Number[JsonLogic_NumberPars
         ['9'] = JsonLogic_NumberParser_ExpDigit,
         [JSONLOGIC_PARSE_EOF] = JsonLogic_NumberParser_End,
     },
+    [JsonLogic_NumberParser_End] = {
+        [JSONLOGIC_PARSE_EOF] = JsonLogic_NumberParser_End,
+    },
 };
 
 static const int JsonLogic_EscMap[256] = {
@@ -531,6 +537,7 @@ static JsonLogic_ParseItem *jsonlogic_parsestack_push(JsonLogic_ParseStack *stac
     if (stack->used == stack->capacity) {
         if (stack->capacity > SIZE_MAX - JSONLOGIC_PARSESTACK_CHUNK_SIZE) {
             JSONLOGIC_ERROR_MEMORY();
+            errno = ENOMEM;
             return NULL;
         }
         size_t new_capacity = stack->capacity + JSONLOGIC_PARSESTACK_CHUNK_SIZE;
@@ -560,6 +567,7 @@ static JsonLogic_ParseItem *jsonlogic_parsestack_push(JsonLogic_ParseStack *stac
 
         default:
             assert(false);
+            return NULL;
     }
     return item;
 }

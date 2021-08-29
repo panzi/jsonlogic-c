@@ -206,7 +206,6 @@ int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
     if (JSONLOGIC_IS_STRING(a)) {
         JsonLogic_Handle bstr = jsonlogic_to_string(b);
         if (JSONLOGIC_IS_ERROR(bstr)) {
-            jsonlogic_decref(bstr);
             return 0;
         }
         int result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(bstr));
@@ -217,7 +216,6 @@ int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
     if (JSONLOGIC_IS_STRING(b)) {
         JsonLogic_Handle astr = jsonlogic_to_string(a);
         if (JSONLOGIC_IS_ERROR(astr)) {
-            jsonlogic_decref(astr);
             return 0;
         }
         int result = jsonlogic_string_compare(JSONLOGIC_CAST_STRING(astr), JSONLOGIC_CAST_STRING(b));
