@@ -797,6 +797,8 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 }
             num_loop_end:
 
+                num_state = JsonLogic_Parser_Number[num_state][JSONLOGIC_PARSE_EOF];
+
                 if (num_state != JsonLogic_NumberParser_End) {
                     state = JsonLogic_ParserState_Error;
                     error = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
