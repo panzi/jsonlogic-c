@@ -4,9 +4,20 @@
 
 #include "jsonlogic_defs.h"
 
+#include <stdbool.h>
+#include <stdio.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct JsonLogic_LineInfo {
+    size_t index;
+    size_t lineno;
+    size_t column;
+} JsonLogic_LineInfo;
+
+#define JSONLOGIC_LINEINFO_INIT (JsonLogic_LineInfo){ .index = 0, .lineno = 0, .column = 0 }
 
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_NaN;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Null;
@@ -21,8 +32,10 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_InternalError;
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
 
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse(const char *str);
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse(const char *str, JsonLogic_LineInfo *infoptr);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_LineInfo *infoptr);
+
+JSONLOGIC_EXPORT JsonLogic_LineInfo jsonlogic_get_lineinfo(const char *str, size_t size, size_t index);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value);
 JSONLOGIC_EXPORT char *jsonlogic_stringify_utf8(JsonLogic_Handle value);
@@ -38,7 +51,10 @@ JSONLOGIC_EXPORT bool jsonlogic_utf16_equals( const char16_t *a, size_t asize, c
 JSONLOGIC_EXPORT int  jsonlogic_utf16_compare(const char16_t *a, size_t asize, const char16_t *b, size_t bsize);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_number_from(double value);
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_boolean_from(bool value);
+JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_boolean_from(bool value) {
+    return value ? JsonLogic_True : JsonLogic_False;
+}
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_string();
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_array();
@@ -78,12 +94,14 @@ JSONLOGIC_EXPORT const char16_t *jsonlogic_get_utf16(JsonLogic_Handle string, si
 
 JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size);
 
-typedef uint64_t JsonLogic_Error;
+JSONLOGIC_EXPORT JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT const char    *jsonlogic_get_type_name(JsonLogic_Type type);
 
-JSONLOGIC_EXPORT JsonLogic_Type  jsonlogic_get_type(JsonLogic_Handle handle);
-JSONLOGIC_EXPORT const char     *jsonlogic_get_type_name(JsonLogic_Type type);
 JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT const char     *jsonlogic_get_error_message(JsonLogic_Error error);
+JSONLOGIC_EXPORT const char *jsonlogic_get_linestart(const char *str, size_t index);
+JSONLOGIC_EXPORT void jsonlogic_print_parse_error(FILE *stream, const char *str, JsonLogic_Error error, JsonLogic_LineInfo info);
+JSONLOGIC_EXPORT void jsonlogic_print_parse_error_sized(FILE *stream, const char *str, size_t size, JsonLogic_Error error, JsonLogic_LineInfo info);
 
 JSONLOGIC_EXPORT bool jsonlogic_is_error  (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_null   (JsonLogic_Handle handle);

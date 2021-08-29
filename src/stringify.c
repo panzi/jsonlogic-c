@@ -106,6 +106,7 @@ static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLog
                 TRY(jsonlogic_stringify_intern(buf, object->entries[0].value));
 
                 for (size_t index = 1; index < object->size; ++ index) {
+                    TRY(jsonlogic_strbuf_append_ascii(buf, ","));
                     TRY(jsonlogic_stringify_intern(buf, object->entries[index].key));
                     TRY(jsonlogic_strbuf_append_ascii(buf, ":"));
                     TRY(jsonlogic_stringify_intern(buf, object->entries[index].value));

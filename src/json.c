@@ -8,11 +8,35 @@
 #include <errno.h>
 #include <inttypes.h>
 
-//#undef JSONLOGIC_ERROR_INTERNAL_ERROR
-//#define JSONLOGIC_ERROR_INTERNAL_ERROR     (assert(false), (JsonLogic_Type_Error | 4))
+#undef JSONLOGIC_ERROR_INTERNAL_ERROR
+#define JSONLOGIC_ERROR_INTERNAL_ERROR     (assert(false), (JsonLogic_Type_Error | 4))
 
-JsonLogic_Handle jsonlogic_parse(const char *str) {
-    return jsonlogic_parse_sized(str, strlen(str));
+JsonLogic_Handle jsonlogic_parse(const char *str, JsonLogic_LineInfo *infoptr) {
+    return jsonlogic_parse_sized(str, strlen(str), infoptr);
+}
+
+JsonLogic_LineInfo jsonlogic_get_lineinfo(const char *str, size_t size, size_t index) {
+    if (index > size) {
+        index = size;
+    }
+
+    size_t lineno = 1;
+    const char *end = str + index;
+    const char *linestart = str;
+    for (const char *ptr = str; ptr < end; ++ ptr) {
+        if (*ptr == '\n') {
+            ++ lineno;
+            linestart = ptr + 1;
+        }
+    }
+
+    size_t column = 1 + (size_t)(end - linestart);
+
+    return (JsonLogic_LineInfo){
+        .index  = index,
+        .lineno = lineno,
+        .column = column,
+    };
 }
 
 typedef enum JsonLogic_RootParser {
@@ -386,7 +410,6 @@ static const int JsonLogic_HexMap[256] = {
                     uint32_t x3 = JsonLogic_HexMap[(unsigned char)(STR)[(INDEX) ++]]; \
                     uint32_t x4 = JsonLogic_HexMap[(unsigned char)(STR)[(INDEX) ++]]; \
                     if ((~x1 | ~x2 | ~x3 | ~x4) & 0xF00) { \
-                        puts("error"); \
                         (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
                         break; \
                     } \
@@ -404,7 +427,9 @@ static const int JsonLogic_HexMap[256] = {
             } \
             CODE; \
         } else if (byte1 < 0xC2) { \
-            /* unexpected continuation or overlong 2-byte sequence, ignored */ \
+            /* unexpected continuation or overlong 2-byte sequence */ \
+            (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+            break; \
         } else if (byte1 < 0xE0) { \
             if ((INDEX) < (SIZE)) { \
                 uint8_t byte2 = (STR)[(INDEX) ++]; \
@@ -412,8 +437,16 @@ static const int JsonLogic_HexMap[256] = {
                     uint32_t codepoint = (uint32_t)(byte1 & 0xF1) << 6 | \
                                          (uint32_t)(byte2 & 0x3F); \
                     CODE; \
-                } /* else illegal byte sequence, ignored */ \
-            } /* else unexpected end of multibyte sequence, ignored */ \
+                } else { \
+                    /* else illegal byte sequence */ \
+                    (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+                    break; \
+                } \
+            } else { \
+                /* else unexpected end of multibyte sequence */ \
+                (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+                break; \
+            } \
         } else if (byte1 < 0xF0) { \
             if ((INDEX) + 1 < (SIZE)) { \
                 uint8_t byte2 = (STR)[(INDEX) ++]; \
@@ -426,8 +459,16 @@ static const int JsonLogic_HexMap[256] = {
                                          (uint32_t)(byte2 & 0x3F) <<  6 | \
                                          (uint32_t)(byte3 & 0x3F); \
                     CODE; \
-                } /* else illegal byte sequence, ignored */ \
-            } /* else unexpected end of multibyte sequence, ignored */ \
+                } else { \
+                    /* else illegal byte sequence */ \
+                    (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+                    break; \
+                } \
+            } else { \
+                /* else unexpected end of multibyte sequence */ \
+                (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+                break; \
+            } \
         } else if (byte1 < 0xF8) { \
             if ((INDEX) + 2 < (SIZE)) { \
                 uint8_t byte2 = (STR)[(INDEX) ++]; \
@@ -445,8 +486,16 @@ static const int JsonLogic_HexMap[256] = {
                                          (uint32_t)(byte4 & 0x3F); \
                     CODE; \
                 } \
-            } /* else unexpected end of multibyte sequence, ignored */ \
-        } /* else illegal byte sequence, ignored */ \
+            } else { \
+                /* else unexpected end of multibyte sequence */ \
+                (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+                break; \
+             } \
+        } else { \
+            /* else illegal byte sequence */ \
+            (ERROR) = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT; \
+            break; \
+        } \
     }
 
 typedef enum JsonLogic_ParseType {
@@ -567,7 +616,7 @@ static inline JsonLogic_Error jsonlogic_parsestack_handle_value(JsonLogic_ParseS
                 }
                 item->data.object.key = jsonlogic_incref(value);
             } else {
-                *stateptr = JsonLogic_ParserState_ObjectValue;
+                *stateptr = JsonLogic_ParserState_ObjectNext;
                 JsonLogic_Error error = jsonlogic_objbuf_set(&item->data.object.buf, item->data.object.key, value);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     return error;
@@ -636,7 +685,7 @@ static void jsonlogic_parsestack_free(JsonLogic_ParseStack *stack) {
     stack->items    = NULL;
 }
 
-JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size) {
+JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_LineInfo *infoptr) {
     JsonLogic_ParseStack stack = JSONLOGIC_PARSESTACK_INIT;
     JsonLogic_RootParser state = JsonLogic_ParserState_Start;
     JsonLogic_Error error = JSONLOGIC_ERROR_SUCCESS;
@@ -921,7 +970,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size) {
                 break;
             }
             case JsonLogic_ParserState_Error:
-                error = JSONLOGIC_ERROR_INTERNAL_ERROR;
+                error = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
                 goto loop_end;
                 break;
 
@@ -936,6 +985,10 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size) {
 loop_end:
 
     if (error != JSONLOGIC_ERROR_SUCCESS) {
+        JsonLogic_LineInfo info = jsonlogic_get_lineinfo(str, size, index);
+        if (infoptr != NULL) {
+            *infoptr = info;
+        }
         jsonlogic_parsestack_free(&stack);
         return (JsonLogic_Handle){ .intptr = error };
     }
@@ -943,6 +996,10 @@ loop_end:
     state = JsonLogic_Parser_Root[state][JSONLOGIC_PARSE_EOF];
 
     if (state != JsonLogic_ParserState_End) {
+        JsonLogic_LineInfo info = jsonlogic_get_lineinfo(str, size, index);
+        if (infoptr != NULL) {
+            *infoptr = info;
+        }
         jsonlogic_parsestack_free(&stack);
         return JsonLogic_Error_IllegalArgument;
     }

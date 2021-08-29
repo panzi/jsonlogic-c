@@ -19,7 +19,7 @@ const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = { .intptr = JSONLOGIC_
 const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_ERROR_INTERNAL_ERROR    };
 
 JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle) {
-    static_assert(sizeof(void*) == 8, "This library only works on 64 bit platform (where pointers actually only use 48 bits).");
+    static_assert(sizeof(void*) <= 8, "This library only works on platforms where pointers use <= 48 bits (e.g. x86_64).");
 
     if (JSONLOGIC_IS_NUMBER(handle)) {
         return JsonLogic_Type_Number;
@@ -78,35 +78,6 @@ bool jsonlogic_is_object(JsonLogic_Handle handle) {
 
 bool jsonlogic_is_boolean(JsonLogic_Handle handle) {
     return JSONLOGIC_IS_BOOLEAN(handle);
-}
-
-JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle) {
-    if (JSONLOGIC_IS_ERROR(handle)) {
-        return (JsonLogic_Error) handle.intptr;
-    }
-    return JSONLOGIC_ERROR_SUCCESS;
-}
-
-const char *jsonlogic_get_error_message(JsonLogic_Error error) {
-    switch (error) {
-        case JSONLOGIC_ERROR_SUCCESS:
-            return "Success";
-
-        case JSONLOGIC_ERROR_OUT_OF_MEMORY:
-            return "Out of Memory";
-
-        case JSONLOGIC_ERROR_ILLEGAL_OPERATION:
-            return "Illegal Operation";
-
-        case JSONLOGIC_ERROR_ILLEGAL_ARGUMENT:
-            return "Illegal Argument";
-
-        case JSONLOGIC_ERROR_INTERNAL_ERROR:
-            return "Internal Error (this is a bug)";
-
-        default:
-            return "(Illegal Error Code)";
-    }
 }
 
 JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle) {

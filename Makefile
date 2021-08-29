@@ -5,6 +5,7 @@ LIB_OBJS=$(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/boolean.o \
          $(BUILD_DIR)/obj/extras.o \
          $(BUILD_DIR)/obj/compare.o \
+         $(BUILD_DIR)/obj/error.o \
          $(BUILD_DIR)/obj/json.o \
          $(BUILD_DIR)/obj/jsonlogic.o \
          $(BUILD_DIR)/obj/number.o \

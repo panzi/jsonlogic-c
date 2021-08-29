@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+JsonLogic_Handle jsonlogic_boolean_from(bool value);
+
 JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
         return handle.number == 0.0 || isnan(handle.number) ?

@@ -5,7 +5,6 @@
 #include <uchar.h>
 #include <stdint.h>
 #include <stddef.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,12 +12,14 @@ extern "C" {
 
 #if defined(JSONLOGIC_INTERN_H)
 typedef union {
-    uintptr_t intptr;
-    double    number;
+    uint64_t intptr;
+    double   number;
 } JsonLogic_Handle;
 #else
-typedef struct JsonLogic_Struct* JsonLogic_Handle;
+typedef uint64_t JsonLogic_Handle;
 #endif
+
+typedef uint64_t JsonLogic_Error;
 
 typedef struct JsonLogic_Object_Entry {
     JsonLogic_Handle key;
