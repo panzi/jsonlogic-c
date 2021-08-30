@@ -68,23 +68,30 @@ int main(int argc, char *argv[]) {
     size_t pass_count = 0;
     #define FAIL() \
         if (!newline) { \
-            puts(" FAILED"); \
+            puts("FAILED"); \
+            fflush(stdout); \
             newline = true; \
-        }
+        } \
+        fprintf(stderr, "      test: %" PRIuPTR "\n", test_count);
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
 
         if (test == JSONLOGIC_ERROR_STOP_ITERATION) {
+            if (!newline) {
+                puts("OK");
+                fflush(stdout);
+                newline = false;
+            }
             break;
         }
 
         if (jsonlogic_is_string(test)) {
             if (!newline) {
-                puts(" OK");
+                puts("OK");
             }
             size_t size = 0;
             const char16_t *str = jsonlogic_get_string_content(test, &size);
-            printf(" - "); jsonlogic_print_utf16(stdout, str, size);
+            printf(" - "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
             fflush(stdout);
             newline = false;
         } else {
@@ -96,19 +103,19 @@ int main(int argc, char *argv[]) {
 
             if (jsonlogic_is_error(logic)) {
                 FAIL();
-                fprintf(stderr, "*** error: in tests JSON: %s\n", jsonlogic_get_error_message(logic));
+                fprintf(stderr, "     error: in tests JSON: %s\n", jsonlogic_get_error_message(logic));
                 goto test_cleanup;
             }
 
             if (jsonlogic_is_error(data)) {
                 FAIL();
-                fprintf(stderr, "*** error: in tests JSON: %s\n", jsonlogic_get_error_message(data));
+                fprintf(stderr, "     error: in tests JSON: %s\n", jsonlogic_get_error_message(data));
                 goto test_cleanup;
             }
 
             if (jsonlogic_is_error(expected)) {
                 FAIL();
-                fprintf(stderr, "*** error: in tests JSON: %s\n", jsonlogic_get_error_message(expected));
+                fprintf(stderr, "     error: in tests JSON: %s\n", jsonlogic_get_error_message(expected));
                 goto test_cleanup;
             }
 
@@ -116,11 +123,11 @@ int main(int argc, char *argv[]) {
 
             if (!jsonlogic_deep_strict_equal(expected, actual)) {
                 FAIL();
-                fprintf(stderr, "*** error: Wrong result\n");
-                fprintf(stderr, "    logic: "); jsonlogic_print(stderr, logic);    fputc('\n', stderr);
-                fprintf(stderr, "     data: "); jsonlogic_print(stderr, data);     fputc('\n', stderr);
-                fprintf(stderr, " expected: "); jsonlogic_print(stderr, expected); fputc('\n', stderr);
-                fprintf(stderr, "   actual: "); jsonlogic_print(stderr, actual);   fputc('\n', stderr);
+                fprintf(stderr, "     error: Wrong result\n");
+                fprintf(stderr, "     logic: "); jsonlogic_print(stderr, logic);    fputc('\n', stderr);
+                fprintf(stderr, "      data: "); jsonlogic_print(stderr, data);     fputc('\n', stderr);
+                fprintf(stderr, "  expected: "); jsonlogic_print(stderr, expected); fputc('\n', stderr);
+                fprintf(stderr, "    actual: "); jsonlogic_print(stderr, actual);   fputc('\n', stderr);
                 fputc('\n', stderr);
                 goto test_cleanup;
             }

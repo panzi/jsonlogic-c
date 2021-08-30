@@ -49,7 +49,7 @@ const char *jsonlogic_get_type_name(JsonLogic_Type type) {
 }
 
 bool jsonlogic_is_error(JsonLogic_Handle handle) {
-    return JSONLOGIC_IS_NUMBER(handle);
+    return JSONLOGIC_IS_ERROR(handle);
 }
 
 bool jsonlogic_is_null(JsonLogic_Handle handle) {

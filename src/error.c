@@ -39,6 +39,7 @@ const char *jsonlogic_get_error_message(JsonLogic_Error error) {
             return "Stop Iteration";
 
         default:
+            JSONLOGIC_DEBUG("illegal error code: 0x%" PRIx64, error);
             return "(Illegal Error Code)";
     }
 }
