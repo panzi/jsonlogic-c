@@ -39,18 +39,21 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    char *utf8 = jsonlogic_stringify_utf8(result);
+    error = jsonlogic_stringify_file(stdout, result);
     jsonlogic_decref(result);
 
-    if (utf8 == NULL) {
+    if (error == JSONLOGIC_ERROR_IO) {
         fprintf(stderr,
-            "*** error: calling jsonlogic_stringify_utf8(): %s\n",
+            "*** error: calling jsonlogic_stringify_file(): %s\n",
             strerror(errno));
         return 1;
-    } else {
-        puts(utf8);
-        free(utf8);
+    } else if (error != JSONLOGIC_ERROR_SUCCESS) {
+        fprintf(stderr,
+            "*** error: calling jsonlogic_stringify_file(): %s\n",
+            jsonlogic_get_error_message(error));
+        return 1;
     }
+    putchar('\n');
 
     return 0;
 }

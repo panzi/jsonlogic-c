@@ -1073,3 +1073,37 @@ char *jsonlogic_stringify_utf8(JsonLogic_Handle value) {
     return result;
 }
 
+static inline JsonLogic_Error jsonlogic_print_double(FILE *file, double value) {
+    int count = fprintf(file, "%g", value);
+    if (count < 0) {
+        return JSONLOGIC_ERROR_IO;
+    }
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+static inline JsonLogic_Error jsonlogic_print_ascii(FILE *file, const char *str) {
+    if (fputs(str, file) < 0) {
+        return JSONLOGIC_ERROR_IO;
+    }
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+#define JsonLogic_StrBuf               FILE
+#define jsonlogic_strbuf_append_double jsonlogic_print_double
+#define jsonlogic_strbuf_append_ascii  jsonlogic_print_ascii
+#define jsonlogic_strbuf_append_utf16  jsonlogic_print_utf16
+#define jsonlogic_stringify_intern     jsonlogic_stringify_file_intern
+#include "stringify.c"
+#undef JsonLogic_StrBuf
+#undef jsonlogic_strbuf_append_double
+#undef jsonlogic_strbuf_append_ascii
+#undef jsonlogic_strbuf_append_utf16
+#undef jsonlogic_stringify_intern
+
+JsonLogic_Error jsonlogic_stringify_file(FILE *file, JsonLogic_Handle value) {
+    if (JSONLOGIC_IS_ERROR(value)) {
+        return value.intptr;
+    }
+
+    return jsonlogic_stringify_file_intern(file, value);
+}

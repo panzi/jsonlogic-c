@@ -29,6 +29,7 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalOperation;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalArgument;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_InternalError;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_StopIteration;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IO;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
@@ -40,6 +41,7 @@ JSONLOGIC_EXPORT JsonLogic_LineInfo jsonlogic_get_lineinfo(const char *str, size
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value);
 JSONLOGIC_EXPORT char *jsonlogic_stringify_utf8(JsonLogic_Handle value);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_stringify_file(FILE *file, JsonLogic_Handle value);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_latin1      (const char *str);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size);
@@ -95,10 +97,10 @@ JSONLOGIC_EXPORT const char16_t *jsonlogic_get_string_content(JsonLogic_Handle s
 
 JSONLOGIC_EXPORT size_t jsonlogic_utf16_len(const char16_t *key);
 JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size);
-JSONLOGIC_EXPORT int   jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
-JSONLOGIC_EXPORT int   jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size);
-JSONLOGIC_EXPORT bool  jsonlogic_print(FILE *stream, JsonLogic_Handle handle);
-JSONLOGIC_EXPORT bool  jsonlogic_println(FILE *stream, JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_print(FILE *stream, JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_println(FILE *stream, JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT const char    *jsonlogic_get_type_name(JsonLogic_Type type);

@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
+#include <errno.h>
+#include <string.h>
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
@@ -935,13 +937,17 @@ JsonLogic_Handle jsonlogic_op_LOG(JsonLogic_Handle data, JsonLogic_Handle args[]
         fprintf(stderr, "%s\n", jsonlogic_get_error_message(jsonlogic_get_error(value)));
         return value;
     }
-    char *utf8 = jsonlogic_stringify_utf8(value);
-    if (utf8 == NULL) {
-        fputs("error calling stringify\n", stderr);
+
+    JsonLogic_Error error = jsonlogic_stringify_file(stdout, value);
+    if (error == JSONLOGIC_ERROR_IO) {
+        int errnum = errno;
+        puts(errnum != 0 ? strerror(errno) : jsonlogic_get_error_message(error));
+    } else if (error != JSONLOGIC_ERROR_SUCCESS) {
+        puts(jsonlogic_get_error_message(error));
     } else {
-        fprintf(stderr, "%s\n", utf8);
-        free(utf8);
+        putchar('\n');
     }
+
     return value;
 }
 

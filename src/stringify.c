@@ -1,5 +1,3 @@
-#include "jsonlogic_intern.h"
-
 // this file is twice included in json.c with functions and typed #defined to make it generic
 static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {

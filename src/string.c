@@ -592,22 +592,26 @@ char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
     return utf8;
 }
 
-int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size) {
+JsonLogic_Error jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size) {
     JSONLOGIC_DECODE_UTF16(str, size, {
         char utf8[6];
         size_t utf8_index = 0;
         JSONLOGIC_ENCODE_UTF8(codepoint, utf8, utf8_index);
         if (fwrite(utf8, utf8_index, 1, stream) != 1) {
-            return index;
+            return JSONLOGIC_ERROR_IO;
         }
     });
 
-    return size;
+    return JSONLOGIC_ERROR_SUCCESS;
 }
 
-int jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size) {
-    int result = jsonlogic_print_utf16(stream, str, size);
-    fputc('\n', stream);
+JsonLogic_Error jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size) {
+    JsonLogic_Error result = jsonlogic_print_utf16(stream, str, size);
+    if (result == JSONLOGIC_ERROR_SUCCESS) {
+        if (fputc('\n', stream) == EOF) {
+            return JSONLOGIC_ERROR_IO;
+        }
+    }
     return result;
 }
 
@@ -728,24 +732,22 @@ void jsonlogic_utf8buf_free(JsonLogic_Utf8Buf *buf) {
     buf->used     = 0;
 }
 
-bool jsonlogic_print(FILE *stream, JsonLogic_Handle handle) {
+JsonLogic_Error jsonlogic_print(FILE *stream, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
-        fputs(jsonlogic_get_error_message(handle.intptr), stream);
-        return false;
+        if (fputs(jsonlogic_get_error_message(handle.intptr), stream) < 0) {
+            return JSONLOGIC_ERROR_IO;
+        }
+        return JSONLOGIC_ERROR_SUCCESS;
     }
-    char *utf8 = jsonlogic_stringify_utf8(handle);
-    if (utf8 == NULL) {
-        fputs(strerror(errno), stream);
-        return false;
-    } else {
-        fputs(utf8, stream);
-        free(utf8);
-        return true;
-    }
+    return jsonlogic_stringify_file(stream, handle);
 }
 
-bool jsonlogic_println(FILE *stream, JsonLogic_Handle handle) {
-    bool result = jsonlogic_print(stream, handle);
-    fputc('\n', stream);
+JsonLogic_Error jsonlogic_println(FILE *stream, JsonLogic_Handle handle) {
+    JsonLogic_Error result = jsonlogic_print(stream, handle);
+    if (result == JSONLOGIC_ERROR_SUCCESS) {
+        if (fputc('\n', stream) == EOF) {
+            return JSONLOGIC_ERROR_IO;
+        }
+    }
     return result;
 }

@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <uchar.h>
+#include <string.h>
+#include <errno.h>
 
 size_t strlen16(const char16_t* strarg) {
    if (strarg == NULL) {
@@ -24,12 +26,20 @@ int main(int argc, char *argv[]) {
             status = 1;
             jsonlogic_print_parse_error(stderr, argv[argind], error, info);
         } else {
-            char *utf8 = jsonlogic_stringify_utf8(value);
-            if (utf8 == NULL) {
-                fprintf(stderr, "*** error: calling jsonlogic_stringify_utf8(): %s\n", argv[argind]);
+            error = jsonlogic_stringify_file(stdout, value);
+
+            if (error == JSONLOGIC_ERROR_IO) {
+                status = 1;
+                fprintf(stderr,
+                    "*** error: calling jsonlogic_stringify_file(): %s\n",
+                    strerror(errno));
+            } else if (error != JSONLOGIC_ERROR_SUCCESS) {
+                status = 1;
+                fprintf(stderr,
+                    "*** error: calling jsonlogic_stringify_file(): %s\n",
+                    jsonlogic_get_error_message(error));
             } else {
-                puts(utf8);
-                free(utf8);
+                putchar('\n');
             }
         }
         jsonlogic_decref(value);

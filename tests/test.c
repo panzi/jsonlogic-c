@@ -122,11 +122,11 @@ int main(int argc, char *argv[]) {
             if (!jsonlogic_deep_strict_equal(expected, actual)) {
                 FAIL();
                 fprintf(stderr, "     error: Wrong result\n");
-                fprintf(stderr, "      test: "); jsonlogic_print(stderr, test);     fputc('\n', stderr);
-                fprintf(stderr, "     logic: "); jsonlogic_print(stderr, logic);    fputc('\n', stderr);
-                fprintf(stderr, "      data: "); jsonlogic_print(stderr, data);     fputc('\n', stderr);
-                fprintf(stderr, "  expected: "); jsonlogic_print(stderr, expected); fputc('\n', stderr);
-                fprintf(stderr, "    actual: "); jsonlogic_print(stderr, actual);   fputc('\n', stderr);
+                fprintf(stderr, "      test: "); jsonlogic_println(stderr, test);
+                fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+                fprintf(stderr, "      data: "); jsonlogic_println(stderr, data);
+                fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
+                fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
                 fputc('\n', stderr);
                 goto test_cleanup;
             }
