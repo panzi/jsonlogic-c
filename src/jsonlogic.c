@@ -333,7 +333,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         size_t index = 0;
         while (index < value_count - 1) {
             JsonLogic_Handle value = jsonlogic_apply_custom(
-                values[index ++],
+                values[index],
                 input,
                 operations,
                 operation_count);
@@ -341,11 +341,12 @@ JsonLogic_Handle jsonlogic_apply_custom(
             jsonlogic_decref(value);
             if (condition) {
                 return jsonlogic_apply_custom(
-                    values[index ++],
+                    values[index + 1],
                     input,
                     operations,
                     operation_count);
             }
+            index += 2;
         }
         if (index < value_count) {
             return jsonlogic_apply_custom(
@@ -404,6 +405,9 @@ JsonLogic_Handle jsonlogic_apply_custom(
             input,
             operations,
             operation_count);
+        if (JSONLOGIC_IS_ERROR(items)) {
+            return items;
+        }
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 2 || !jsonlogic_to_bool(values[1])) {
             jsonlogic_decref(items);
             return jsonlogic_empty_array();
@@ -445,7 +449,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
             input,
             operations,
             operation_count);
-        if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
+        if (JSONLOGIC_IS_ERROR(items)) {
+            return items;
+        }
+        if (!JSONLOGIC_IS_ARRAY(items)) {
             jsonlogic_decref(items);
             return jsonlogic_empty_array();
         }
@@ -466,8 +473,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
                 item,
                 operations,
                 operation_count);
-            jsonlogic_incref(value);
-            mapped->items[index ++] = value;
+            mapped->items[index] = value;
         }
 
         jsonlogic_decref(items);
@@ -490,6 +496,9 @@ JsonLogic_Handle jsonlogic_apply_custom(
             input,
             operations,
             operation_count);
+        if (JSONLOGIC_IS_ERROR(items)) {
+            return items;
+        }
 
         if (!JSONLOGIC_IS_ARRAY(items)) {
             jsonlogic_incref(init);
@@ -550,6 +559,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
             input,
             operations,
             operation_count);
+        if (JSONLOGIC_IS_ERROR(items)) {
+            return items;
+        }
+
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
             return JsonLogic_False;
@@ -591,6 +604,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
             input,
             operations,
             operation_count);
+        if (JSONLOGIC_IS_ERROR(items)) {
+            return items;
+        }
+
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
             return JsonLogic_False;
@@ -632,6 +649,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
             input,
             operations,
             operation_count);
+        if (JSONLOGIC_IS_ERROR(items)) {
+            return items;
+        }
+
         if (!JSONLOGIC_IS_ARRAY(items) || value_count < 1) {
             jsonlogic_decref(items);
             return JsonLogic_True;
@@ -1059,11 +1080,13 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
         return jsonlogic_incref(data);
     }
 
-    if (JSONLOGIC_IS_NUMBER(args[0])) {
-        return jsonlogic_get(data, args[0]);
+    JsonLogic_Handle arg0 = args[0];
+
+    if (JSONLOGIC_IS_NUMBER(arg0) && isfinite(arg0.number) && floor(arg0.number) == arg0.number) {
+        return jsonlogic_get(data, arg0);
     }
 
-    JsonLogic_Handle key = jsonlogic_to_string(args[0]);
+    JsonLogic_Handle key = jsonlogic_to_string(arg0);
     if (JSONLOGIC_IS_ERROR(key)) {
         return key;
     }
@@ -1077,10 +1100,9 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
     }
 
     const char16_t *pos = strkey->str;
-    size_t keysize = strkey->size;
-    const char16_t *next = jsonlogic_find_char(pos, keysize, u'.');
+    const char16_t *next = jsonlogic_find_char(pos, strkey->size, u'.');
     if (next == NULL) {
-        JsonLogic_Handle value = jsonlogic_get(data, key);
+        JsonLogic_Handle value = jsonlogic_get_utf16_sized(data, strkey->str, strkey->size);
         jsonlogic_decref(key);
         if (JSONLOGIC_IS_NULL(value)) {
             jsonlogic_incref(default_value);
@@ -1089,11 +1111,10 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
         return value;
     }
 
+    const char16_t *end = strkey->str + strkey->size;
     for (;;) {
         size_t size = next - pos;
-        JsonLogic_Handle prop = jsonlogic_string_from_utf16_sized(pos, size);
-        data = jsonlogic_get(data, prop);
-        jsonlogic_decref(prop);
+        data = jsonlogic_get_utf16_sized(data, pos, size);
         if (JSONLOGIC_IS_NULL(data)) {
             jsonlogic_incref(default_value);
             jsonlogic_decref(key);
@@ -1101,16 +1122,14 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
         }
 
         pos = next + 1;
-        keysize -= size;
-        if (keysize == 0) {
+        if (pos < end) {
             jsonlogic_incref(default_value);
             jsonlogic_decref(key);
             return default_value;
         }
-        -- keysize;
-        next = jsonlogic_find_char(pos, keysize, u'.');
+        next = jsonlogic_find_char(pos, end - pos, u'.');
         if (next == NULL) {
-            next = pos + keysize;
+            next = end;
         }
     }
 }
