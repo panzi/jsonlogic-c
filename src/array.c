@@ -52,8 +52,14 @@ JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
 
     for (size_t index = 0; index < count; ++ index) {
         JsonLogic_Handle item = va_arg(ap, JsonLogic_Handle);
-        jsonlogic_incref(item);
-        array->items[index] = item;
+        if (JSONLOGIC_IS_ERROR(item)) {
+            for (size_t free_index = 0; free_index < index; ++ free_index) {
+                jsonlogic_decref(array->items[free_index]);
+            }
+            free(array);
+            return item;
+        }
+        array->items[index] = jsonlogic_incref(item);
     }
 
     va_end(ap);

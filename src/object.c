@@ -70,6 +70,18 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
 
             return key;
         }
+        if (JSONLOGIC_IS_ERROR(entry.value)) {
+            jsonlogic_decref(key);
+            for (size_t free_index = 0; free_index < index; ++ free_index) {
+                JsonLogic_Object_Entry *entry = &object->entries[free_index];
+                jsonlogic_decref(entry->key);
+                jsonlogic_decref(entry->value);
+            }
+            free(object);
+            va_end(ap);
+
+            return entry.value;
+        }
         jsonlogic_incref(entry.value);
         object->entries[index] = (JsonLogic_Object_Entry){
             .key   = key,
@@ -79,7 +91,9 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
 
     va_end(ap);
 
-    qsort(object->entries, object->size, sizeof(JsonLogic_Object_Entry), jsonlogic_object_entry_compary);
+    qsort(object->entries, object->size,
+        sizeof(JsonLogic_Object_Entry),
+        jsonlogic_object_entry_compary);
 
     // check uniquness
     if (count > 1) {

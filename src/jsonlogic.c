@@ -692,7 +692,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
     if (opfunc == NULL) {
         opfunc = jsonlogic_operation_get(JsonLogic_Builtins, JSONLOGIC_BUILTIN_COUNT, opstr->str, opstr->size);
         if (opfunc == NULL) {
-            JSONLOGIC_ERROR("%s", "illegal operation");
             return JsonLogic_Error_IllegalOperation;
         }
     }

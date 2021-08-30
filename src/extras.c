@@ -9,6 +9,7 @@
 #include <string.h>
 #include <inttypes.h>
 #include <math.h>
+#include <errno.h>
 
 #if defined(_WIN32) || defined(_WIN64)
     // #include <windows.h>
@@ -358,12 +359,14 @@ double jsonlogic_parse_date_time(const char16_t *str, size_t size) {
 
 JsonLogic_Operation_Entry *jsonlogic_add_extras(const JsonLogic_Operation_Entry operations[], size_t *operations_size) {
     if (operations_size == NULL) {
-        JSONLOGIC_ERROR("%s", "illegal argument: operations_size is NULL");
+        JSONLOGIC_DEBUG("%s", "illegal argument: operations_size is NULL");
+        errno = EINVAL;
         return NULL;
     }
 
     if (*operations_size > 0 && operations == NULL) {
-        JSONLOGIC_ERROR("%s", "illegal argument: *operations_size > 0, but operations == NULL");
+        JSONLOGIC_DEBUG("%s", "illegal argument: *operations_size > 0, but operations == NULL");
+        errno = EINVAL;
         return NULL;
     }
 

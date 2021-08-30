@@ -9,8 +9,93 @@
 #include <unistd.h>
 #include <inttypes.h>
 
-int main(int argc, char *argv[]) {
+struct TestContext;
 
+typedef void (*TestFunc)(struct TestContext *);
+
+typedef struct TestCase {
+    const char *name;
+    TestFunc func;
+} TestCase;
+
+typedef struct TestContext {
+    const TestCase *test_case;
+    size_t testnr;
+    bool newline;
+    bool passed;
+} TestContext;
+
+#define TEST_STR_(CODE) (#CODE)
+#define TEST_STR(CODE) TEST_STR_(CODE)
+
+#define TEST_FAIL() \
+    { \
+        test_context->passed = false; \
+        if (!test_context->newline) { \
+            puts("FAILED"); \
+            fflush(stdout); \
+            test_context->newline = true; \
+        } \
+    }
+
+#define TEST_ASSERT(EXPR) \
+    if (!(EXPR)) { \
+        TEST_FAIL(); \
+        fprintf(stderr, "%s:%u: Assertion failed: %s\n", \
+            __FILE__, __LINE__, TEST_STR(EXPR)); \
+        goto cleanup; \
+    }
+
+#define TEST_ASSERT_MSG(EXPR, MSG) \
+    if (!(EXPR)) { \
+        TEST_FAIL(); \
+        fprintf(stderr, "%s:%u: Assertion failed: %s\n", \
+            __FILE__, __LINE__, MSG); \
+        goto cleanup; \
+    }
+
+#define TEST_ASSERT_FMT(EXPR, MSG, ...) \
+    if (!(EXPR)) { \
+        TEST_FAIL(); \
+        fprintf(stderr, "%s:%u: Assertion failed: " MSG "\n", \
+            __FILE__, __LINE__, __VA_ARGS__); \
+        goto cleanup; \
+    }
+
+#define TEST_ASSERT_X(EXPR, CODE) \
+    if (!(EXPR)) { \
+        TEST_FAIL(); \
+        fprintf(stderr, "%s:%u: Assertion failed: ", \
+            __FILE__, __LINE__); \
+        CODE; \
+        goto cleanup; \
+    }
+
+#define TEST_DECL(NAME, FUNC) \
+    { .name = NAME, .func = test_##FUNC }
+
+#define TEST_END { .name = NULL, .func = NULL }
+
+void test_bad_operator(TestContext *test_context) {
+    JsonLogic_Handle logic  = jsonlogic_parse("{\"fubar\": []}", NULL);
+    JsonLogic_Handle result = jsonlogic_apply(
+        logic,
+        JsonLogic_Null
+    );
+
+    TEST_ASSERT(result == JSONLOGIC_ERROR_ILLEGAL_OPERATION);
+
+cleanup:
+    jsonlogic_decref(result);
+    jsonlogic_decref(logic);
+}
+
+const TestCase TEST_CASES[] = {
+    TEST_DECL("Bad operator", bad_operator),
+    TEST_END,
+};
+
+int main(int argc, char *argv[]) {
     if (argc != 2) {
         const char *progname = argc > 0 ? argv[0] : "test";
         fprintf(stderr, "usage: %s <path/to/tests.json>\n", progname);
@@ -61,37 +146,71 @@ int main(int argc, char *argv[]) {
 
     JsonLogic_Iterator iter = jsonlogic_iter(tests);
 
-    bool newline = true;
+    TestContext test_context = {
+        .test_case = NULL,
+        .newline   = false,
+        .passed    = true,
+        .testnr    = 0,
+    };
     size_t test_count = 0;
     size_t pass_count = 0;
+
+    for (const TestCase *test = TEST_CASES; test->func; ++ test) {
+        ++ test_count;
+        printf(" - %s ... ", test->name);
+        fflush(stdout);
+        test_context.test_case = test;
+        test_context.testnr    = test_count;
+        test_context.newline   = false;
+        test_context.passed    = true;
+
+        test->func(&test_context);
+
+        if (!test_context.newline) {
+            puts(test_context.passed ? "OK" : "FAILED");
+            fflush(stdout);
+            test_context.newline = true;
+        }
+
+        if (test_context.passed) {
+            ++ pass_count;
+        }
+    }
+
+    test_context.test_case = NULL;
+    test_context.testnr    = 0;
+    test_context.newline   = true;
+    test_context.passed    = true;
+
     #define FAIL() \
-        if (!newline) { \
+        if (!test_context.newline) { \
             puts("FAILED"); \
             fflush(stdout); \
-            newline = true; \
+            test_context.newline = true; \
         } \
         fprintf(stderr, "      test: %" PRIuPTR "\n", test_count);
+
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
 
         if (test == JSONLOGIC_ERROR_STOP_ITERATION) {
-            if (!newline) {
+            if (!test_context.newline) {
                 puts("OK");
                 fflush(stdout);
-                newline = false;
+                test_context.newline = false;
             }
             break;
         }
 
         if (jsonlogic_is_string(test)) {
-            if (!newline) {
+            if (!test_context.newline) {
                 puts("OK");
             }
             size_t size = 0;
             const char16_t *str = jsonlogic_get_string_content(test, &size);
             printf(" - "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
             fflush(stdout);
-            newline = false;
+            test_context.newline = false;
         } else {
             ++ test_count;
 
