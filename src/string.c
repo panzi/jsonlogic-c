@@ -182,16 +182,16 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
     if (isnan(dbl_index)) {
         sz_index = 0;
     } else if (dbl_index < 0) {
-        if (-dbl_index >= (double)string->size) {
+        sz_index = (size_t)-dbl_index;
+        if (sz_index >= string->size) {
             sz_index = 0;
         } else {
-            sz_index = string->size + (size_t)dbl_index;
+            sz_index = string->size - sz_index;
         }
     } else {
-        if (dbl_index > (double)string->size) {
+        sz_index = (size_t)dbl_index;
+        if (sz_index > string->size) {
             sz_index = string->size;
-        } else {
-            sz_index = (size_t)dbl_index;
         }
     }
 
@@ -202,17 +202,20 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
 
         if (isnan(dbl_size)) {
             sz_size = 0;
-        } else if (dbl_size < 0) {
-            if (-dbl_size >= (double)string->size) {
-                sz_size = 0;
-            } else {
-                sz_size = string->size + (size_t)dbl_size;
-            }
         } else {
-            if (dbl_size > (double)(string->size - sz_index)) {
-                sz_size = string->size - sz_index;
+            size_t max_size = string->size - sz_index;
+            if (dbl_size < 0) {
+                sz_size = (size_t)-dbl_size;
+                if (sz_size >= max_size) {
+                    sz_size = 0;
+                } else {
+                    sz_size = max_size - sz_size;
+                }
             } else {
                 sz_size = (size_t)dbl_size;
+                if (sz_size > max_size) {
+                    sz_size = max_size;
+                }
             }
         }
     }
