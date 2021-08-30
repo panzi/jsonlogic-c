@@ -16,7 +16,7 @@ JsonLogic_Handle jsonlogic_empty_object() {
     object->refcount = 1;
     object->size     = 0;
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
+    return jsonlogic_object_into_handle(object);
 }
 
 void jsonlogic_object_free(JsonLogic_Object *object) {
@@ -92,12 +92,14 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
         }
     }
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
+    return jsonlogic_object_into_handle(object);
 }
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, u"length")
 
-JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle key) {
+JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key);
+
+JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16_t *key, size_t size) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
         return JsonLogic_Null;
     }
@@ -105,26 +107,10 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         {
-            size_t index = SIZE_MAX;
-            if (JSONLOGIC_IS_STRING(key)) {
-                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
-                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
-                    return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
-                }
-                index = jsonlogic_string_to_index(stringkey);
-            } else {
-                JsonLogic_Handle strkey = jsonlogic_to_string(key);
-                if (JSONLOGIC_IS_ERROR(strkey)) {
-                    return strkey;
-                }
-                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
-                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
-                    jsonlogic_decref(strkey);
-                    return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
-                }
-                index = jsonlogic_string_to_index(stringkey);
-                jsonlogic_decref(strkey);
+            if (jsonlogic_utf16_equals(key, size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
+                return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
             }
+            size_t index = jsonlogic_utf16_to_index(key, size);
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
             if (index < string->size) {
                 return jsonlogic_string_from_utf16_sized(string->str + index, 1);
@@ -133,26 +119,10 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
         }
         case JsonLogic_Type_Array:
         {
-            size_t index = SIZE_MAX;
-            if (JSONLOGIC_IS_STRING(key)) {
-                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(key);
-                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
-                    return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
-                }
-                index = jsonlogic_string_to_index(stringkey);
-            } else {
-                JsonLogic_Handle strkey = jsonlogic_to_string(key);
-                if (JSONLOGIC_IS_ERROR(strkey)) {
-                    return strkey;
-                }
-                const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
-                if (jsonlogic_utf16_equals(stringkey->str, stringkey->size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
-                    jsonlogic_decref(strkey);
-                    return jsonlogic_number_from(JSONLOGIC_CAST_ARRAY(handle)->size);
-                }
-                index = jsonlogic_string_to_index(stringkey);
-                jsonlogic_decref(strkey);
+            if (jsonlogic_utf16_equals(key, size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
+                return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
             }
+            size_t index = jsonlogic_utf16_to_index(key, size);
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
             if (index < array->size) {
                 JsonLogic_Handle item = array->items[index];
@@ -164,7 +134,7 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
         case JsonLogic_Type_Object:
         {
             JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
-            size_t index = jsonlogic_object_get_index(object, key);
+            size_t index = jsonlogic_object_get_index_utf16(object, key, size);
             if (index >= object->size) {
                 return JsonLogic_Null;
             }
@@ -176,6 +146,14 @@ JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle handle, JsonLogic_Handle ke
         default:
             return JsonLogic_Error_InternalError;
     }
+}
+
+JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
+    JsonLogic_Handle strkey = jsonlogic_to_string(key);
+    JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
+    JsonLogic_Handle result = jsonlogic_get_utf16_sized(handle, stringkey->str, stringkey->size);
+    jsonlogic_decref(strkey);
+    return result;
 }
 
 size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t *key, size_t key_size) {

@@ -9,6 +9,7 @@ const JsonLogic_Handle JsonLogic_Error_OutOfMemory      = { .intptr = JSONLOGIC_
 const JsonLogic_Handle JsonLogic_Error_IllegalOperation = { .intptr = JSONLOGIC_ERROR_ILLEGAL_OPERATION };
 const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = { .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT  };
 const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_ERROR_INTERNAL_ERROR    };
+const JsonLogic_Handle JsonLogic_Error_StopIteration    = { .intptr = JSONLOGIC_ERROR_STOP_ITERATION    };
 
 JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
@@ -34,6 +35,9 @@ const char *jsonlogic_get_error_message(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_INTERNAL_ERROR:
             return "Internal Error (this is a bug)";
 
+        case JSONLOGIC_ERROR_STOP_ITERATION:
+            return "Stop Iteration";
+
         default:
             return "(Illegal Error Code)";
     }
@@ -46,6 +50,7 @@ JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_ILLEGAL_OPERATION:
         case JSONLOGIC_ERROR_ILLEGAL_ARGUMENT:
         case JSONLOGIC_ERROR_INTERNAL_ERROR:
+        case JSONLOGIC_ERROR_STOP_ITERATION:
             return (JsonLogic_Handle){ .intptr = error };
 
         default:

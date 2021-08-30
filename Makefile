@@ -4,6 +4,7 @@ BUILD_DIR=build
 LIB_OBJS=$(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/boolean.o \
          $(BUILD_DIR)/obj/extras.o \
+         $(BUILD_DIR)/obj/iterator.o \
          $(BUILD_DIR)/obj/compare.o \
          $(BUILD_DIR)/obj/error.o \
          $(BUILD_DIR)/obj/json.o \
@@ -99,11 +100,17 @@ else
 endif
 endif
 
-.PHONY: static shared lib so inc examples examples_shared clean install uninstall
+.PHONY: static shared lib so inc examples examples_shared clean install uninstall test test_shared
 
 static: lib inc
 
 shared: so inc
+
+test: $(BUILD_DIR)/bin/test$(BIN_EXT)
+	$< tests/tests.json
+
+test_shared: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
+	LD_LIBRARY_PATH=$(BUILD_DIR)/lib $< tests/tests.json
 
 lib: $(LIB)
 
@@ -126,6 +133,14 @@ uninstall:
 	   $(PREFIX)/include/jsonlogic_defs.h \
 	   $(PREFIX)/include/jsonlogic_extras.h \
 	   $(PREFIX)/include/jsonlogic.h
+
+$(BUILD_DIR)/bin/test$(BIN_EXT): tests/test.c src/jsonlogic.h src/jsonlogic_intern.h lib
+	@mkdir -p $(BUILD_DIR)/bin
+	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(STATIC_LIBS) -o $@
+
+$(BUILD_DIR)/bin/test_shared$(BIN_EXT): tests/test.c src/jsonlogic.h src/jsonlogic_intern.h so
+	@mkdir -p $(BUILD_DIR)/bin
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< $(LIBS) -o $@
 
 $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.o $(LIB)
 	@mkdir -p $(BUILD_DIR)/examples
@@ -181,4 +196,5 @@ $(INC): src/jsonlogic.h src/jsonlogic_defs.h src/jsonlogic_extras.h
 	cp src/jsonlogic_extras.h $(BUILD_DIR)/include/jsonlogic_extras.h
 
 clean:
-	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) || true
+	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) \
+	       $(BUILD_DIR)/bin/test$(BIN_EXT) $(BUILD_DIR)/bin/test_shared$(BIN_EXT) || true

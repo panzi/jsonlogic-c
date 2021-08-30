@@ -15,6 +15,15 @@ JsonLogic_Error jsonlogic_strbuf_append_ascii(JsonLogic_StrBuf *buf, const char 
 JsonLogic_Error jsonlogic_utf8buf_append_ascii(JsonLogic_Utf8Buf *buf, const char *str);
 int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b);
 
+size_t jsonlogic_utf16_len(const char16_t *key) {
+    if (key == NULL) {
+        return 0;
+    }
+    const char16_t *ptr = key;
+    while (ptr < key) ++ ptr;
+    return ptr - key;
+}
+
 JsonLogic_Handle jsonlogic_empty_string() {
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t));
     if (string == NULL) {
@@ -238,7 +247,7 @@ JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle inde
     return jsonlogic_string_substr(string, index, size);
 }
 
-const char16_t *jsonlogic_get_utf16(JsonLogic_Handle handle, size_t *sizeptr) {
+const char16_t *jsonlogic_get_string_content(JsonLogic_Handle handle, size_t *sizeptr) {
     if (!JSONLOGIC_IS_STRING(handle)) {
         return NULL;
     }
@@ -263,7 +272,11 @@ JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        buf->string = new_string;
+        if (buf->string == NULL) {
+            new_string->refcount = 1;
+            new_string->size     = 0;
+        }
+        buf->string   = new_string;
         buf->capacity = new_size;
     }
     return JSONLOGIC_ERROR_SUCCESS;
@@ -415,8 +428,7 @@ void jsonlogic_strbuf_free(JsonLogic_StrBuf *buf) {
 
 JsonLogic_Handle jsonlogic_to_string(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_STRING(handle)) {
-        jsonlogic_incref(handle);
-        return handle;
+        return jsonlogic_incref(handle);
     }
 
     if (JSONLOGIC_IS_ERROR(handle)) {
@@ -477,14 +489,16 @@ void jsonlogic_string_free(JsonLogic_String *string) {
     free(string);
 }
 
-size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
+size_t jsonlogic_string_to_index(const JsonLogic_String *string);
+
+size_t jsonlogic_utf16_to_index(const char16_t *str, size_t size) {
     size_t value = 0;
 
-    for (size_t index = 0; index < string->size; ++ index) {
+    for (size_t index = 0; index < size; ++ index) {
         if (value >= SIZE_MAX / 10) {
             return SIZE_MAX;
         }
-        char16_t ch = string->str[index];
+        char16_t ch = str[index];
         if (ch < u'0' || ch > u'1') {
             return SIZE_MAX;
         }

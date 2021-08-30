@@ -28,6 +28,7 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_OutOfMemory;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalOperation;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalArgument;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_InternalError;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_StopIteration;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
@@ -78,7 +79,7 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...
  * @endcode
  * 
  */
-#define jsonlogic_object_from(...) jsonlogic_array_from_vararg(jsonlogic_count_entries(__VA_ARGS__), __VA_ARGS__)
+#define jsonlogic_object_from(...) jsonlogic_object_from_vararg(jsonlogic_count_entries(__VA_ARGS__), __VA_ARGS__)
 #define jsonlogic_entry(KEY, VALUE) (JsonLogic_Object_Entry){ .key = (KEY), .value = (VALUE) }
 #define jsonlogic_entry_latin1(KEY, VALUE) (JsonLogic_Object_Entry){ .key = jsonlogic_string_from_latin1((KEY)), .value = (VALUE) }
 
@@ -90,13 +91,14 @@ JSONLOGIC_EXPORT bool   jsonlogic_to_bool  (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT double jsonlogic_to_double(JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle string, JsonLogic_Handle index, JsonLogic_Handle size);
-JSONLOGIC_EXPORT const char16_t *jsonlogic_get_utf16(JsonLogic_Handle string, size_t *sizeptr);
+JSONLOGIC_EXPORT const char16_t *jsonlogic_get_string_content(JsonLogic_Handle string, size_t *sizeptr);
 
+JSONLOGIC_EXPORT size_t jsonlogic_utf16_len(const char16_t *key);
 JSONLOGIC_EXPORT char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size);
-JSONLOGIC_EXPORT int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
-JSONLOGIC_EXPORT int jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size);
-JSONLOGIC_EXPORT bool jsonlogic_print(FILE *stream, JsonLogic_Handle handle);
-JSONLOGIC_EXPORT bool jsonlogic_println(FILE *stream, JsonLogic_Handle handle);
+JSONLOGIC_EXPORT int   jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size);
+JSONLOGIC_EXPORT int   jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size);
+JSONLOGIC_EXPORT bool  jsonlogic_print(FILE *stream, JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool  jsonlogic_println(FILE *stream, JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT const char    *jsonlogic_get_type_name(JsonLogic_Type type);
@@ -107,6 +109,7 @@ JSONLOGIC_EXPORT const char     *jsonlogic_get_linestart(const char *str, size_t
 JSONLOGIC_EXPORT void jsonlogic_print_parse_error(FILE *stream, const char *str, JsonLogic_Error error, JsonLogic_LineInfo info);
 JSONLOGIC_EXPORT void jsonlogic_print_parse_error_sized(FILE *stream, const char *str, size_t size, JsonLogic_Error error, JsonLogic_LineInfo info);
 
+JSONLOGIC_EXPORT bool jsonlogic_is_string (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_error  (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_null   (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_number (JsonLogic_Handle handle);
@@ -135,9 +138,24 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_not_equal(JsonLogic_Handle a, JsonLo
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_strict_equal    (JsonLogic_Handle a, JsonLogic_Handle b);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_strict_not_equal(JsonLogic_Handle a, JsonLogic_Handle b);
 
+/**
+ * @brief Check for deep equality.
+ * @warning Has no cycle detection!
+ * 
+ * @param a 
+ * @param b 
+ * @return 
+ */
+JSONLOGIC_EXPORT bool jsonlogic_deep_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b);
+
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item);
 
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_item(JsonLogic_Handle object, JsonLogic_Handle key);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get(JsonLogic_Handle object, JsonLogic_Handle key);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle object, const char16_t *key, size_t size);
+JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key) {
+    return jsonlogic_get_utf16_sized(object, key, jsonlogic_utf16_len(key));
+}
+
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);
 
 typedef JsonLogic_Handle (*JsonLogic_Operation)(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
@@ -150,6 +168,21 @@ typedef struct JsonLogic_Operation_Entry {
 
 JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry operations[], size_t count);
 JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const char16_t *key, size_t key_size);
+
+typedef struct JsonLogic_Iterator {
+    JsonLogic_Handle handle;
+    size_t index;
+} JsonLogic_Iterator;
+
+JSONLOGIC_EXPORT inline JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle) {
+    return (JsonLogic_Iterator){
+        .handle = handle,
+        .index  = 0,
+    };
+}
+
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_iter_next(JsonLogic_Iterator *iter);
+JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);
 
 /**
  * @brief 

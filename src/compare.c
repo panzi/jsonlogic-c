@@ -3,6 +3,82 @@
 #include <stdlib.h>
 #include <assert.h>
 
+bool jsonlogic_deep_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
+    if (a.intptr == b.intptr) {
+        return true;
+    }
+
+    if (JSONLOGIC_IS_NUMBER(a)) {
+        if (JSONLOGIC_IS_NUMBER(b)) {
+            return a.number == b.number;
+        } else {
+            return false;
+        }
+    } else {
+        return false;
+    }
+
+    JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;
+    JsonLogic_Type btype = b.intptr & JsonLogic_TypeMask;
+    if (atype != btype) {
+        return false;
+    }
+
+    switch (atype) {
+        case JsonLogic_Type_Null:
+            return true;
+
+        case JsonLogic_Type_String:
+            return jsonlogic_string_equals(JSONLOGIC_CAST_STRING(a), JSONLOGIC_CAST_STRING(b));
+
+        case JsonLogic_Type_Array:
+        {
+            const JsonLogic_Array *aarray = JSONLOGIC_CAST_ARRAY(a);
+            const JsonLogic_Array *barray = JSONLOGIC_CAST_ARRAY(b);
+
+            if (aarray->size != barray->size) {
+                return false;
+            }
+
+            for (size_t index = 0; index < aarray->size; ++ index) {
+                if (!jsonlogic_deep_strict_equal(aarray->items[index], barray->items[index])) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        case JsonLogic_Type_Object:
+        {
+            const JsonLogic_Object *aobject = JSONLOGIC_CAST_OBJECT(a);
+            const JsonLogic_Object *bobject = JSONLOGIC_CAST_OBJECT(b);
+
+            if (aobject->size != bobject->size) {
+                return false;
+            }
+
+            // as long as its a sorted list instead of a hashtable this is easy:
+            for (size_t index = 0; index < aobject->size; ++ index) {
+                const JsonLogic_Object_Entry *aentry = &aobject->entries[index];
+                const JsonLogic_Object_Entry *bentry = &bobject->entries[index];
+                if (!jsonlogic_deep_strict_equal(aentry->key,   bentry->key) ||
+                    !jsonlogic_deep_strict_equal(aentry->value, bentry->value)) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+        case JsonLogic_Type_Boolean:
+        case JsonLogic_Type_Error:
+            return a.intptr == b.intptr;
+
+        default:
+            assert(false);
+            return false;
+    }
+}
+
 JsonLogic_Handle jsonlogic_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
     if (JSONLOGIC_IS_NUMBER(a)) {
         if (JSONLOGIC_IS_NUMBER(b)) {

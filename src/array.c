@@ -28,7 +28,7 @@ JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
     }
 
     array->refcount = 1;
-    array->size     = 0;
+    array->size     = size;
 
     for (size_t index = 0; index < size; ++ index) {
         array->items[index] = JsonLogic_Null;
@@ -132,11 +132,15 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
 
 JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Handle handle) {
     if (buf->capacity == 0 || buf->capacity == buf->array->size) {
-        size_t new_capacity = buf->capacity + JSONLOGIC_CHUNK_SIZE;
+        size_t new_capacity = buf->capacity + 1024;
         JsonLogic_Array *new_array = realloc(buf->array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * new_capacity);
         if (new_array == NULL) {
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+        }
+        if (buf->array == NULL) {
+            new_array->refcount = 1;
+            new_array->size     = 0;
         }
         buf->array    = new_array;
         buf->capacity = new_capacity;

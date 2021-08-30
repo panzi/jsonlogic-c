@@ -168,7 +168,11 @@ JSONLOGIC_EXPORT inline int jsonlogic_string_compare(const JsonLogic_String *a, 
     return jsonlogic_utf16_compare(a->str, a->size, b->str, b->size);
 }
 
-JSONLOGIC_PRIVATE size_t jsonlogic_string_to_index(const JsonLogic_String *string);
+JSONLOGIC_PRIVATE size_t jsonlogic_utf16_to_index(const char16_t *str, size_t size);
+
+JSONLOGIC_PRIVATE inline size_t jsonlogic_string_to_index(const JsonLogic_String *string) {
+    return jsonlogic_utf16_to_index(string->str, string->size);
+}
 
 JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size);
 

@@ -901,7 +901,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
-                index += 4;
+                index += 5;
                 error = jsonlogic_parsestack_handle_value(&stack, JsonLogic_False, &state);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     state = JsonLogic_ParserState_Error;

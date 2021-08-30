@@ -72,6 +72,10 @@ bool jsonlogic_is_boolean(JsonLogic_Handle handle) {
     return JSONLOGIC_IS_BOOLEAN(handle);
 }
 
+bool jsonlogic_is_string(JsonLogic_Handle handle) {
+    return JSONLOGIC_IS_STRING(handle);
+}
+
 JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle) {
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
@@ -1033,7 +1037,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
     size_t keysize = strkey->size;
     const char16_t *next = jsonlogic_find_char(pos, keysize, u'.');
     if (next == NULL) {
-        JsonLogic_Handle value = jsonlogic_get_item(data, key);
+        JsonLogic_Handle value = jsonlogic_get(data, key);
         if (JSONLOGIC_IS_NULL(value)) {
             jsonlogic_incref(default_value);
             return default_value;
@@ -1044,7 +1048,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
     for (;;) {
         size_t size = next - pos;
         JsonLogic_Handle prop = jsonlogic_string_from_utf16_sized(pos, size);
-        data = jsonlogic_get_item(data, key);
+        data = jsonlogic_get(data, key);
         jsonlogic_decref(prop);
         if (JSONLOGIC_IS_NULL(data)) {
             jsonlogic_incref(default_value);
