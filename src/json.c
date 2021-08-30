@@ -8,12 +8,6 @@
 #include <errno.h>
 #include <inttypes.h>
 
-// #undef JSONLOGIC_ERROR_INTERNAL_ERROR
-// #define JSONLOGIC_ERROR_INTERNAL_ERROR     (assert(false), (JsonLogic_Type_Error | 4))
-// 
-// #undef JSONLOGIC_ERROR_ILLEGAL_ARGUMENT
-// #define JSONLOGIC_ERROR_ILLEGAL_ARGUMENT     (assert(false), (JsonLogic_Type_Error | 3))
-
 JsonLogic_Handle jsonlogic_parse(const char *str, JsonLogic_LineInfo *infoptr) {
     return jsonlogic_parse_sized(str, strlen(str), infoptr);
 }

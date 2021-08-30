@@ -780,17 +780,43 @@ JsonLogic_Handle jsonlogic_op_DIV(JsonLogic_Handle data, JsonLogic_Handle args[]
 
 JsonLogic_Handle jsonlogic_op_LT(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     switch (argc) {
-        case 0:  return JsonLogic_False;
-        case 1:  return jsonlogic_lt(args[0], JsonLogic_Null);
-        default: return jsonlogic_lt(args[0], args[1]);
+        case 0: return JsonLogic_False;
+        case 1: return jsonlogic_lt(args[0], JsonLogic_Null);
+        case 2: return jsonlogic_lt(args[0], args[1]);
+        default:
+        {
+            JsonLogic_Handle result = jsonlogic_lt(args[0], args[1]);
+            if (JSONLOGIC_IS_ERROR(result)) {
+                return result;
+            }
+
+            if (JSONLOGIC_IS_FALSE(result)) {
+                return result;
+            }
+
+            return jsonlogic_lt(args[1], args[2]);
+        }
     }
 }
 
 JsonLogic_Handle jsonlogic_op_LE(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     switch (argc) {
-        case 0:  return JsonLogic_True;
-        case 1:  return jsonlogic_le(args[0], JsonLogic_Null);
-        default: return jsonlogic_le(args[0], args[1]);
+        case 0: return JsonLogic_True;
+        case 1: return jsonlogic_le(args[0], JsonLogic_Null);
+        case 2: return jsonlogic_le(args[0], args[1]);
+        default:
+        {
+            JsonLogic_Handle result = jsonlogic_le(args[0], args[1]);
+            if (JSONLOGIC_IS_ERROR(result)) {
+                return result;
+            }
+
+            if (JSONLOGIC_IS_FALSE(result)) {
+                return result;
+            }
+
+            return jsonlogic_le(args[1], args[2]);
+        }
     }
 }
 
@@ -812,17 +838,43 @@ JsonLogic_Handle jsonlogic_op_STRICT_EQ(JsonLogic_Handle data, JsonLogic_Handle 
 
 JsonLogic_Handle jsonlogic_op_GT(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     switch (argc) {
-        case 0:  return JsonLogic_False;
-        case 1:  return jsonlogic_gt(args[0], JsonLogic_Null);
-        default: return jsonlogic_gt(args[0], args[1]);
+        case 0: return JsonLogic_False;
+        case 1: return jsonlogic_gt(args[0], JsonLogic_Null);
+        case 2: return jsonlogic_gt(args[0], args[1]);
+        default:
+        {
+            JsonLogic_Handle result = jsonlogic_gt(args[0], args[1]);
+            if (JSONLOGIC_IS_ERROR(result)) {
+                return result;
+            }
+
+            if (JSONLOGIC_IS_FALSE(result)) {
+                return result;
+            }
+
+            return jsonlogic_gt(args[1], args[2]);
+        }
     }
 }
 
 JsonLogic_Handle jsonlogic_op_GE(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     switch (argc) {
-        case 0:  return JsonLogic_True;
-        case 1:  return jsonlogic_gt(args[0], JsonLogic_Null);
-        default: return jsonlogic_gt(args[0], args[1]);
+        case 0: return JsonLogic_True;
+        case 1: return jsonlogic_ge(args[0], JsonLogic_Null);
+        case 2: return jsonlogic_ge(args[0], args[1]);
+        default:
+        {
+            JsonLogic_Handle result = jsonlogic_ge(args[0], args[1]);
+            if (JSONLOGIC_IS_ERROR(result)) {
+                return result;
+            }
+
+            if (JSONLOGIC_IS_FALSE(result)) {
+                return result;
+            }
+
+            return jsonlogic_ge(args[1], args[2]);
+        }
     }
 }
 
@@ -946,7 +998,8 @@ JsonLogic_Handle jsonlogic_op_MISSING(JsonLogic_Handle data, JsonLogic_Handle ar
 
     JsonLogic_Array *missing = jsonlogic_array_with_capacity(key_count);
     if (missing == NULL) {
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
 
     size_t missing_index = 0;
@@ -980,9 +1033,8 @@ JsonLogic_Handle jsonlogic_op_MISSING_SOME(JsonLogic_Handle data, JsonLogic_Hand
         JSONLOGIC_CAST_ARRAY(options)->size : 1;
 
     JsonLogic_Handle missing = jsonlogic_op_MISSING(data, args + 1, 1);
-    if (!JSONLOGIC_IS_ARRAY(missing)) {
-        jsonlogic_decref(missing);
-        return JsonLogic_Null;
+    if (JSONLOGIC_IS_ERROR(missing)) {
+        return missing;
     }
     JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(missing);
 
@@ -1040,7 +1092,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
     for (;;) {
         size_t size = next - pos;
         JsonLogic_Handle prop = jsonlogic_string_from_utf16_sized(pos, size);
-        data = jsonlogic_get(data, key);
+        data = jsonlogic_get(data, prop);
         jsonlogic_decref(prop);
         if (JSONLOGIC_IS_NULL(data)) {
             jsonlogic_incref(default_value);
