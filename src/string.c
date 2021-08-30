@@ -605,7 +605,7 @@ int jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size) {
 }
 
 int jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_t size) {
-    bool result = jsonlogic_print_utf16(stream, str, size);
+    int result = jsonlogic_print_utf16(stream, str, size);
     fputc('\n', stream);
     return result;
 }
