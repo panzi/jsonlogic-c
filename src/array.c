@@ -180,6 +180,16 @@ JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *buf) {
     return array;
 }
 
+void jsonlogic_arraybuf_clear(JsonLogic_ArrayBuf *buf) {
+    JsonLogic_Array *array = buf->array;
+    if (array != NULL) {
+        for (size_t index = 0; index < array->size; ++ index) {
+            jsonlogic_decref(array->items[index]);
+        }
+        array->size = 0;
+    }
+}
+
 void jsonlogic_arraybuf_free(JsonLogic_ArrayBuf *buf) {
     jsonlogic_array_free(buf->array);
     buf->array    = NULL;

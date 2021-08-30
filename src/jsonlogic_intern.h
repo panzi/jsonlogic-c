@@ -224,6 +224,7 @@ typedef struct JsonLogic_ArrayBuf {
 #define JSONLOGIC_ARRAYBUF_INIT ((JsonLogic_ArrayBuf){ .capacity = 0, .array = NULL })
 
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Handle handle);
+JSONLOGIC_PRIVATE void            jsonlogic_arraybuf_clear(JsonLogic_ArrayBuf *buf);
 JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *buf);
 JSONLOGIC_PRIVATE void jsonlogic_arraybuf_free(JsonLogic_ArrayBuf *buf);
 
