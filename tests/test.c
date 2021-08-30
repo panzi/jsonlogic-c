@@ -59,8 +59,6 @@ int main(int argc, char *argv[]) {
     free(tests_json);
     tests_json = NULL;
 
-    int status = 0;
-
     JsonLogic_Iterator iter = jsonlogic_iter(tests);
 
     bool newline = true;
@@ -151,5 +149,5 @@ int main(int argc, char *argv[]) {
 
     jsonlogic_decref(tests);
 
-    return status;
+    return test_count == pass_count ? 0 : 1;
 }
