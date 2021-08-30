@@ -369,7 +369,7 @@ JsonLogic_Operation_Entry *jsonlogic_add_extras(const JsonLogic_Operation_Entry 
 
     size_t old_size = *operations_size;
     size_t new_size = old_size + JSONLOGIC_EXTRAS_COUNT;
-    JsonLogic_Operation_Entry *new_operations = malloc(new_size);
+    JsonLogic_Operation_Entry *new_operations = malloc(new_size * sizeof(JsonLogic_Operation_Entry));
 
     size_t new_index = 0;
     for (size_t index = 0; index < old_size; ++ index) {
