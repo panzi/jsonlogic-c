@@ -11,7 +11,8 @@ JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object);
 JsonLogic_Handle jsonlogic_empty_object() {
     JsonLogic_Object *object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry));
     if (object == NULL) {
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
 
     object->refcount = 1;
@@ -45,7 +46,8 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
     JsonLogic_Object *object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * count);
 
     if (object == NULL) {
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
 
     object->refcount = 1;

@@ -44,7 +44,8 @@ JsonLogic_Handle jsonlogic_string_from_latin1(const char *str) {
 JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size) {
     JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * size);
     if (string == NULL) {
-        return JsonLogic_Null;
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
     }
     string->refcount = 1;
     string->size     = size;
@@ -217,7 +218,6 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
     }
 
     JsonLogic_String *new_string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * sz_size);
-
     if (new_string == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -579,6 +579,7 @@ char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
 
     char *utf8 = malloc(utf8_size + 1);
     if (utf8 == NULL) {
+        JSONLOGIC_ERROR_MEMORY();
         return NULL;
     }
 

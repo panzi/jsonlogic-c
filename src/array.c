@@ -11,7 +11,7 @@ JsonLogic_Handle jsonlogic_empty_array() {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
     if (array == NULL) {
         JSONLOGIC_ERROR_MEMORY();
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
 
     array->refcount = 1;
@@ -41,7 +41,7 @@ JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
     JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * count);
     if (array == NULL) {
         JSONLOGIC_ERROR_MEMORY();
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
 
     array->refcount = 1;
