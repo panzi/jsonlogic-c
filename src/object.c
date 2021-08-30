@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object);
 
@@ -140,15 +141,58 @@ JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16
             }
             return jsonlogic_incref(object->entries[index].value);
         }
+        case JsonLogic_Type_Boolean:
+        case JsonLogic_Type_Number:
+        case JsonLogic_Type_Null:
+            return JsonLogic_Null;
+
         case JsonLogic_Type_Error:
             return handle;
 
         default:
+            assert(false);
             return JsonLogic_Error_InternalError;
     }
 }
 
 JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
+        return JsonLogic_Null;
+    }
+
+    if (JSONLOGIC_IS_NUMBER(key)) {
+        switch (handle.intptr & JsonLogic_TypeMask) {
+            case JsonLogic_Type_String:
+            {
+                if (!isfinite(key.number) || key.number < 0) {
+                    return JsonLogic_Null;
+                }
+
+                size_t index = key.number;
+                const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
+                if (index >= string->size) {
+                    return JsonLogic_Null;
+                }
+
+                return jsonlogic_string_from_utf16_sized(string->str + index, 1);
+            }
+            case JsonLogic_Type_Array:
+            {
+                if (!isfinite(key.number) || key.number < 0) {
+                    return JsonLogic_Null;
+                }
+
+                size_t index = key.number;
+                const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
+                if (index >= array->size) {
+                    return JsonLogic_Null;
+                }
+
+                return jsonlogic_incref(array->items[index]);
+            }
+        }
+    }
+
     JsonLogic_Handle strkey = jsonlogic_to_string(key);
     JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
     JsonLogic_Handle result = jsonlogic_get_utf16_sized(handle, stringkey->str, stringkey->size);

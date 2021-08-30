@@ -124,6 +124,7 @@ int main(int argc, char *argv[]) {
             if (!jsonlogic_deep_strict_equal(expected, actual)) {
                 FAIL();
                 fprintf(stderr, "     error: Wrong result\n");
+                fprintf(stderr, "      test: "); jsonlogic_print(stderr, test);     fputc('\n', stderr);
                 fprintf(stderr, "     logic: "); jsonlogic_print(stderr, logic);    fputc('\n', stderr);
                 fprintf(stderr, "      data: "); jsonlogic_print(stderr, data);     fputc('\n', stderr);
                 fprintf(stderr, "  expected: "); jsonlogic_print(stderr, expected); fputc('\n', stderr);

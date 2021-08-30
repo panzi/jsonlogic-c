@@ -371,14 +371,10 @@ JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle 
         case JsonLogic_Type_Array:
         {
             JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
-            if (array->size > 0) {
-                TRY(jsonlogic_strbuf_append(buf, array->items[0]));
-                for (size_t index = 1; index < array->size; ++ index) {
-                    TRY(jsonlogic_strbuf_append_utf16(buf, u",", 1));
-                    JsonLogic_Handle item = array->items[index];
-                    if (!JSONLOGIC_IS_NULL(item)) {
-                        TRY(jsonlogic_strbuf_append(buf, item));
-                    }
+            for (size_t index = 0; index < array->size; ++ index) {
+                JsonLogic_Handle item = array->items[index];
+                if (!JSONLOGIC_IS_NULL(item)) {
+                    TRY(jsonlogic_strbuf_append(buf, item));
                 }
             }
             return true;
@@ -499,7 +495,7 @@ size_t jsonlogic_utf16_to_index(const char16_t *str, size_t size) {
             return SIZE_MAX;
         }
         char16_t ch = str[index];
-        if (ch < u'0' || ch > u'1') {
+        if (ch < u'0' || ch > u'9') {
             return SIZE_MAX;
         }
         int ord = ch - u'0';

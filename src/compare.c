@@ -14,8 +14,6 @@ bool jsonlogic_deep_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
         } else {
             return false;
         }
-    } else {
-        return false;
     }
 
     JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;
@@ -86,8 +84,6 @@ JsonLogic_Handle jsonlogic_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) 
         } else {
             return JsonLogic_False;
         }
-    } else {
-        return JsonLogic_False;
     }
 
     JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;
@@ -126,8 +122,6 @@ JsonLogic_Handle jsonlogic_strict_not_equal(JsonLogic_Handle a, JsonLogic_Handle
         } else {
             return JsonLogic_True;
         }
-    } else {
-        return JsonLogic_True;
     }
 
     JsonLogic_Type atype = a.intptr & JsonLogic_TypeMask;

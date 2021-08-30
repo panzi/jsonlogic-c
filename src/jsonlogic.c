@@ -829,19 +829,7 @@ JsonLogic_Handle jsonlogic_op_GE(JsonLogic_Handle data, JsonLogic_Handle args[],
 JsonLogic_Handle jsonlogic_op_CAT(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc > 0) {
         JsonLogic_StrBuf buf = JSONLOGIC_STRBUF_INIT;
-
-        if (!jsonlogic_strbuf_append(&buf, args[0])) {
-            jsonlogic_strbuf_free(&buf);
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Error_OutOfMemory;
-        }
-
-        for (size_t index = 1; index < argc; ++ index) {
-            if (!jsonlogic_strbuf_append_utf16(&buf, u",", 1)) {
-                jsonlogic_strbuf_free(&buf);
-                JSONLOGIC_ERROR_MEMORY();
-                return JsonLogic_Error_OutOfMemory;
-            }
+        for (size_t index = 0; index < argc; ++ index) {
             JsonLogic_Handle item = args[index];
             if (!JSONLOGIC_IS_NULL(item) && !jsonlogic_strbuf_append(&buf, item)) {
                 jsonlogic_strbuf_free(&buf);
@@ -1015,9 +1003,12 @@ JsonLogic_Handle jsonlogic_op_SUBSTR(JsonLogic_Handle data, JsonLogic_Handle arg
 }
 
 JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    if (argc == 0) {
-        jsonlogic_incref(data);
-        return data;
+    if (argc == 0 || JSONLOGIC_IS_NULL(args[0])) {
+        return jsonlogic_incref(data);
+    }
+
+    if (JSONLOGIC_IS_NUMBER(args[0])) {
+        return jsonlogic_get(data, args[0]);
     }
 
     JsonLogic_Handle key = jsonlogic_to_string(args[0]);
@@ -1026,18 +1017,19 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
     }
     JsonLogic_Handle default_value = argc > 1 ? args[1] : JsonLogic_Null;
 
-    if (JSONLOGIC_IS_NULL(key) || (JSONLOGIC_IS_STRING(key) && JSONLOGIC_CAST_STRING(key)->size == 0)) {
-        jsonlogic_incref(data);
-        return data;
-    }
-
     const JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(key);
+
+    if (strkey->size == 0) {
+        jsonlogic_decref(key);
+        return jsonlogic_incref(data);
+    }
 
     const char16_t *pos = strkey->str;
     size_t keysize = strkey->size;
     const char16_t *next = jsonlogic_find_char(pos, keysize, u'.');
     if (next == NULL) {
         JsonLogic_Handle value = jsonlogic_get(data, key);
+        jsonlogic_decref(key);
         if (JSONLOGIC_IS_NULL(value)) {
             jsonlogic_incref(default_value);
             return default_value;
@@ -1052,6 +1044,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
         jsonlogic_decref(prop);
         if (JSONLOGIC_IS_NULL(data)) {
             jsonlogic_incref(default_value);
+            jsonlogic_decref(key);
             return default_value;
         }
 
@@ -1059,6 +1052,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
         keysize -= size;
         if (keysize == 0) {
             jsonlogic_incref(default_value);
+            jsonlogic_decref(key);
             return default_value;
         }
         -- keysize;
