@@ -1129,6 +1129,7 @@ JsonLogic_Handle jsonlogic_op_VAR(JsonLogic_Handle data, JsonLogic_Handle args[]
 
         pos = next + 1;
         if (pos >= end) {
+            jsonlogic_decref(key);
             return jsonlogic_incref(data);
         }
         next = jsonlogic_find_char(pos, end - pos, u'.');
