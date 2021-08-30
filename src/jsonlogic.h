@@ -153,6 +153,7 @@ JSONLOGIC_EXPORT bool jsonlogic_deep_strict_equal(JsonLogic_Handle a, JsonLogic_
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get(JsonLogic_Handle object, JsonLogic_Handle key);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_index(JsonLogic_Handle handle, size_t index);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle object, const char16_t *key, size_t size);
 JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key) {
     return jsonlogic_get_utf16_sized(object, key, jsonlogic_utf16_len(key));
@@ -167,6 +168,15 @@ typedef struct JsonLogic_Operation_Entry {
     size_t key_size;
     JsonLogic_Operation operation;
 } JsonLogic_Operation_Entry;
+
+#define jsonlogic_operation(KEY, OPERATION) { \
+        .key = KEY, \
+        .key_size = sizeof(KEY) / sizeof(char16_t) - 1, \
+        .operation = OPERATION, \
+    }
+
+#define jsonlogic_operations_size(OPERATIONS) \
+    (sizeof(OPERATIONS) / sizeof(JsonLogic_Operation_Entry))
 
 JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry operations[], size_t count);
 JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const char16_t *key, size_t key_size);

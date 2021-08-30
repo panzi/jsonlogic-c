@@ -10,6 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <assert.h>
 
 struct TestContext;
 
@@ -139,23 +140,170 @@ void test_edge_cases(TestContext *test_context) {
 
     jsonlogic_decref(logic);
     logic = jsonlogic_parse("{\"var\":[\"a\",\"fallback\"]}", NULL);
-    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, JsonLogic_Null), fallback), "Fallback works when data is a non-object");
+    JsonLogic_Handle result = jsonlogic_apply(logic, JsonLogic_Null);
+    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(result, fallback), "Fallback works when data is a non-object");
+    jsonlogic_decref(result);
 
 cleanup:
     jsonlogic_decref(logic);
     jsonlogic_decref(fallback);
 }
 
+typedef struct TestCustomOps {
+    double a;
+} TestCustomOps;
+
+JsonLogic_Handle add_to_a(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    assert(context != NULL);
+    TestCustomOps *ptr = context;
+    double b = argc == 0 ? 1 : jsonlogic_to_double(args[0]);
+    return jsonlogic_number_from(ptr->a += b);
+}
+
+JsonLogic_Handle fives_add(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    double i = argc == 0 ? 0.0 : jsonlogic_to_double(args[0]);
+    return jsonlogic_number_from(i + 5);
+}
+
+JsonLogic_Handle fives_subtract(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    double i = argc == 0 ? 0.0 : jsonlogic_to_double(args[0]);
+    return jsonlogic_number_from(i - 5);
+}
+
+JsonLogic_Handle times(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    if (argc < 2) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    JsonLogic_Handle a = args[0];
+    JsonLogic_Handle b = args[1];
+
+    if (jsonlogic_is_error(a)) {
+        return a;
+    }
+
+    if (jsonlogic_is_error(b)) {
+        return b;
+    }
+
+    double anum = jsonlogic_to_double(a);
+    double bnum = jsonlogic_to_double(b);
+    return jsonlogic_number_from(anum * bnum);
+}
+
+JsonLogic_Handle array_times(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    if (argc < 1) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    JsonLogic_Handle a = jsonlogic_get_index(args[0], 0);
+    if (jsonlogic_is_error(a)) {
+        return a;
+    }
+    JsonLogic_Handle b = jsonlogic_get_index(args[0], 1);
+    if (jsonlogic_is_error(b)) {
+        jsonlogic_decref(a);
+        return b;
+    }
+
+    double anum = jsonlogic_to_double(a);
+    double bnum = jsonlogic_to_double(b);
+    return jsonlogic_number_from(anum * bnum);
+}
+
 void test_custom_operators(TestContext *test_context) {
-    // TODO
-//cleanup:;
+    // Set up some outside data, and build a basic function operator
+    TestCustomOps context = {
+        .a = 0.0,
+    };
+    JsonLogic_Handle data  = JsonLogic_Null;
+    JsonLogic_Handle logic = jsonlogic_parse("{\"add_to_a\":[]}", NULL);
+    // Operator is not yet defined
+    JsonLogic_Handle result = jsonlogic_apply_custom(logic, JsonLogic_Null, &context, NULL, 0);
+
+    TEST_ASSERT(result == JSONLOGIC_ERROR_ILLEGAL_OPERATION);
+    jsonlogic_decref(result);
+    result = JsonLogic_Null;
+
+    JsonLogic_Operation_Entry ops[] = {
+        jsonlogic_operation(u"add_to_a", add_to_a),
+    };
+
+    // New operation executes, returns desired result
+    // No args
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
+        &context, ops, jsonlogic_operations_size(ops));
+
+    TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(1)));
+
+    // Unary syntactic sugar
+    jsonlogic_decref(logic);
+    logic  = jsonlogic_parse("{\"add_to_a\":41}", NULL);
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
+        &context, ops, jsonlogic_operations_size(ops));
+
+    TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
+    // New operation had side effects.
+    TEST_ASSERT(context.a == 42.0);
+
+    JsonLogic_Operation_Entry ops2[] = {
+        jsonlogic_operation(u"fives.add", fives_add),
+        jsonlogic_operation(u"fives.subtract", fives_subtract),
+    };
+
+    jsonlogic_decref(logic);
+    logic  = jsonlogic_parse("{\"fives.add\":37}", NULL);
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
+        &context, ops2, jsonlogic_operations_size(ops2));
+
+    TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
+
+    jsonlogic_decref(logic);
+    logic  = jsonlogic_parse("{\"fives.subtract\":47}", NULL);
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
+        &context, ops2, jsonlogic_operations_size(ops2));
+
+    TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
+
+    JsonLogic_Operation_Entry ops3[] = {
+        jsonlogic_operation(u"times", times),
+    };
+
+    // Calling a method with multiple var as arguments.
+    jsonlogic_decref(logic);
+    logic = jsonlogic_parse("{\"times\":[{\"var\":\"a\"},{\"var\":\"b\"}]}", NULL);
+    data  = jsonlogic_parse("{\"a\":6,\"b\":7}", NULL);
+
+    result = jsonlogic_apply_custom(logic, data, &context, ops3, jsonlogic_operations_size(ops3));
+
+    TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
+
+    result = jsonlogic_apply_custom(logic, data, &context, NULL, 0);
+    TEST_ASSERT(result == JSONLOGIC_ERROR_ILLEGAL_OPERATION);
+
+    // Calling a method that takes an array, but the inside of the array has rules, too
+    JsonLogic_Operation_Entry ops4[] = {
+        jsonlogic_operation(u"array_times", array_times),
+    };
+
+    jsonlogic_decref(logic);
+    logic = jsonlogic_parse("{\"array_times\":[[{\"var\":\"a\"},{\"var\":\"b\"}]]}", NULL);
+
+    result = jsonlogic_apply_custom(logic, data, &context, ops4, jsonlogic_operations_size(ops4));
+
+    TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
+
+cleanup:
+    jsonlogic_decref(logic);
+    jsonlogic_decref(result);
+    jsonlogic_decref(data);
 }
 
 const TestCase TEST_CASES[] = {
     TEST_DECL("Bad Operator", bad_operator),
     TEST_DECL("Logging", logging),
     TEST_DECL("Edge Cases", edge_cases),
-    //TEST_DECL("Expanding functionality with custom operators", custom_operators),
+    TEST_DECL("Expanding functionality with custom operators", custom_operators),
     TEST_END,
 };
 
