@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <string.h>
+#include <errno.h>
 #include <inttypes.h>
 
 struct TestContext;
@@ -78,10 +80,7 @@ typedef struct TestContext {
 
 void test_bad_operator(TestContext *test_context) {
     JsonLogic_Handle logic  = jsonlogic_parse("{\"fubar\": []}", NULL);
-    JsonLogic_Handle result = jsonlogic_apply(
-        logic,
-        JsonLogic_Null
-    );
+    JsonLogic_Handle result = jsonlogic_apply(logic, JsonLogic_Null);
 
     TEST_ASSERT(result == JSONLOGIC_ERROR_ILLEGAL_OPERATION);
 
@@ -90,8 +89,73 @@ cleanup:
     jsonlogic_decref(logic);
 }
 
+void test_logging(TestContext *test_context) {
+    JsonLogic_Handle logic  = JsonLogic_Null;
+    JsonLogic_Handle result = JsonLogic_Null;
+    int pair[2] = { -1, -1 };
+    int stdout_backup = dup(STDOUT_FILENO);
+
+    TEST_ASSERT_FMT(stdout_backup != -1, "dup(STDOUT_FILENO): %s", strerror(errno));
+    TEST_ASSERT_FMT(pipe(pair) != -1, "pipe(&pair): %s", strerror(errno));
+    TEST_ASSERT_FMT(dup2(pair[1], STDOUT_FILENO) != -1, "dup2(pair[1], STDOUT_FILENO): %s", strerror(errno))
+
+    logic  = jsonlogic_parse("{\"log\": [1]}", NULL);
+    result = jsonlogic_apply(logic, JsonLogic_Null);
+
+    TEST_ASSERT(jsonlogic_get_error(result) == JSONLOGIC_ERROR_SUCCESS);
+
+    char buf[2];
+
+    TEST_ASSERT(read(pair[0], buf, sizeof(buf)) == 2);
+    TEST_ASSERT(memcmp(buf, "1\n", sizeof(buf)) == 0);
+
+cleanup:
+    jsonlogic_decref(result);
+    jsonlogic_decref(logic);
+
+    if (pair[0] != -1) {
+        close(pair[0]);
+    }
+
+    if (pair[1] != -1) {
+        close(pair[1]);
+    }
+
+    if (stdout_backup != -1) {
+        dup2(stdout_backup, STDOUT_FILENO);
+        close(stdout_backup);
+    }
+}
+
+void test_edge_cases(TestContext *test_context) {
+    JsonLogic_Handle logic = jsonlogic_parse("{\"var\": \"\"}", NULL);
+    JsonLogic_Handle fallback = jsonlogic_string_from_latin1("fallback");
+
+    TEST_ASSERT(jsonlogic_is_string(fallback));
+
+    TEST_ASSERT_MSG(jsonlogic_apply(JsonLogic_Null, JsonLogic_Null) == JsonLogic_Null, "Called with null");
+    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, jsonlogic_number_from(0)), jsonlogic_number_from(0)), "Var when date is 'falsy'");
+    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, JsonLogic_Null), JsonLogic_Null), "Var when date is null");
+
+    jsonlogic_decref(logic);
+    logic = jsonlogic_parse("{\"var\":[\"a\",\"fallback\"]}", NULL);
+    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, JsonLogic_Null), fallback), "Fallback works when data is a non-object");
+
+cleanup:
+    jsonlogic_decref(logic);
+    jsonlogic_decref(fallback);
+}
+
+void test_custom_operators(TestContext *test_context) {
+    // TODO
+//cleanup:;
+}
+
 const TestCase TEST_CASES[] = {
-    TEST_DECL("Bad operator", bad_operator),
+    TEST_DECL("Bad Operator", bad_operator),
+    TEST_DECL("Logging", logging),
+    TEST_DECL("Edge Cases", edge_cases),
+    //TEST_DECL("Expanding functionality with custom operators", custom_operators),
     TEST_END,
 };
 

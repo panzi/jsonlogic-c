@@ -160,7 +160,7 @@ JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle ob
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);
 
-typedef JsonLogic_Handle (*JsonLogic_Operation)(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+typedef JsonLogic_Handle (*JsonLogic_Operation)(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 typedef struct JsonLogic_Operation_Entry {
     const char16_t *key;
@@ -198,6 +198,7 @@ JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply_custom(
     JsonLogic_Handle logic,
     JsonLogic_Handle input,
+    void *context,
     const JsonLogic_Operation_Entry operations[],
     size_t operation_count
 );

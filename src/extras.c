@@ -28,13 +28,13 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_PARSE_TIME,   u"parseTime")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_TIME_SINCE,   u"timeSince")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ZIP,          u"zip")
 
-static JsonLogic_Handle jsonlogic_extra_COMBINATIONS(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_DAYS        (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_HOURS       (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_NOW         (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_ZIP         (JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_DAYS        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_HOURS       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_NOW         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_ZIP         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 #define JSONLOGIC_EXTRAS_COUNT 7
 static const JsonLogic_Operation_Entry JsonLogic_Extras[JSONLOGIC_EXTRAS_COUNT] = {
@@ -411,19 +411,19 @@ JsonLogic_Operation_Entry *jsonlogic_add_extras(const JsonLogic_Operation_Entry 
     return new_operations;
 }
 
-JsonLogic_Handle jsonlogic_extra_COMBINATIONS(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     JSONLOGIC_ERROR("%s", "not implemented");
     return JsonLogic_Error_InternalError;
 }
 
-JsonLogic_Handle jsonlogic_extra_DAYS(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_DAYS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
         return JsonLogic_Error_IllegalArgument;
     }
     return jsonlogic_number_from(jsonlogic_to_double(args[0]) * 24 * 60 * 60 * 1000);
 }
 
-JsonLogic_Handle jsonlogic_extra_HOURS(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_HOURS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
         return JsonLogic_Error_IllegalArgument;
     }
@@ -464,11 +464,11 @@ double jsonlogic_parse_time(JsonLogic_Handle handle) {
     return jsonlogic_parse_date_time(string->str, string->size);
 }
 
-JsonLogic_Handle jsonlogic_extra_NOW(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_NOW(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     return jsonlogic_number_from(jsonlogic_now());
 }
 
-JsonLogic_Handle jsonlogic_extra_PARSE_TIME(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_PARSE_TIME(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
         return JsonLogic_Error_IllegalArgument;
     }
@@ -476,7 +476,7 @@ JsonLogic_Handle jsonlogic_extra_PARSE_TIME(JsonLogic_Handle data, JsonLogic_Han
     return jsonlogic_number_from(jsonlogic_parse_time(args[0]));
 }
 
-JsonLogic_Handle jsonlogic_extra_TIME_SINCE(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_TIME_SINCE(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
         return JsonLogic_Error_IllegalArgument;
     }
@@ -486,7 +486,7 @@ JsonLogic_Handle jsonlogic_extra_TIME_SINCE(JsonLogic_Handle data, JsonLogic_Han
     return jsonlogic_number_from(jsonlogic_now() - tv);
 }
 
-JsonLogic_Handle jsonlogic_extra_ZIP(JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle jsonlogic_extra_ZIP(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
         return jsonlogic_empty_array();
     }
