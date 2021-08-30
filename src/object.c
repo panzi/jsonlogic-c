@@ -129,8 +129,7 @@ JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
             if (index < array->size) {
                 JsonLogic_Handle item = array->items[index];
-                jsonlogic_incref(item);
-                return item;
+                return jsonlogic_incref(item);
             }
             return JsonLogic_Null;
         }
