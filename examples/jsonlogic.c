@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
     error = jsonlogic_stringify_file(stdout, result);
     jsonlogic_decref(result);
 
-    if (error == JSONLOGIC_ERROR_IO) {
+    if (error == JSONLOGIC_ERROR_IO_ERROR) {
         fprintf(stderr,
             "*** error: calling jsonlogic_stringify_file(): %s\n",
             strerror(errno));

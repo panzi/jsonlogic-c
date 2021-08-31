@@ -535,14 +535,17 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return init;
         }
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
+        JsonLogic_Handle str_accumulator = jsonlogic_string_from_utf16_sized(JSONLOGIC_ACCUMULATOR, JSONLOGIC_ACCUMULATOR_SIZE);
+        JsonLogic_Handle str_current     = jsonlogic_string_from_utf16_sized(JSONLOGIC_CURRENT, JSONLOGIC_CURRENT_SIZE);
         JsonLogic_Handle reduce_context = jsonlogic_object_from(
-            jsonlogic_entry_latin1("accumulator", JsonLogic_Null),
-            jsonlogic_entry_latin1("current", JsonLogic_Null)
+            jsonlogic_entry(str_accumulator, JsonLogic_Null),
+            jsonlogic_entry(str_current,     JsonLogic_Null)
         );
-        if (!JSONLOGIC_IS_OBJECT(reduce_context)) {
+        jsonlogic_decref(str_accumulator);
+        jsonlogic_decref(str_current);
+        if (JSONLOGIC_IS_ERROR(reduce_context)) {
             jsonlogic_decref(items);
-            JSONLOGIC_ERROR_MEMORY();
-            return JsonLogic_Error_OutOfMemory;
+            return reduce_context;
         }
         JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(reduce_context);
         JsonLogic_Handle accumulator = jsonlogic_incref(init);
@@ -973,7 +976,7 @@ JsonLogic_Handle jsonlogic_op_LOG(void *context, JsonLogic_Handle data, JsonLogi
     }
 
     JsonLogic_Error error = jsonlogic_stringify_file(stdout, value);
-    if (error == JSONLOGIC_ERROR_IO) {
+    if (error == JSONLOGIC_ERROR_IO_ERROR) {
         int errnum = errno;
         puts(errnum != 0 ? strerror(errno) : jsonlogic_get_error_message(error));
     } else if (error != JSONLOGIC_ERROR_SUCCESS) {

@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         } else {
             error = jsonlogic_stringify_file(stdout, value);
 
-            if (error == JSONLOGIC_ERROR_IO) {
+            if (error == JSONLOGIC_ERROR_IO_ERROR) {
                 status = 1;
                 fprintf(stderr,
                     "*** error: calling jsonlogic_stringify_file(): %s\n",

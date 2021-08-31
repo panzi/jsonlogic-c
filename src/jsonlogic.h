@@ -29,7 +29,8 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalOperation;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalArgument;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_InternalError;
 JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_StopIteration;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IO;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IOError;
+JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_SyntaxError;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);

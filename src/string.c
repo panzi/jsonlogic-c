@@ -602,7 +602,7 @@ JsonLogic_Error jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t 
         size_t utf8_index = 0;
         JSONLOGIC_ENCODE_UTF8(codepoint, utf8, utf8_index);
         if (fwrite(utf8, utf8_index, 1, stream) != 1) {
-            return JSONLOGIC_ERROR_IO;
+            return JSONLOGIC_ERROR_IO_ERROR;
         }
     });
 
@@ -613,7 +613,7 @@ JsonLogic_Error jsonlogic_println_utf16(FILE *stream, const char16_t *str, size_
     JsonLogic_Error result = jsonlogic_print_utf16(stream, str, size);
     if (result == JSONLOGIC_ERROR_SUCCESS) {
         if (fputc('\n', stream) == EOF) {
-            return JSONLOGIC_ERROR_IO;
+            return JSONLOGIC_ERROR_IO_ERROR;
         }
     }
     return result;
@@ -739,7 +739,7 @@ void jsonlogic_utf8buf_free(JsonLogic_Utf8Buf *buf) {
 JsonLogic_Error jsonlogic_print(FILE *stream, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
         if (fputs(jsonlogic_get_error_message(handle.intptr), stream) < 0) {
-            return JSONLOGIC_ERROR_IO;
+            return JSONLOGIC_ERROR_IO_ERROR;
         }
         return JSONLOGIC_ERROR_SUCCESS;
     }
@@ -750,7 +750,7 @@ JsonLogic_Error jsonlogic_println(FILE *stream, JsonLogic_Handle handle) {
     JsonLogic_Error result = jsonlogic_print(stream, handle);
     if (result == JSONLOGIC_ERROR_SUCCESS) {
         if (fputc('\n', stream) == EOF) {
-            return JSONLOGIC_ERROR_IO;
+            return JSONLOGIC_ERROR_IO_ERROR;
         }
     }
     return result;

@@ -10,7 +10,8 @@ const JsonLogic_Handle JsonLogic_Error_IllegalOperation = { .intptr = JSONLOGIC_
 const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = { .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT  };
 const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_ERROR_INTERNAL_ERROR    };
 const JsonLogic_Handle JsonLogic_Error_StopIteration    = { .intptr = JSONLOGIC_ERROR_STOP_ITERATION    };
-const JsonLogic_Handle JsonLogic_Error_IO               = { .intptr = JSONLOGIC_ERROR_IO                };
+const JsonLogic_Handle JsonLogic_Error_IOError          = { .intptr = JSONLOGIC_ERROR_IO_ERROR          };
+const JsonLogic_Handle JsonLogic_Error_SyntaxError      = { .intptr = JSONLOGIC_ERROR_SYNTAX_ERROR      };
 
 JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
@@ -39,8 +40,11 @@ const char *jsonlogic_get_error_message(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_STOP_ITERATION:
             return "Stop Iteration";
 
-        case JSONLOGIC_ERROR_IO:
+        case JSONLOGIC_ERROR_IO_ERROR:
             return "Input/Output Error";
+
+        case JSONLOGIC_ERROR_SYNTAX_ERROR:
+            return "Syntax Error";
 
         default:
             JSONLOGIC_DEBUG("illegal error code: 0x%" PRIx64, error);
@@ -56,7 +60,8 @@ JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_ILLEGAL_ARGUMENT:
         case JSONLOGIC_ERROR_INTERNAL_ERROR:
         case JSONLOGIC_ERROR_STOP_ITERATION:
-        case JSONLOGIC_ERROR_IO:
+        case JSONLOGIC_ERROR_IO_ERROR:
+        case JSONLOGIC_ERROR_SYNTAX_ERROR:
             return (JsonLogic_Handle){ .intptr = error };
 
         default:

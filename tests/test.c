@@ -684,9 +684,10 @@ int main(int argc, char *argv[]) {
         } else {
             ++ test_count;
 
-            JsonLogic_Handle logic    = jsonlogic_get(test, jsonlogic_number_from(0));
-            JsonLogic_Handle data     = jsonlogic_get(test, jsonlogic_number_from(1));
-            JsonLogic_Handle expected = jsonlogic_get(test, jsonlogic_number_from(2));
+            JsonLogic_Handle logic    = jsonlogic_get_index(test, 0);
+            JsonLogic_Handle data     = jsonlogic_get_index(test, 1);
+            JsonLogic_Handle expected = jsonlogic_get_index(test, 2);
+            JsonLogic_Handle actual   = JsonLogic_Null;
 
             if (jsonlogic_is_error(logic)) {
                 FAIL();
@@ -706,7 +707,7 @@ int main(int argc, char *argv[]) {
                 goto test_cleanup;
             }
 
-            JsonLogic_Handle actual = jsonlogic_apply(logic, data);
+            actual = jsonlogic_apply(logic, data);
 
             if (!jsonlogic_deep_strict_equal(expected, actual)) {
                 FAIL();
@@ -726,6 +727,7 @@ int main(int argc, char *argv[]) {
             jsonlogic_decref(logic);
             jsonlogic_decref(data);
             jsonlogic_decref(expected);
+            jsonlogic_decref(actual);
         }
 
         jsonlogic_decref(test);
