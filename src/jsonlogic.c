@@ -1155,10 +1155,12 @@ JsonLogic_Handle jsonlogic_op_VAR(void *context, JsonLogic_Handle data, JsonLogi
     }
 
     const char16_t *end = strkey->str + strkey->size;
+    jsonlogic_incref(data);
     for (;;) {
         size_t size = next - pos;
-        data = jsonlogic_get_utf16_sized(data, pos, size);
-        if (JSONLOGIC_IS_NULL(data)) {
+        JsonLogic_Handle next_data = jsonlogic_get_utf16_sized(data, pos, size);
+        jsonlogic_decref(data);
+        if (JSONLOGIC_IS_NULL(next_data)) {
             jsonlogic_incref(default_value);
             jsonlogic_decref(key);
             return default_value;
@@ -1167,11 +1169,12 @@ JsonLogic_Handle jsonlogic_op_VAR(void *context, JsonLogic_Handle data, JsonLogi
         pos = next + 1;
         if (pos >= end) {
             jsonlogic_decref(key);
-            return jsonlogic_incref(data);
+            return next_data;
         }
         next = jsonlogic_find_char(pos, end - pos, u'.');
         if (next == NULL) {
             next = end;
         }
+        data = next_data;
     }
 }
