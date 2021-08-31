@@ -137,6 +137,20 @@ JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle) {
     return handle;
 }
 
+size_t jsonlogic_get_refcount(JsonLogic_Handle handle) {
+    switch (handle.intptr & JsonLogic_TypeMask) {
+        case JsonLogic_Type_String:
+            return JSONLOGIC_CAST_STRING(handle)->refcount;
+
+        case JsonLogic_Type_Array:
+            return JSONLOGIC_CAST_ARRAY(handle)->refcount;
+
+        case JsonLogic_Type_Object:
+            return JSONLOGIC_CAST_OBJECT(handle)->refcount;
+    }
+    return 1;
+}
+
 static int jsonlogic_operation_entry_compare(const void *leftptr, const void *rightptr) {
     const JsonLogic_Operation_Entry *left  = leftptr;
     const JsonLogic_Operation_Entry *right = rightptr;

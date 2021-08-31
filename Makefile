@@ -139,9 +139,9 @@ $(BUILD_DIR)/bin/test$(BIN_EXT): tests/test.c src/jsonlogic.h src/jsonlogic_inte
 	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(STATIC_LIBS) -o $@
 
 # shared binary but statically linked objects, because we're using internal APIs in tests
-$(BUILD_DIR)/bin/test_shared$(BIN_EXT): tests/test.c src/jsonlogic.h src/jsonlogic_intern.h $(LIB_OBJS)
+$(BUILD_DIR)/bin/test_shared$(BIN_EXT): tests/test.c src/jsonlogic.h src/jsonlogic_intern.h $(SO_OBJS)
 	@mkdir -p $(BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $(LIB_OBJS) $(LIBS) $< -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $(SO_OBJS) $(LIBS) $< -o $@
 
 $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.o $(LIB)
 	@mkdir -p $(BUILD_DIR)/examples

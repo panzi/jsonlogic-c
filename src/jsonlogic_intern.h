@@ -5,6 +5,7 @@
 #include "jsonlogic_defs.h"
 
 #include <stdio.h>
+#include <assert.h>
 
 #define JsonLogic_PtrMask  (~(uintptr_t)0xffff000000000000)
 #define JsonLogic_TypeMask  ((uintptr_t)0xffff000000000000)
@@ -145,6 +146,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic
     if (string == NULL) {
         return JsonLogic_Null;
     }
+    assert(string->refcount == 1);
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
 }
 
@@ -152,6 +154,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_
     if (array == NULL) {
         return JsonLogic_Null;
     }
+    assert(array->refcount == 1);
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
 }
 
@@ -159,6 +162,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
     if (object == NULL) {
         return JsonLogic_Null;
     }
+    assert(object->refcount == 1);
     return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
 }
 

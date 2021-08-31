@@ -33,6 +33,7 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IO;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT size_t           jsonlogic_get_refcount(JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse(const char *str, JsonLogic_LineInfo *infoptr);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_LineInfo *infoptr);
@@ -188,7 +189,7 @@ typedef struct JsonLogic_Iterator {
 
 JSONLOGIC_EXPORT inline JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle) {
     return (JsonLogic_Iterator){
-        .handle = handle,
+        .handle = jsonlogic_incref(handle),
         .index  = 0,
     };
 }

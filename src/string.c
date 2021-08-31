@@ -413,6 +413,7 @@ JsonLogic_String *jsonlogic_strbuf_take(JsonLogic_StrBuf *buf) {
             JSONLOGIC_ERROR_MEMORY();
             string = buf->string;
         }
+        assert(string->refcount == 1);
     }
     buf->capacity = 0;
     buf->string   = NULL;

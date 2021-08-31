@@ -749,7 +749,9 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 assert(utf16_index == utf16_size);
                 assert(error == JSONLOGIC_ERROR_SUCCESS);
 
-                error = jsonlogic_parsestack_handle_value(&stack, jsonlogic_string_into_handle(string), &state);
+                JsonLogic_Handle handle = jsonlogic_string_into_handle(string);
+                error = jsonlogic_parsestack_handle_value(&stack, handle, &state);
+                jsonlogic_decref(handle);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     jsonlogic_string_free(string);
                     state = JsonLogic_ParserState_Error;
@@ -930,6 +932,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     goto loop_end;
                 }
                 error = jsonlogic_parsestack_handle_value(&stack, handle, &state);
+                jsonlogic_decref(handle);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
@@ -966,6 +969,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     goto loop_end;
                 }
                 error = jsonlogic_parsestack_handle_value(&stack, handle, &state);
+                jsonlogic_decref(handle);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;

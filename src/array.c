@@ -174,6 +174,7 @@ JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *buf) {
             JSONLOGIC_ERROR_MEMORY();
             array = buf->array;
         }
+        assert(array->refcount == 1);
     }
     buf->capacity = 0;
     buf->array = NULL;

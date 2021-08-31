@@ -406,6 +406,7 @@ JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf) {
             JSONLOGIC_ERROR_MEMORY();
             object = buf->object;
         }
+        assert(object->refcount == 1);
     }
     buf->capacity = 0;
     buf->object   = NULL;
