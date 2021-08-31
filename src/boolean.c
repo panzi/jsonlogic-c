@@ -20,18 +20,14 @@ JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
             return handle;
 
         case JsonLogic_Type_String:
-            return JSONLOGIC_CAST_STRING(handle)->size > 0 ?
-                JsonLogic_True :
-                JsonLogic_False;
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_STRING(handle)->size > 0) | JsonLogic_Type_Boolean };
 
         case JsonLogic_Type_Null:
             return JsonLogic_False;
 
         case JsonLogic_Type_Array:
             // this is different to JavaScript
-            return JSONLOGIC_CAST_ARRAY(handle)->size > 0 ?
-                JsonLogic_True :
-                JsonLogic_False;
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_ARRAY(handle)->size > 0) | JsonLogic_Type_Boolean };
 
         case JsonLogic_Type_Error:
             return handle;
@@ -55,23 +51,17 @@ JsonLogic_Handle jsonlogic_not(JsonLogic_Handle handle) {
 
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_Boolean:
-            return handle.intptr == JsonLogic_True.intptr ?
-                JsonLogic_False :
-                JsonLogic_True;
+            return (JsonLogic_Handle){ .intptr = (~handle.intptr & 1) | JsonLogic_Type_Boolean };
 
         case JsonLogic_Type_String:
-            return JSONLOGIC_CAST_STRING(handle)->size > 0 ?
-                JsonLogic_False :
-                JsonLogic_True;
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_STRING(handle)->size == 0) | JsonLogic_Type_Boolean };
 
         case JsonLogic_Type_Null:
             return JsonLogic_True;
 
         case JsonLogic_Type_Array:
             // this is different to JavaScript
-            return JSONLOGIC_CAST_ARRAY(handle)->size > 0 ?
-                JsonLogic_False :
-                JsonLogic_True;
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_ARRAY(handle)->size == 0) | JsonLogic_Type_Boolean };
 
         case JsonLogic_Type_Error:
             return handle;
