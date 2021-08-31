@@ -97,7 +97,11 @@ void test_logging(TestContext *test_context) {
     int stdout_backup = dup(STDOUT_FILENO);
 
     TEST_ASSERT_FMT(stdout_backup != -1, "dup(STDOUT_FILENO): %s", strerror(errno));
+#if defined(_WIN32) || defined(_WIN64)
+    TEST_ASSERT_FMT(_pipe(pair, 1024, 0) != -1, "_pipe(&pair, 1024, 0): %s", strerror(errno));
+#else
     TEST_ASSERT_FMT(pipe(pair) != -1, "pipe(&pair): %s", strerror(errno));
+#endif
     TEST_ASSERT_FMT(dup2(pair[1], STDOUT_FILENO) != -1, "dup2(pair[1], STDOUT_FILENO): %s", strerror(errno))
 
     logic  = jsonlogic_parse("{\"log\": [1]}", NULL);

@@ -34,7 +34,7 @@ JsonLogic_Handle jsonlogic_empty_string() {
     string->refcount = 1;
     string->size     = 0;
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
 }
 
 JsonLogic_Handle jsonlogic_string_from_latin1(const char *str) {
@@ -54,7 +54,7 @@ JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size
         string->str[index] = str[index];
     }
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
 }
 
 JsonLogic_Handle jsonlogic_string_from_utf8(const char *str) {
@@ -142,7 +142,7 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
     });
     assert(utf16_index == utf16_size);
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
 }
 
 JsonLogic_Handle jsonlogic_string_from_utf16(const char16_t *str) {
@@ -163,7 +163,7 @@ JsonLogic_Handle jsonlogic_string_from_utf16_sized(const char16_t *str, size_t s
 
     memcpy(string->str, str, size * sizeof(char16_t));
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
 }
 
 static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, JsonLogic_Handle index, JsonLogic_Handle size) {
@@ -231,7 +231,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
 
     memcpy(new_string->str, string->str + sz_index, sz_size * sizeof(char16_t));
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)new_string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)new_string) | JsonLogic_Type_String };
 }
 
 JsonLogic_Handle jsonlogic_substr(JsonLogic_Handle handle, JsonLogic_Handle index, JsonLogic_Handle size) {
@@ -449,7 +449,7 @@ JsonLogic_Handle jsonlogic_to_string(JsonLogic_Handle handle) {
         return JsonLogic_Error_OutOfMemory;
     }
 
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
 }
 
 bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *b) {

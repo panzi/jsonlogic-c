@@ -7,9 +7,9 @@
 #include <stdio.h>
 #include <assert.h>
 
-#define JsonLogic_PtrMask  (~(uintptr_t)0xffff000000000000)
-#define JsonLogic_TypeMask  ((uintptr_t)0xffff000000000000)
-#define JsonLogic_MaxNumber ((uintptr_t)0xfff8000000000000)
+#define JsonLogic_PtrMask  (~(uint64_t)0xffff000000000000)
+#define JsonLogic_TypeMask  ((uint64_t)0xffff000000000000)
+#define JsonLogic_MaxNumber ((uint64_t)0xfff8000000000000)
 
 #if defined(NDEBUG)
     #define JSONLOGIC_DEBUG(...)
@@ -65,9 +65,9 @@ struct JsonLogic_Array;
 struct JsonLogic_String;
 struct JsonLogic_Object;
 
-#define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)((handle).intptr & JsonLogic_PtrMask))
-#define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) ((handle).intptr & JsonLogic_PtrMask))
-#define JSONLOGIC_CAST_OBJECT(handle) ((JsonLogic_Object*)((handle).intptr & JsonLogic_PtrMask))
+#define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)(uintptr_t)((handle).intptr & JsonLogic_PtrMask))
+#define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) (uintptr_t)((handle).intptr & JsonLogic_PtrMask))
+#define JSONLOGIC_CAST_OBJECT(handle) ((JsonLogic_Object*)(uintptr_t)((handle).intptr & JsonLogic_PtrMask))
 
 #define JSONLOGIC_IS_STRING(handle)  (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_String)
 #define JSONLOGIC_IS_OBJECT(handle)  (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Object)
@@ -146,7 +146,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic
         return JsonLogic_Null;
     }
     assert(string->refcount == 1);
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)string) | JsonLogic_Type_String };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
 }
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array) {
@@ -154,7 +154,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_
         return JsonLogic_Null;
     }
     assert(array->refcount == 1);
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)array) | JsonLogic_Type_Array };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)array) | JsonLogic_Type_Array };
 }
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object) {
@@ -162,7 +162,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
         return JsonLogic_Null;
     }
     assert(object->refcount == 1);
-    return (JsonLogic_Handle){ .intptr = ((uintptr_t)object) | JsonLogic_Type_Object };
+    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)object) | JsonLogic_Type_Object };
 }
 
 JSONLOGIC_PRIVATE bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *b);
