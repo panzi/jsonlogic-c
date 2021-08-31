@@ -4,11 +4,38 @@
 #include <math.h>
 #include <assert.h>
 
+static bool JsonLogic_IsNumMap[256] = {
+    ['e'] = true,
+    ['E'] = true,
+    ['.'] = true,
+    ['+'] = true,
+    ['-'] = true,
+    ['0'] = true,
+    ['1'] = true,
+    ['2'] = true,
+    ['3'] = true,
+    ['4'] = true,
+    ['5'] = true,
+    ['6'] = true,
+    ['7'] = true,
+    ['8'] = true,
+    ['9'] = true,
+};
+
+static bool JsonLogic_IsSpaceMap[256] = {
+    ['\t'] = true,
+    ['\n'] = true,
+    ['\v'] = true,
+    ['\f'] = true,
+    ['\r'] = true,
+    [' ']  = true,
+};
+
 #define JSONLOGIC_IS_NUM(ch) \
-    ((ch) == u'e' || (ch) == u'E' || (ch) == u'.' || (ch) == u'+' || (ch) == u'-' || ((ch) >= u'0' && (ch) <= u'9'))
+    ((ch) <= 0xFF && JsonLogic_IsNumMap[(ch)])
 
 #define JSONLOGIC_IS_SPACE(ch) \
-    ((ch) >= u'\t' && (ch) <= u'\r')
+    ((ch) <= 0xFF && JsonLogic_IsSpaceMap[(ch)])
 
 const JsonLogic_Handle JsonLogic_NaN = { .number = NAN };
 
