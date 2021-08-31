@@ -26,10 +26,6 @@ PREFIX=/usr/local
 SO_FLAGS=-fPIC
 SHARED_BIN_OBJS=
 
-ifneq ($(patsubst %64,64,$(TARGET)),64)
-    $(error only 64 bit systems are supported)
-endif
-
 ifeq ($(patsubst %32,32,$(TARGET)),32)
     CFLAGS += -m32
 else

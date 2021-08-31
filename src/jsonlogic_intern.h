@@ -12,9 +12,9 @@
 #define JsonLogic_MaxNumber ((uintptr_t)0xfff8000000000000)
 
 #if defined(NDEBUG)
-    #define JSONLOGIC_DEBUG(...) 0
+    #define JSONLOGIC_DEBUG(...)
     #define JSONLOGIC_ERROR(...)
-    #define JSONLOGIC_DEBUG_UTF16(...) 0
+    #define JSONLOGIC_DEBUG_UTF16(...)
     #define JSONLOGIC_ERROR_UTF16(...)
     #define JSONLOGIC_ASSERT(...)
 #else
@@ -78,15 +78,14 @@ struct JsonLogic_Object;
 #define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == (JsonLogic_Type_Boolean | 1))
 #define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == (JsonLogic_Type_Boolean | 0))
 
-#define JSONLOGIC_IS_ERROR_(handle)   (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Error)
+#define JSONLOGIC_IS_ERROR_(handle)  (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Error)
 
-#ifndef NDEBUG
+#if defined(NDEBUG) || 1
     #define JSONLOGIC_IS_ERROR(handle) JSONLOGIC_IS_ERROR_(handle)
 #else
+    // extra debug stuf prints error trace wherever JSONLOGIC_IS_ERROR() is used:
     #define JSONLOGIC_IS_ERROR(handle) \
-        (JSONLOGIC_IS_ERROR_(handle) && \
-         JSONLOGIC_DEBUG("trace: %s", jsonlogic_get_error_message(jsonlogic_get_error(handle))), \
-         JSONLOGIC_IS_ERROR_(handle))
+        (JSONLOGIC_IS_ERROR_(handle) ? (JSONLOGIC_DEBUG("trace: %s", jsonlogic_get_error_message((handle).intptr)), true) : false)
 #endif
 
 #define JSONLOGIC_DECL_UTF16(NAME) \

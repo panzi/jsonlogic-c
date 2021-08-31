@@ -5,6 +5,7 @@
 #include "jsonlogic_extras.h"
 
 #include <time.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <inttypes.h>
