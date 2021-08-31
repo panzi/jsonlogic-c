@@ -1160,7 +1160,7 @@ JsonLogic_Handle jsonlogic_op_VAR(void *context, JsonLogic_Handle data, JsonLogi
     JsonLogic_Handle arg0 = args[0];
 
     if (JSONLOGIC_IS_NUMBER(arg0) && isfinite(arg0.number) && floor(arg0.number) == arg0.number) {
-        return jsonlogic_get(data, arg0);
+        return jsonlogic_get_index(data, (size_t)arg0.number);
     }
 
     JsonLogic_Handle key = jsonlogic_to_string(arg0);
