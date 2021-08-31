@@ -47,6 +47,7 @@ typedef uint64_t JsonLogic_Type;
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
     #ifdef JSONLOGIC_STATIC
+        #define JSONLOGIC_INLINE_SUPPORTED
         #define JSONLOGIC_EXPORT
     #else
         #ifdef JSONLOGIC_WIN_EXPORT
@@ -66,6 +67,7 @@ typedef uint64_t JsonLogic_Type;
     #endif
     #define JSONLOGIC_PRIVATE
 #else
+    #define JSONLOGIC_INLINE_SUPPORTED
     #if (defined(__GNUC__) && __GNUC__ >= 4) || defined(__clang__)
         #define JSONLOGIC_EXPORT  __attribute__ ((visibility ("default")))
         #define JSONLOGIC_PRIVATE __attribute__ ((visibility ("hidden")))

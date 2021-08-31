@@ -167,7 +167,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
 
 JSONLOGIC_PRIVATE bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *b);
 
-JSONLOGIC_EXPORT inline int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b) {
+JSONLOGIC_PRIVATE inline int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b) {
     return jsonlogic_utf16_compare(a->str, a->size, b->str, b->size);
 }
 

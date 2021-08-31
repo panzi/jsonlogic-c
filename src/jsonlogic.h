@@ -56,9 +56,7 @@ JSONLOGIC_EXPORT bool jsonlogic_utf16_equals( const char16_t *a, size_t asize, c
 JSONLOGIC_EXPORT int  jsonlogic_utf16_compare(const char16_t *a, size_t asize, const char16_t *b, size_t bsize);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_number_from(double value);
-JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_boolean_from(bool value) {
-    return value ? JsonLogic_True : JsonLogic_False;
-}
+
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_string();
@@ -156,9 +154,6 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, Json
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get(JsonLogic_Handle object, JsonLogic_Handle key);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_index(JsonLogic_Handle handle, size_t index);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle object, const char16_t *key, size_t size);
-JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key) {
-    return jsonlogic_get_utf16_sized(object, key, jsonlogic_utf16_len(key));
-}
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);
 
@@ -187,12 +182,28 @@ typedef struct JsonLogic_Iterator {
     size_t index;
 } JsonLogic_Iterator;
 
+#if defined(JSONLOGIC_INLINE_SUPPORTED)
+JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key) {
+    return jsonlogic_get_utf16_sized(object, key, jsonlogic_utf16_len(key));
+}
+
+JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_boolean_from(bool value) {
+    return value ? JsonLogic_True : JsonLogic_False;
+}
+
 JSONLOGIC_EXPORT inline JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle) {
     return (JsonLogic_Iterator){
         .handle = jsonlogic_incref(handle),
         .index  = 0,
     };
 }
+#else
+
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_boolean_from(bool value);
+JSONLOGIC_EXPORT JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle);
+
+#endif
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_iter_next(JsonLogic_Iterator *iter);
 JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);

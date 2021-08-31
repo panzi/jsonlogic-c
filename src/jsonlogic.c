@@ -1,3 +1,5 @@
+#define JSONLOGIC_INLINE_SUPPORTED
+
 #include "jsonlogic_intern.h"
 
 #include <stdlib.h>
