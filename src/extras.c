@@ -413,8 +413,89 @@ JsonLogic_Operation_Entry *jsonlogic_add_extras(const JsonLogic_Operation_Entry 
 }
 
 JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    JSONLOGIC_ERROR("%s", "not implemented");
-    return JsonLogic_Error_InternalError;
+    if (argc == 0) {
+        return jsonlogic_empty_array();
+    }
+
+    JsonLogic_Handle handle = args[0];
+    if (!JSONLOGIC_IS_ARRAY(handle)) {
+        return jsonlogic_empty_array();
+    }
+    const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
+    size_t prod_len = array->size;
+
+    for (size_t index = 1; index < argc; ++ index) {
+        JsonLogic_Handle handle = args[index];
+        if (!JSONLOGIC_IS_ARRAY(handle)) {
+            return jsonlogic_empty_array();
+        }
+        prod_len *= JSONLOGIC_CAST_ARRAY(handle)->size;
+    }
+
+    if (prod_len == 0) {
+        return jsonlogic_empty_array();
+    }
+
+    JsonLogic_Array *combinations = jsonlogic_array_with_capacity(prod_len);
+    if (combinations == NULL) {
+        return JsonLogic_Error_OutOfMemory;
+    }
+
+    size_t *stack = calloc(argc, sizeof(size_t));
+    if (stack == NULL) {
+        jsonlogic_array_free(combinations);
+        return JsonLogic_Error_OutOfMemory;
+    }
+
+    JsonLogic_Array *item = jsonlogic_array_with_capacity(argc);
+    if (item == NULL) {
+        jsonlogic_array_free(combinations);
+        free(stack);
+        return JsonLogic_Error_OutOfMemory;
+    }
+
+    size_t combinations_index = 0;
+    size_t stack_ptr = 0;
+    stack[0] = 0;
+
+    for (;;) {
+        if (stack_ptr == argc) {
+            combinations->items[combinations_index ++] = jsonlogic_array_into_handle(item);
+            assert(stack_ptr > 0);
+            -- stack_ptr;
+
+            item = jsonlogic_array_with_capacity(argc);
+            if (item == NULL) {
+                jsonlogic_array_free(combinations);
+                free(stack);
+                jsonlogic_array_free(item);
+                return JsonLogic_Error_OutOfMemory;
+            }
+        } else {
+            const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(args[stack_ptr]);
+            const size_t index = stack[stack_ptr];
+
+            if (index == array->size) {
+                if (stack_ptr == 0) {
+                    break;
+                }
+                -- stack_ptr;
+            } else {
+                item->items[stack_ptr] = jsonlogic_incref(args[index]);
+                stack[stack_ptr] = index + 1;
+                ++ stack_ptr;
+                stack[stack_ptr] = 0;
+            }
+        }
+    }
+
+    assert(combinations_index == combinations->size);
+
+    jsonlogic_array_free(combinations);
+    jsonlogic_array_free(item);
+    free(stack);
+
+    return jsonlogic_array_into_handle(combinations);
 }
 
 JsonLogic_Handle jsonlogic_extra_DAYS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -447,7 +528,7 @@ double jsonlogic_now() {
         return JsonLogic_Error_InternalError.number;
     }
 
-    return (double)tv.tv_sec * 1000 + (double)tv.tv_usec / 1000;
+    return (double)tv.tv_sec * 1000 + (double)(tv.tv_usec / 1000);
 #endif
 }
 
