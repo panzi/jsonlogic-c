@@ -85,7 +85,6 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...
  */
 #define jsonlogic_object_from(...) jsonlogic_object_from_vararg(jsonlogic_count_entries(__VA_ARGS__), __VA_ARGS__)
 #define jsonlogic_entry(KEY, VALUE) (JsonLogic_Object_Entry){ .key = (KEY), .value = (VALUE) }
-#define jsonlogic_entry_latin1(KEY, VALUE) (JsonLogic_Object_Entry){ .key = jsonlogic_string_from_latin1((KEY)), .value = (VALUE) }
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_to_string (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_to_number (JsonLogic_Handle handle);

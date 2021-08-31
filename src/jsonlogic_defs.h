@@ -46,18 +46,22 @@ typedef uint64_t JsonLogic_Type;
 #define JSONLOGIC_ERROR_SYNTAX_ERROR       (JsonLogic_Type_Error | 7)
 
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
-    #ifdef WIN_EXPORT
-        // Exporting...
-        #ifdef __GNUC__
-        #define JSONLOGIC_EXPORT __attribute__ ((dllexport))
-        #else
-        #define JSONLOGIC_EXPORT __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
-        #endif
+    #ifdef JSONLOGIC_STATIC
+        #define JSONLOGIC_EXPORT
     #else
-        #ifdef __GNUC__
-        #define JSONLOGIC_EXPORT __attribute__ ((dllimport))
+        #ifdef JSONLOGIC_WIN_EXPORT
+            // Exporting...
+            #ifdef __GNUC__
+                #define JSONLOGIC_EXPORT __attribute__ ((dllexport))
+            #else
+                #define JSONLOGIC_EXPORT __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
+            #endif
         #else
-        #define JSONLOGIC_EXPORT __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+            #ifdef __GNUC__
+                #define JSONLOGIC_EXPORT __attribute__ ((dllimport))
+            #else
+                #define JSONLOGIC_EXPORT __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
+            #endif
         #endif
     #endif
     #define JSONLOGIC_PRIVATE
