@@ -34,6 +34,7 @@ JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_SyntaxError;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_dissolve(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT size_t           jsonlogic_get_refcount(JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_parse(const char *str, JsonLogic_LineInfo *infoptr);

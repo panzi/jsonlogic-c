@@ -139,6 +139,38 @@ JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle) {
     return handle;
 }
 
+JsonLogic_Handle jsonlogic_dissolve(JsonLogic_Handle handle) {
+    switch (handle.intptr & JsonLogic_TypeMask) {
+        case JsonLogic_Type_Array:
+        {
+            JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
+            size_t size = array->size;
+            // Set size to 0 before calling jsonlogic_dissolve() on any
+            // children to stop recursion for ref-loops
+            array->size = 0;
+            for (size_t index = 0; index < size; ++ index) {
+                jsonlogic_dissolve(array->items[index]);
+            }
+            break;
+        }
+        case JsonLogic_Type_Object:
+        {
+            JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
+            size_t size = object->size;
+            // Set size to 0 before calling jsonlogic_dissolve() on any
+            // children to stop recursion for ref-loops
+            object->size = 0;
+            for (size_t index = 0; index < size; ++ index) {
+                JsonLogic_Object_Entry *entry = &object->entries[index];
+                jsonlogic_dissolve(entry->key);
+                jsonlogic_dissolve(entry->value);
+            }
+            break;
+        }
+    }
+    return jsonlogic_decref(handle);
+}
+
 size_t jsonlogic_get_refcount(JsonLogic_Handle handle) {
     switch (handle.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
