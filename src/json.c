@@ -1079,15 +1079,10 @@ char *jsonlogic_stringify_utf8(JsonLogic_Handle value) {
     return result;
 }
 
+// This function is only called by jsonlogic_stringify_file_intern() and that
+// checks isfinite() already before, so we don't need it here:
 static inline JsonLogic_Error jsonlogic_print_double(FILE *file, double value) {
-    int count;
-
-    if (!isfinite(value)) {
-        count = fprintf(file, "null");
-    } else {
-        count = fprintf(file, "%.*g", DBL_DIG, value);
-    }
-
+    int count = fprintf(file, "%.*g", DBL_DIG, value);
     if (count < 0) {
         return JSONLOGIC_ERROR_IO_ERROR;
     }

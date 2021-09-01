@@ -686,7 +686,8 @@ JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double v
     size_t has_free = buf->capacity - buf->used;
     int count = snprintf(buf->string + buf->used, has_free, "%.*g", DBL_DIG, value);
     if (count < 0) {
-        JSONLOGIC_DEBUG("snprintf(buf, %" PRIuPTR ", \"%%.%ug\", %.*g) error: %s", has_free, DBL_DIG, DBL_DIG, value, strerror(errno));
+        JSONLOGIC_DEBUG("snprintf(buf, %" PRIuPTR ", \"%%.%ug\", %.*g) error: %s",
+            has_free, DBL_DIG, DBL_DIG, value, strerror(errno));
         return JSONLOGIC_ERROR_INTERNAL_ERROR;
     } else if (count >= has_free) {
         // snprintf() always writes the terminating NULL byte (if maxlen > 0)
