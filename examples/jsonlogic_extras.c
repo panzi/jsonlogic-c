@@ -1,4 +1,5 @@
 #include "jsonlogic.h"
+#include "jsonlogic_extras.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +12,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "usage: %s <logic> <data>\n", progname);
         return 1;
     }
-    JsonLogic_LineInfo info  = JSONLOGIC_LINEINFO_INIT;
+    JsonLogic_LineInfo info = JSONLOGIC_LINEINFO_INIT;
     JsonLogic_Handle logic = jsonlogic_parse(argv[1], &info);
     JsonLogic_Error  error = jsonlogic_get_error(logic);
     if (error != JSONLOGIC_ERROR_SUCCESS) {
@@ -27,7 +28,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    JsonLogic_Handle result = jsonlogic_apply(logic, data);
+    JsonLogic_Handle result = jsonlogic_apply_custom(logic, data, NULL, JsonLogic_Extras.entries, JsonLogic_Extras.size);
 
     jsonlogic_decref(logic);
     jsonlogic_decref(data);

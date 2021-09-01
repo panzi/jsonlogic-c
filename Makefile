@@ -11,6 +11,7 @@ LIB_OBJS=$(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/jsonlogic.o \
          $(BUILD_DIR)/obj/number.o \
          $(BUILD_DIR)/obj/object.o \
+         $(BUILD_DIR)/obj/operations.o \
          $(BUILD_DIR)/obj/string.o
 LIBS=-lm
 
@@ -60,7 +61,8 @@ BUILD_DIR := $(BUILD_DIR)/$(TARGET)
 LIB_DIRS=-L$(BUILD_DIR)/lib
 INC_DIRS=-Isrc
 EXAMPLES=$(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
-         $(BUILD_DIR)/examples/jsonlogic$(BIN_EXT)
+         $(BUILD_DIR)/examples/jsonlogic$(BIN_EXT) \
+         $(BUILD_DIR)/examples/jsonlogic_extras$(BIN_EXT)
 EXAMPLES_SHARED=$(patsubst $(BUILD_DIR)/examples/%,$(BUILD_DIR)/examples-shared/%,$(EXAMPLES))
 LIB=$(BUILD_DIR)/lib/libjsonlogic.a
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
@@ -103,10 +105,10 @@ static: lib inc
 shared: so inc
 
 test: $(BUILD_DIR)/bin/test$(BIN_EXT)
-	$< tests/tests.json
+	$<
 
 test_shared: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
-	LD_LIBRARY_PATH=$(BUILD_DIR)/lib $< tests/tests.json
+	LD_LIBRARY_PATH=$(BUILD_DIR)/lib $<
 
 lib: $(LIB)
 

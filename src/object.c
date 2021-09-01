@@ -292,7 +292,7 @@ size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t
         } else if (cmp > 0) {
             right = mid;
         } else {
-            return left;
+            return mid;
         }
     }
     return object->size;

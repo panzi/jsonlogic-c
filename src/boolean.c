@@ -3,8 +3,8 @@
 #include <stdlib.h>
 #include <math.h>
 
-const JsonLogic_Handle JsonLogic_True  = { .intptr = JsonLogic_Type_Boolean | 1 };
-const JsonLogic_Handle JsonLogic_False = { .intptr = JsonLogic_Type_Boolean | 0 };
+const JsonLogic_Handle JsonLogic_True  = { .intptr = JSONLOGIC_TURE  };
+const JsonLogic_Handle JsonLogic_False = { .intptr = JSONLOGIC_FALSE };
 
 JsonLogic_Handle jsonlogic_boolean_from(bool value);
 
@@ -39,7 +39,7 @@ JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
 
 bool jsonlogic_to_bool(JsonLogic_Handle handle) {
     // interpretes errors as false
-    return jsonlogic_to_boolean(handle).intptr == JsonLogic_True.intptr;
+    return jsonlogic_to_boolean(handle).intptr == JSONLOGIC_TURE;
 }
 
 JsonLogic_Handle jsonlogic_not(JsonLogic_Handle handle) {

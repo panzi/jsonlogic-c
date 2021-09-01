@@ -68,7 +68,7 @@ static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLog
             return jsonlogic_strbuf_append_ascii(buf, "\"");
 
         case JsonLogic_Type_Boolean:
-            if (handle.intptr == JsonLogic_False.intptr) {
+            if (handle.intptr == JSONLOGIC_FALSE) {
                 return jsonlogic_strbuf_append_ascii(buf, "false");
             } else {
                 return jsonlogic_strbuf_append_ascii(buf, "true");

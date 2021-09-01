@@ -2,6 +2,7 @@
 #define _POSIX_C_SOURCE 1
 
 #include "jsonlogic_intern.h"
+#include "jsonlogic_extras.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -78,6 +79,8 @@ typedef struct TestContext {
     { .name = NAME, .func = test_##FUNC }
 
 #define TEST_END { .name = NULL, .func = NULL }
+
+const double MOCK_TIME = 1629205800000; // 2021-08-17T15:10:00+02:00
 
 void test_bad_operator(TestContext *test_context) {
     JsonLogic_Handle logic  = jsonlogic_parse("{\"fubar\": []}", NULL);
@@ -212,6 +215,10 @@ JsonLogic_Handle array_times(void *context, JsonLogic_Handle data, JsonLogic_Han
 
     double anum = jsonlogic_to_double(a);
     double bnum = jsonlogic_to_double(b);
+
+    jsonlogic_decref(a);
+    jsonlogic_decref(b);
+
     return jsonlogic_number_from(anum * bnum);
 }
 
@@ -229,56 +236,52 @@ void test_custom_operators(TestContext *test_context) {
     jsonlogic_decref(result);
     result = JsonLogic_Null;
 
-    JsonLogic_Operation_Entry ops[] = {
+    JsonLogic_Operations ops = jsonlogic_operations(
         jsonlogic_operation(u"add_to_a", add_to_a),
-    };
+    );
 
     // New operation executes, returns desired result
     // No args
-    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops));
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null, &context, ops.entries, ops.size);
 
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(1)));
 
     // Unary syntactic sugar
     jsonlogic_decref(logic);
     logic  = jsonlogic_parse("{\"add_to_a\":41}", NULL);
-    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops));
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null, &context, ops.entries, ops.size);
 
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
     // New operation had side effects.
     TEST_ASSERT(context.a == 42.0);
 
-    JsonLogic_Operation_Entry ops2[] = {
+    JsonLogic_Operations ops2 = jsonlogic_operations(
         jsonlogic_operation(u"fives.add", fives_add),
         jsonlogic_operation(u"fives.subtract", fives_subtract),
-    };
+    );
 
     jsonlogic_decref(logic);
     logic  = jsonlogic_parse("{\"fives.add\":37}", NULL);
-    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
-        &context, ops2, jsonlogic_operations_size(ops2));
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null, &context, ops2.entries, ops2.size);
 
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
 
     jsonlogic_decref(logic);
     logic  = jsonlogic_parse("{\"fives.subtract\":47}", NULL);
-    result = jsonlogic_apply_custom(logic, JsonLogic_Null,
-        &context, ops2, jsonlogic_operations_size(ops2));
+    result = jsonlogic_apply_custom(logic, JsonLogic_Null, &context, ops2.entries, ops2.size);
 
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
 
-    JsonLogic_Operation_Entry ops3[] = {
+    JsonLogic_Operations ops3 = jsonlogic_operations(
         jsonlogic_operation(u"times", times),
-    };
+    );
 
     // Calling a method with multiple var as arguments.
     jsonlogic_decref(logic);
     logic = jsonlogic_parse("{\"times\":[{\"var\":\"a\"},{\"var\":\"b\"}]}", NULL);
     data  = jsonlogic_parse("{\"a\":6,\"b\":7}", NULL);
 
-    result = jsonlogic_apply_custom(logic, data, &context, ops3, jsonlogic_operations_size(ops3));
+    result = jsonlogic_apply_custom(logic, data, &context, ops3.entries, ops3.size);
 
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
 
@@ -286,14 +289,14 @@ void test_custom_operators(TestContext *test_context) {
     TEST_ASSERT(jsonlogic_get_error(result) == JSONLOGIC_ERROR_ILLEGAL_OPERATION);
 
     // Calling a method that takes an array, but the inside of the array has rules, too
-    JsonLogic_Operation_Entry ops4[] = {
+    JsonLogic_Operations ops4 = jsonlogic_operations(
         jsonlogic_operation(u"array_times", array_times),
-    };
+    );
 
     jsonlogic_decref(logic);
     logic = jsonlogic_parse("{\"array_times\":[[{\"var\":\"a\"},{\"var\":\"b\"}]]}", NULL);
 
-    result = jsonlogic_apply_custom(logic, data, &context, ops4, jsonlogic_operations_size(ops4));
+    result = jsonlogic_apply_custom(logic, data, &context, ops4.entries, ops4.size);
 
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
 
@@ -308,6 +311,19 @@ typedef struct TestShortCircuit {
     JsonLogic_ArrayBuf consequences;
     JsonLogic_ArrayBuf list;
 } TestShortCircuit;
+
+JsonLogic_Handle mock_now(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    return jsonlogic_number_from(MOCK_TIME);
+}
+
+JsonLogic_Handle mock_time_since(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    if (argc == 0) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    double tv = jsonlogic_parse_time(args[0]);
+    return jsonlogic_number_from(MOCK_TIME - tv);
+}
 
 JsonLogic_Handle push_if(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     TestShortCircuit *ctx = context;
@@ -356,12 +372,12 @@ void test_short_circuit(TestContext *test_context) {
         .list         = JSONLOGIC_ARRAYBUF_INIT,
     };
 
-    JsonLogic_Operation_Entry ops[] = {
+    JsonLogic_Operations ops = jsonlogic_operations(
         jsonlogic_operation(u"push",      push_list),
         jsonlogic_operation(u"push.else", push_else),
         jsonlogic_operation(u"push.if",   push_if),
         jsonlogic_operation(u"push.then", push_then),
-    };
+    );
 
     JsonLogic_Handle logic = jsonlogic_parse("{\"if\":["
         "{\"push.if\":[true]},"
@@ -373,7 +389,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     JsonLogic_Handle data = jsonlogic_parse("[true]", NULL);
 
@@ -404,7 +420,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[false, false]", NULL);
@@ -427,7 +443,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[false]", NULL);
@@ -443,7 +459,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[false]", NULL);
@@ -459,7 +475,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[true, false]", NULL);
@@ -475,7 +491,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[true, true]", NULL);
@@ -493,7 +509,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[false, false]", NULL);
@@ -509,7 +525,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[false, true]", NULL);
@@ -525,7 +541,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[true]", NULL);
@@ -541,7 +557,7 @@ void test_short_circuit(TestContext *test_context) {
 
     jsonlogic_decref(jsonlogic_apply_custom(
         logic, JsonLogic_Null,
-        &context, ops, jsonlogic_operations_size(ops)));
+        &context, ops.entries, ops.size));
 
     jsonlogic_decref(data);
     data = jsonlogic_parse("[true]", NULL);
@@ -569,56 +585,97 @@ const TestCase TEST_CASES[] = {
     TEST_END,
 };
 
-int main(int argc, char *argv[]) {
-    if (argc != 2) {
-        const char *progname = argc > 0 ? argv[0] : "test";
-        fprintf(stderr, "usage: %s <path/to/tests.json>\n", progname);
-        return 1;
-    }
-
-    const char *filename = argv[1];
+JsonLogic_Handle parse_file(const char *filename) {
     FILE *fp = fopen(filename, "r");
     if (fp == NULL) {
         perror(filename);
-        return 1;
+        return JsonLogic_Error_IOError;
     }
 
     struct stat stbuf;
     if (fstat(fileno(fp), &stbuf) != 0) {
         fclose(fp);
         perror(filename);
-        return 1;
+        return JsonLogic_Error_IOError;
     }
 
-    char *tests_json = malloc(stbuf.st_size);
-    if (tests_json == NULL) {
+    char *data = malloc(stbuf.st_size + 1);
+    if (data == NULL) {
         fclose(fp);
         perror(filename);
-        return 1;
+        return JsonLogic_Error_OutOfMemory;
     }
 
-    if (fread(tests_json, stbuf.st_size, 1, fp) != 1) {
-        free(tests_json);
+    if (fread(data, stbuf.st_size, 1, fp) != 1) {
+        free(data);
         fclose(fp);
         perror(filename);
-        return 1;
+        return JsonLogic_Error_IOError;
     }
+
+    data[stbuf.st_size] = 0;
 
     fclose(fp);
 
     JsonLogic_LineInfo info = JSONLOGIC_LINEINFO_INIT;
-    JsonLogic_Handle tests = jsonlogic_parse_sized(tests_json, stbuf.st_size, &info);
+    JsonLogic_Handle handle = jsonlogic_parse(data, &info);
 
-    JsonLogic_Error error = jsonlogic_get_error(tests);
+    JsonLogic_Error error = jsonlogic_get_error(handle);
     if (error != JSONLOGIC_ERROR_SUCCESS) {
-        jsonlogic_print_parse_error_sized(stderr, tests_json, stbuf.st_size, error, info);
-        free(tests_json);
-        return 1;
+        jsonlogic_print_parse_error(stderr, data, error, info);
+        free(data);
+        return handle;
     }
-    free(tests_json);
-    tests_json = NULL;
+    free(data);
 
-    JsonLogic_Iterator iter = jsonlogic_iter(tests);
+    return handle;
+}
+
+int main(int argc, char *argv[]) {
+    const JsonLogic_Operations ops_for_merge[] = {
+        JsonLogic_Extras,
+        (JsonLogic_Operations)jsonlogic_operations(
+            jsonlogic_operation(u"now", mock_now),
+            jsonlogic_operation(u"timeSince", mock_time_since),
+        ),
+    };
+
+    JsonLogic_Handle tests = JsonLogic_Null;
+    JsonLogic_Handle rule  = JsonLogic_Null;
+    JsonLogic_Handle valid_examples   = JsonLogic_Null;
+    JsonLogic_Handle invalid_examples = JsonLogic_Null;
+    int status = 0;
+
+    size_t ops_size = 0;
+    JsonLogic_Operation_Entry *ops = jsonlogic_operations_merge(
+        ops_for_merge,
+        sizeof(ops_for_merge) / sizeof(ops_for_merge[0]),
+        &ops_size);
+
+    if (ops == NULL) {
+        fprintf(stderr, "*** error: merging operations: %s\n", strerror(errno));
+        goto error;
+    }
+
+    tests = parse_file("tests/tests.json");
+    if (jsonlogic_is_error(tests)) {
+        goto error;
+    }
+
+    rule = parse_file("tests/rule.json");
+    if (jsonlogic_is_error(rule)) {
+        goto error;
+    }
+
+    valid_examples = parse_file("tests/valid.json");
+    if (jsonlogic_is_error(valid_examples)) {
+        goto error;
+    }
+
+    invalid_examples = parse_file("tests/invalid.json");
+    if (jsonlogic_is_error(invalid_examples)) {
+        goto error;
+    }
 
     TestContext test_context = {
         .test_case = NULL,
@@ -664,15 +721,22 @@ int main(int argc, char *argv[]) {
         } \
         fprintf(stderr, "      test: %" PRIuPTR "\n", test_count);
 
+    JsonLogic_Iterator iter = jsonlogic_iter(tests);
+
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
+        JsonLogic_Error error = jsonlogic_get_error(test);
 
-        if (jsonlogic_get_error(test) == JSONLOGIC_ERROR_STOP_ITERATION) {
+        if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
             if (!test_context.newline) {
                 puts("OK");
                 fflush(stdout);
                 test_context.newline = false;
             }
+            break;
+        } else if (error != JSONLOGIC_ERROR_SUCCESS) {
+            FAIL();
+            fprintf(stderr, "     error: in tests/tests.json: %s\n", jsonlogic_get_error_message(error));
             break;
         }
 
@@ -695,19 +759,19 @@ int main(int argc, char *argv[]) {
 
             if (jsonlogic_is_error(logic)) {
                 FAIL();
-                fprintf(stderr, "     error: in tests JSON: %s\n", jsonlogic_get_error_message(jsonlogic_get_error(logic)));
+                fprintf(stderr, "     error: in tests/tests.json: %s\n", jsonlogic_get_error_message(jsonlogic_get_error(logic)));
                 goto test_cleanup;
             }
 
             if (jsonlogic_is_error(data)) {
                 FAIL();
-                fprintf(stderr, "     error: in tests JSON: %s\n", jsonlogic_get_error_message(jsonlogic_get_error(data)));
+                fprintf(stderr, "     error: in tests/tests.json: %s\n", jsonlogic_get_error_message(jsonlogic_get_error(data)));
                 goto test_cleanup;
             }
 
             if (jsonlogic_is_error(expected)) {
                 FAIL();
-                fprintf(stderr, "     error: in tests JSON: %s\n", jsonlogic_get_error_message(jsonlogic_get_error(expected)));
+                fprintf(stderr, "     error: in tests/tests.json: %s\n", jsonlogic_get_error_message(jsonlogic_get_error(expected)));
                 goto test_cleanup;
             }
 
@@ -739,10 +803,149 @@ int main(int argc, char *argv[]) {
 
     jsonlogic_iter_free(&iter);
 
+    iter = jsonlogic_iter(valid_examples);
+
+    for (;;) {
+        JsonLogic_Handle test = jsonlogic_iter_next(&iter);
+        JsonLogic_Error error = jsonlogic_get_error(test);
+
+        if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
+            break;
+        }
+
+        ++ test_count;
+
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            fflush(stdout);
+            fprintf(stderr, "     error: in tests/valid.json: %s\n", jsonlogic_get_error_message(error));
+            break;
+        }
+
+        size_t size = 0;
+        JsonLogic_Handle test_name = jsonlogic_get_utf16(test, u"name");
+        const char16_t *str = jsonlogic_get_string_content(test_name, &size);
+        if (str == NULL) {
+            puts("FAIL");
+            fflush(stdout);
+            if (jsonlogic_is_string(test_name)) {
+                fprintf(stderr, "     error: in tests/valid.json: error getting test name\n");
+            } else {
+                fprintf(stderr, "     error: in tests/valid.json: error getting test name: ");
+                jsonlogic_println(stderr, test);
+            }
+            jsonlogic_decref(test);
+            jsonlogic_decref(test_name);
+            continue;
+        }
+
+        printf(" - "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
+        fflush(stdout);
+
+        JsonLogic_Handle code   = jsonlogic_get_utf16(test, u"code");
+        JsonLogic_Handle result = jsonlogic_apply_custom(rule, code, NULL, ops, ops_size);
+
+        if (jsonlogic_is_true(result)) {
+            puts("OK");
+            ++ pass_count;
+        } else {
+            puts("FAIL");
+            fflush(stdout);
+            fprintf(stderr, "     error: Wrong result\n");
+            //fprintf(stderr, "     logic: "); jsonlogic_println(stderr, rule);
+            fprintf(stderr, "      data: "); jsonlogic_println(stderr, code);
+            fprintf(stderr, "  expected: true\n");
+            fprintf(stderr, "    actual: "); jsonlogic_println(stderr, result);
+            fputc('\n', stderr);
+        }
+
+        jsonlogic_decref(result);
+        jsonlogic_decref(code);
+        jsonlogic_decref(test_name);
+        jsonlogic_decref(test);
+    }
+
+    jsonlogic_iter_free(&iter);
+
+    iter = jsonlogic_iter(invalid_examples);
+
+    for (;;) {
+        JsonLogic_Handle test = jsonlogic_iter_next(&iter);
+        JsonLogic_Error error = jsonlogic_get_error(test);
+
+        if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
+            break;
+        }
+
+        ++ test_count;
+
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            fflush(stdout);
+            fprintf(stderr, "     error: in tests/valid.json: %s\n", jsonlogic_get_error_message(error));
+            break;
+        }
+
+        size_t size = 0;
+        JsonLogic_Handle test_name = jsonlogic_get_utf16(test, u"name");
+        const char16_t *str = jsonlogic_get_string_content(test_name, &size);
+        if (str == NULL) {
+            puts("FAIL");
+            fflush(stdout);
+            if (jsonlogic_is_string(test_name)) {
+                fprintf(stderr, "     error: in tests/valid.json: error getting test name\n");
+            } else {
+                fprintf(stderr, "     error: in tests/valid.json: error getting test name: ");
+                jsonlogic_println(stderr, test_name);
+            }
+            jsonlogic_decref(test);
+            jsonlogic_decref(test_name);
+            continue;
+        }
+
+        printf(" - "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
+        fflush(stdout);
+
+        JsonLogic_Handle code   = jsonlogic_get_utf16(test, u"code");
+        JsonLogic_Handle result = jsonlogic_apply_custom(rule, code, NULL, ops, ops_size);
+
+        if (jsonlogic_is_false(result)) {
+            puts("OK");
+            ++ pass_count;
+        } else {
+            puts("FAIL");
+            fflush(stdout);
+            fprintf(stderr, "     error: Wrong result\n");
+            //fprintf(stderr, "     logic: "); jsonlogic_println(stderr, rule);
+            fprintf(stderr, "      data: "); jsonlogic_println(stderr, code);
+            fprintf(stderr, "  expected: false\n");
+            fprintf(stderr, "    actual: "); jsonlogic_println(stderr, result);
+            fputc('\n', stderr);
+        }
+
+        jsonlogic_decref(result);
+        jsonlogic_decref(code);
+        jsonlogic_decref(test_name);
+        jsonlogic_decref(test);
+    }
+
+    jsonlogic_iter_free(&iter);
+
     printf("\ntests: %" PRIuPTR ", failed: %" PRIuPTR ", passed: %" PRIuPTR "\n",
         test_count, test_count - pass_count, pass_count);
 
-    jsonlogic_decref(tests);
+    status = test_count == pass_count ? 0 : 1;
 
-    return test_count == pass_count ? 0 : 1;
+    goto cleanup;
+
+error:
+    status = 1;
+
+cleanup:
+
+    jsonlogic_decref(tests);
+    jsonlogic_decref(rule);
+    jsonlogic_decref(valid_examples);
+    jsonlogic_decref(invalid_examples);
+    free(ops);
+
+    return status;
 }

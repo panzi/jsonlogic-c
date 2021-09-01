@@ -36,6 +36,10 @@ typedef uint64_t JsonLogic_Type;
 #define JsonLogic_Type_Object   ((JsonLogic_Type) 0xfffd000000000000)
 #define JsonLogic_Type_Error    ((JsonLogic_Type) 0xfffe000000000000)
 
+#define JSONLOGIC_NULL  JsonLogic_Type_Null
+#define JSONLOGIC_TURE  (JsonLogic_Type_Boolean | 1)
+#define JSONLOGIC_FALSE (JsonLogic_Type_Boolean | 0)
+
 #define JSONLOGIC_ERROR_SUCCESS            (JsonLogic_Type_Error | 0)
 #define JSONLOGIC_ERROR_OUT_OF_MEMORY      (JsonLogic_Type_Error | 1)
 #define JSONLOGIC_ERROR_ILLEGAL_OPERATION  (JsonLogic_Type_Error | 2)

@@ -20,7 +20,7 @@ size_t jsonlogic_utf16_len(const char16_t *key) {
         return 0;
     }
     const char16_t *ptr = key;
-    while (ptr < key) ++ ptr;
+    while (*ptr) ++ ptr;
     return ptr - key;
 }
 
@@ -363,7 +363,7 @@ JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle 
             return jsonlogic_strbuf_append_utf16(buf, string->str, string->size);
         }
         case JsonLogic_Type_Boolean:
-            if (handle.intptr == JsonLogic_False.intptr) {
+            if (handle.intptr == JSONLOGIC_FALSE) {
                 return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_FALSE_STRING, JSONLOGIC_FALSE_STRING_SIZE);
             } else {
                 return jsonlogic_strbuf_append_utf16(buf, JSONLOGIC_TRUE_STRING, JSONLOGIC_TRUE_STRING_SIZE);

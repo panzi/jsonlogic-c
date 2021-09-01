@@ -38,7 +38,7 @@ static JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (void *context, JsonLogic_Ha
 static JsonLogic_Handle jsonlogic_extra_ZIP         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 #define JSONLOGIC_EXTRAS_COUNT 7
-static const JsonLogic_Operation_Entry JsonLogic_Extras[JSONLOGIC_EXTRAS_COUNT] = {
+const JsonLogic_Operation_Entry JsonLogic_Extras_Entries[JSONLOGIC_EXTRAS_COUNT] = {
     JSONLOGIC_EXTRA(COMBINATIONS),
     JSONLOGIC_EXTRA(DAYS),
     JSONLOGIC_EXTRA(HOURS),
@@ -46,6 +46,11 @@ static const JsonLogic_Operation_Entry JsonLogic_Extras[JSONLOGIC_EXTRAS_COUNT] 
     JSONLOGIC_EXTRA(PARSE_TIME),
     JSONLOGIC_EXTRA(TIME_SINCE),
     JSONLOGIC_EXTRA(ZIP),
+};
+
+const JsonLogic_Operations JsonLogic_Extras = {
+    .size = JSONLOGIC_EXTRAS_COUNT,
+    .entries = JsonLogic_Extras_Entries,
 };
 
 #define IS_NUM(CH) ((CH) >= u'0' && (CH) <= u'9')
@@ -355,61 +360,7 @@ double jsonlogic_parse_date_time(const char16_t *str, size_t size) {
         return DBOULE_ILLEGAL_ARGUMENT;
     }
 
-    return (double)(time + tzoff) * 1000 + msec;
-}
-
-JsonLogic_Operation_Entry *jsonlogic_add_extras(const JsonLogic_Operation_Entry operations[], size_t *operations_size) {
-    if (operations_size == NULL) {
-        JSONLOGIC_DEBUG("%s", "illegal argument: operations_size is NULL");
-        errno = EINVAL;
-        return NULL;
-    }
-
-    if (*operations_size > 0 && operations == NULL) {
-        JSONLOGIC_DEBUG("%s", "illegal argument: *operations_size > 0, but operations == NULL");
-        errno = EINVAL;
-        return NULL;
-    }
-
-    size_t old_size = *operations_size;
-    size_t new_size = old_size + JSONLOGIC_EXTRAS_COUNT;
-    JsonLogic_Operation_Entry *new_operations = malloc(new_size * sizeof(JsonLogic_Operation_Entry));
-    if (new_operations == NULL) {
-        JSONLOGIC_ERROR_MEMORY();
-        return NULL;
-    }
-
-    size_t new_index = 0;
-    for (size_t index = 0; index < old_size; ++ index) {
-        const JsonLogic_Operation_Entry *entry = &operations[index];
-
-        JsonLogic_Operation extra = jsonlogic_operation_get(JsonLogic_Extras, JSONLOGIC_EXTRAS_COUNT, entry->key, entry->key_size);
-        if (extra == NULL) {
-            new_operations[new_index ++] = *entry;
-        }
-    }
-
-    for (size_t index = 0; index < JSONLOGIC_EXTRAS_COUNT; ++ index) {
-        new_operations[new_index ++] = JsonLogic_Extras[index];
-    }
-
-    if (new_index < new_size) {
-        new_size = new_index;
-        JsonLogic_Operation_Entry *truncated_operations = realloc(new_operations, sizeof(JsonLogic_Operation_Entry) * new_size);
-        if (truncated_operations == NULL) {
-            JSONLOGIC_ERROR("%s", "failed to truncate operations array");
-        } else {
-            new_operations = truncated_operations;
-        }
-    }
-
-    if (old_size > 0) {
-        jsonlogic_operations_sort(new_operations, new_size);
-    }
-
-    *operations_size = new_size;
-
-    return new_operations;
+    return (double)(time - tzoff) * 1000 + msec;
 }
 
 JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -441,7 +392,7 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
         return JsonLogic_Error_OutOfMemory;
     }
 
-    size_t *stack = calloc(argc, sizeof(size_t));
+    size_t *stack = calloc(argc + 1, sizeof(size_t));
     if (stack == NULL) {
         jsonlogic_array_free(combinations);
         return JsonLogic_Error_OutOfMemory;
@@ -491,7 +442,6 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
 
     assert(combinations_index == combinations->size);
 
-    jsonlogic_array_free(combinations);
     jsonlogic_array_free(item);
     free(stack);
 

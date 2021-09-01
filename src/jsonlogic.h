@@ -118,6 +118,8 @@ JSONLOGIC_EXPORT bool jsonlogic_is_number (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_array  (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_object (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT bool jsonlogic_is_boolean(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_true   (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool jsonlogic_is_false  (JsonLogic_Handle handle);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_add(JsonLogic_Handle a, JsonLogic_Handle b);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_sub(JsonLogic_Handle a, JsonLogic_Handle b);
@@ -172,11 +174,25 @@ typedef struct JsonLogic_Operation_Entry {
         .operation = OPERATION, \
     }
 
-#define jsonlogic_operations_size(OPERATIONS) \
-    (sizeof(OPERATIONS) / sizeof(JsonLogic_Operation_Entry))
+#define jsonlogic_operations(...) \
+    { \
+        .size = sizeof((JsonLogic_Operation_Entry[]){ __VA_ARGS__ }) / sizeof(JsonLogic_Operation_Entry), \
+        .entries = (JsonLogic_Operation_Entry[]){ __VA_ARGS__ }, \
+    }
 
-JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry operations[], size_t count);
-JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operation_get(const JsonLogic_Operation_Entry operations[], size_t count, const char16_t *key, size_t key_size);
+typedef struct JsonLogic_Operations {
+    size_t size;
+    const JsonLogic_Operation_Entry *entries;
+} JsonLogic_Operations;
+
+JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry *operations, size_t count);
+JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size);
+
+JSONLOGIC_EXPORT extern const JsonLogic_Operations JsonLogic_Builtins;
+
+JSONLOGIC_EXPORT JsonLogic_Operation_Entry *jsonlogic_operations_merge(const JsonLogic_Operations ops[], size_t ops_size, size_t *new_size_ptr);
+
+#define JSONLOGIC_OPERATIONS_INIT { .size = 0, .entries = NULL }
 
 typedef struct JsonLogic_Iterator {
     JsonLogic_Handle handle;
@@ -222,7 +238,7 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply_custom(
     JsonLogic_Handle logic,
     JsonLogic_Handle input,
     void *context,
-    const JsonLogic_Operation_Entry operations[],
+    const JsonLogic_Operation_Entry *operations,
     size_t operation_count
 );
 
