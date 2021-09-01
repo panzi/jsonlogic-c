@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <float.h>
 
 #define JSONLOGIC_CODEPOINT_MAX 0x10FFFF
 
@@ -333,7 +334,7 @@ JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double val
     }
 
     char latin1[128];
-    int count = snprintf(latin1, sizeof(buf), "%g", value);
+    int count = snprintf(latin1, sizeof(buf), "%.*g", DBL_DIG, value);
     if (count < 0) {
         return JSONLOGIC_ERROR_INTERNAL_ERROR;
     } else if (count >= sizeof(latin1)) {
@@ -343,7 +344,7 @@ JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double val
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        snprintf(latin1, size, "%g", value);
+        snprintf(latin1, size, "%.*g", DBL_DIG, value);
         JsonLogic_Error result = jsonlogic_strbuf_append_latin1(buf, latin1);
         free(latin1);
         return result;
@@ -683,15 +684,15 @@ JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double v
     }
 
     size_t has_free = buf->capacity - buf->used;
-    int count = snprintf(buf->string + buf->used, has_free, "%g", value);
+    int count = snprintf(buf->string + buf->used, has_free, "%.*g", DBL_DIG, value);
     if (count < 0) {
-        JSONLOGIC_DEBUG("snprintf(buf, %" PRIuPTR ", \"%%g\", %g) error: %s", has_free, value, strerror(errno));
+        JSONLOGIC_DEBUG("snprintf(buf, %" PRIuPTR ", \"%%.%ug\", %.*g) error: %s", has_free, DBL_DIG, DBL_DIG, value, strerror(errno));
         return JSONLOGIC_ERROR_INTERNAL_ERROR;
     } else if (count >= has_free) {
         // snprintf() always writes the terminating NULL byte (if maxlen > 0)
         size_t need_free = (size_t)count + 1;
         TRY(jsonlogic_utf8buf_ensure(buf, need_free));
-        snprintf(buf->string + buf->used, need_free, "%g", value);
+        snprintf(buf->string + buf->used, need_free, "%.*g", DBL_DIG, value);
     }
     buf->used += (size_t)count;
 

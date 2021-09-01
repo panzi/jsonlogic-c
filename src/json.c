@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <math.h>
+#include <float.h>
 #include <errno.h>
 #include <inttypes.h>
 
@@ -1079,7 +1080,14 @@ char *jsonlogic_stringify_utf8(JsonLogic_Handle value) {
 }
 
 static inline JsonLogic_Error jsonlogic_print_double(FILE *file, double value) {
-    int count = fprintf(file, "%g", value);
+    int count;
+
+    if (!isfinite(value)) {
+        count = fprintf(file, "null");
+    } else {
+        count = fprintf(file, "%.*g", DBL_DIG, value);
+    }
+
     if (count < 0) {
         return JSONLOGIC_ERROR_IO_ERROR;
     }
