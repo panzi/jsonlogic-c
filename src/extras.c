@@ -432,7 +432,7 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
                 }
                 -- stack_ptr;
             } else {
-                item->items[stack_ptr] = jsonlogic_incref(args[index]);
+                item->items[stack_ptr] = jsonlogic_incref(array->items[index]);
                 stack[stack_ptr] = index + 1;
                 ++ stack_ptr;
                 stack[stack_ptr] = 0;
