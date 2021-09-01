@@ -686,6 +686,7 @@ int main(int argc, char *argv[]) {
     size_t test_count = 0;
     size_t pass_count = 0;
 
+    puts("Basic Tests");
     for (const TestCase *test = TEST_CASES; test->func; ++ test) {
         ++ test_count;
         printf(" - %s ... ", test->name);
@@ -723,6 +724,8 @@ int main(int argc, char *argv[]) {
 
     JsonLogic_Iterator iter = jsonlogic_iter(tests);
 
+    putchar('\n');
+    puts("Tests from https://jsonlogic.com/tests.json");
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
         JsonLogic_Error error = jsonlogic_get_error(test);
@@ -805,6 +808,8 @@ int main(int argc, char *argv[]) {
 
     iter = jsonlogic_iter(valid_examples);
 
+    putchar('\n');
+    puts("Test European Health Certificate rules with valid data");
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
         JsonLogic_Error error = jsonlogic_get_error(test);
@@ -868,6 +873,8 @@ int main(int argc, char *argv[]) {
 
     iter = jsonlogic_iter(invalid_examples);
 
+    putchar('\n');
+    puts("Test European Health Certificate rules with invalid data");
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
         JsonLogic_Error error = jsonlogic_get_error(test);
