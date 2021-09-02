@@ -24,6 +24,7 @@
 #define JSONLOGIC_EXTRA(NAME) \
     { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = (jsonlogic_extra_##NAME) }
 
+JSONLOGIC_DEF_UTF16(JSONLOGIC_ADD_YEARS,    u"addYears")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_COMBINATIONS, u"combinations")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_DAYS,         u"days")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_FORMAT_TIME,  u"formatTime")
@@ -33,6 +34,7 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_PARSE_TIME,   u"parseTime")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_TIME_SINCE,   u"timeSince")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ZIP,          u"zip")
 
+static JsonLogic_Handle jsonlogic_extra_ADD_YEARS   (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_DAYS        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
@@ -42,8 +44,9 @@ static JsonLogic_Handle jsonlogic_extra_FORMAT_TIME (void *context, JsonLogic_Ha
 static JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_ZIP         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
-#define JSONLOGIC_EXTRAS_COUNT 8
+#define JSONLOGIC_EXTRAS_COUNT 9
 const JsonLogic_Operation_Entry JsonLogic_Extras_Entries[JSONLOGIC_EXTRAS_COUNT] = {
+    JSONLOGIC_EXTRA(ADD_YEARS),
     JSONLOGIC_EXTRA(COMBINATIONS),
     JSONLOGIC_EXTRA(DAYS),
     JSONLOGIC_EXTRA(FORMAT_TIME),
@@ -136,14 +139,23 @@ size_t jsonlogic_scan_uint32(const char16_t **str, const char16_t *endptr, const
 
 #define DOUBLE_ILLEGAL_ARGUMENT ((JsonLogic_Handle){ .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT }.number)
 
-double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
+typedef struct JsonLogic_DateTime {
+    uint32_t year  ;
+    uint32_t month ;
+    uint32_t day   ;
+    uint32_t hour  ;
+    uint32_t minute;
+    uint32_t second;
+    uint32_t msec  ;
+    int32_t  tzoff ;
+} JsonLogic_DateTime;
+
+JsonLogic_Error jsonlogic_parse_date_time_utf16_intern(const char16_t *str, size_t size, JsonLogic_DateTime *date_time_ptr) {
     // Parses rfc3339 date-time strings, but allow more parts to be optional.
     // In particular allow date-only, optional seconds, and optional time-zone offset.
     // In rfc3339 only milliseconds are optional.
     // YYYY-MM-DD['T'hh:mm[:ss[.sss]]['Z'|(+|-)[ZZ:ZZ]]]
-
-    struct tm time_info;
-    memset(&time_info, 0, sizeof(time_info));
+    assert(date_time_ptr != NULL);
 
     uint32_t year   = 0;
     uint32_t month  = 0;
@@ -159,21 +171,21 @@ double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
     size_t count = jsonlogic_scan_uint32(&ptr, endptr, u"--", &year, &month, &day);
     if (count != 3) {
         JSONLOGIC_DEBUG_UTF16("illegal date-time string, parsed %" PRIuPTR " values of date component", str, size, count);
-        return DOUBLE_ILLEGAL_ARGUMENT;
+        return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
     }
 
     if (ptr < endptr) {
         char16_t ch = *ptr;
         if ((ch != 'T' && ch != ' ' && ch != 't') || ptr + 1 == endptr) {
             JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
-            return DOUBLE_ILLEGAL_ARGUMENT;
+            return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
         }
         ptr ++;
 
         count = jsonlogic_scan_uint32(&ptr, endptr, u"::", &hour, &minute, &second);
         if (count != 3) {
             JSONLOGIC_DEBUG_UTF16("illegal date-time string, parsed %" PRIuPTR " values of time component", str, size, count);
-            return DOUBLE_ILLEGAL_ARGUMENT;
+            return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
         }
 
         if (ptr < endptr && *ptr == '.') {
@@ -181,7 +193,7 @@ double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
             const char16_t *next = jsonlogic_parse_uint(ptr, endptr, &msec);
             if (next - ptr != 3) {
                 JSONLOGIC_DEBUG_UTF16("illegal date-time string, parsed %" PRIuPTR " characters of milliseconds", str, size, (size_t)(next - ptr));
-                return DOUBLE_ILLEGAL_ARGUMENT;
+                return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
             }
             ptr = next;
         }
@@ -199,7 +211,7 @@ double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
                 count = jsonlogic_scan_uint32(&ptr, endptr, u":", &tzhour, &tzminute);
                 if (count != 2) {
                     JSONLOGIC_DEBUG_UTF16("illegal date-time string, parsed %" PRIuPTR " values of time-zone component", str, size, count);
-                    return DOUBLE_ILLEGAL_ARGUMENT;
+                    return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
                 }
 
                 tzoff = fact * (tzhour * 60 + tzminute);
@@ -209,21 +221,44 @@ double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
         if (ptr < endptr) {
             size_t index = (size_t)(ptr - str);
             JSONLOGIC_DEBUG_UTF16("illegal date-time string, unexpected characters at index %" PRIuPTR, str, size, index);
-            return DOUBLE_ILLEGAL_ARGUMENT;
+            return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
         }
     }
 
     if (month == 0 || month > 12 || day == 0 || day > 31 || year < 1900 || hour > 24 || minute > 59 || second > 60 || (month != 12 && day != 31 && second > 59)) {
         JSONLOGIC_DEBUG_UTF16("%s", str, size, "illegal date-time string");
-        return DOUBLE_ILLEGAL_ARGUMENT;
+        return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
     }
 
-    time_info.tm_year  = year - 1900;
-    time_info.tm_mon   = month - 1;
-    time_info.tm_mday  = day;
-    time_info.tm_hour  = hour;
-    time_info.tm_min   = minute;
-    time_info.tm_sec   = second;
+    date_time_ptr->year   = year;
+    date_time_ptr->month  = month;
+    date_time_ptr->day    = day;
+    date_time_ptr->hour   = hour;
+    date_time_ptr->minute = minute;
+    date_time_ptr->second = second;
+    date_time_ptr->msec   = msec;
+    date_time_ptr->tzoff  = tzoff;
+
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
+    JsonLogic_DateTime date_time;
+
+    JsonLogic_Error error = jsonlogic_parse_date_time_utf16_intern(str, size, &date_time);
+    if (error != JSONLOGIC_ERROR_SUCCESS) {
+        return (JsonLogic_Handle){ .intptr = error }.number;
+    }
+
+    struct tm time_info;
+    memset(&time_info, 0, sizeof(time_info));
+
+    time_info.tm_year  = date_time.year - 1900;
+    time_info.tm_mon   = date_time.month - 1;
+    time_info.tm_mday  = date_time.day;
+    time_info.tm_hour  = date_time.hour;
+    time_info.tm_min   = date_time.minute;
+    time_info.tm_sec   = date_time.second;
     time_info.tm_isdst = -1;
 
 #if defined(_WIN32) || defined(_WIN64)
@@ -237,7 +272,7 @@ double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
         return DOUBLE_ILLEGAL_ARGUMENT;
     }
 
-    return (double)(time - tzoff) * 1000 + (double)msec;
+    return (double)(time - date_time.tzoff) * 1000 + (double)date_time.msec;
 }
 
 JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
@@ -300,6 +335,91 @@ JsonLogic_Handle jsonlogic_extra_FORMAT_TIME(void *context, JsonLogic_Handle dat
     }
 
     return jsonlogic_format_date_time(timestamp);
+}
+
+JsonLogic_Handle jsonlogic_extra_ADD_YEARS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    if (argc < 2) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    double years = jsonlogic_to_double(args[1]);
+    if (!isfinite(years)) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    struct tm time_info;
+    uint32_t msec = 0;
+    int32_t tzoff = 0;
+
+    memset(&time_info, 0, sizeof(time_info));
+
+    JsonLogic_Handle handle = args[0];
+    if (JSONLOGIC_IS_NUMBER(handle)) {
+        double timestamp = handle.number;
+
+        time_t tv = (int64_t)timestamp / 1000;
+        msec = (int64_t)timestamp % 1000;
+        if (msec < 0) {
+            tv  -= 1;
+            msec = 1000 + msec;
+        }
+
+#if defined(_WIN32) || defined(_WIN64)
+        errno_t errnum = gmtime_s(&time_info, &tv);
+        if (errnum != 0) {
+            JSONLOGIC_DEBUG("failed to convert timestamp %.*g to date-time string: %s", DBL_DIG, timestamp, strerror(errnum));
+            return JsonLogic_Error_IllegalArgument;
+        }
+#else
+        if (gmtime_r(&tv, &time_info) == NULL) {
+            JSONLOGIC_DEBUG("failed to convert timestamp %.*g to date-time string: %s", DBL_DIG, timestamp, strerror(errno));
+            return JsonLogic_Error_IllegalArgument;
+        }
+#endif
+    } else if (JSONLOGIC_IS_STRING(handle)) {
+        JsonLogic_DateTime date_time;
+        const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
+        JsonLogic_Error error = jsonlogic_parse_date_time_utf16_intern(string->str, string->size, &date_time);
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            return (JsonLogic_Handle){ .intptr = error };
+        }
+
+        time_info.tm_year  = date_time.year - 1900;
+        time_info.tm_mon   = date_time.month - 1;
+        time_info.tm_mday  = date_time.day;
+        time_info.tm_hour  = date_time.hour;
+        time_info.tm_min   = date_time.minute;
+        time_info.tm_sec   = date_time.second;
+        time_info.tm_isdst = -1;
+        msec  = date_time.msec;
+        tzoff = date_time.tzoff;
+    } else {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    time_info.tm_year += (int)years;
+
+#if defined(_WIN32) || defined(_WIN64)
+    time_t time = _mkgmtime(&time_info);
+#else
+    time_t time = timegm(&time_info);
+#endif
+
+    if (time == (time_t)-1) {
+        JSONLOGIC_DEBUG("illegal date-time: %4d-%2d-%2d %2d:%2d:%2d.%3d tzoff=%d",
+            time_info.tm_year + 1900,
+            time_info.tm_mon + 1,
+            time_info.tm_mday,
+            time_info.tm_hour,
+            time_info.tm_min,
+            time_info.tm_sec,
+            msec,
+            tzoff
+        );
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    return jsonlogic_number_from((double)(time - tzoff) * 1000 + (double)msec);
 }
 
 JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
