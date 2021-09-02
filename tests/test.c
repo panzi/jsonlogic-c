@@ -575,6 +575,42 @@ cleanup:
     jsonlogic_arraybuf_free(&context.list);
 }
 
+void test_substr(TestContext *test_context) {
+    JsonLogic_Handle logic    = jsonlogic_parse("{\"substr\": [\"äöü\", 0, -2]}", NULL);
+    JsonLogic_Handle expected = jsonlogic_string_from_utf16(u"ä");
+    JsonLogic_Handle actual   = jsonlogic_apply(logic, JsonLogic_Null);
+
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(expected, actual), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+        fprintf(stderr, "      data: "); jsonlogic_println(stderr, JsonLogic_Null);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
+        fputc('\n', stderr);
+    });
+
+    jsonlogic_decref(actual);
+    jsonlogic_decref(logic);
+    jsonlogic_decref(expected);
+
+    logic    = jsonlogic_parse("{\"substr\": [\"\\uD80C\\uDC00\", 1]}", NULL);
+    expected = jsonlogic_string_from_utf16((char16_t[]){ 0xdc00, 0 });
+    actual   = jsonlogic_apply(logic, JsonLogic_Null);
+
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(expected, actual), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+        fprintf(stderr, "      data: "); jsonlogic_println(stderr, JsonLogic_Null);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
+        fputc('\n', stderr);
+    });
+
+cleanup:
+    jsonlogic_decref(logic);
+    jsonlogic_decref(expected);
+    jsonlogic_decref(actual);
+}
 
 const TestCase TEST_CASES[] = {
     TEST_DECL("Bad Operator", bad_operator),
@@ -582,6 +618,7 @@ const TestCase TEST_CASES[] = {
     TEST_DECL("Edge Cases", edge_cases),
     TEST_DECL("Expanding functionality with custom operators", custom_operators),
     TEST_DECL("Control structures don't eval depth-first", short_circuit),
+    TEST_DECL("Sub-string of non-ASCII strings", substr),
     TEST_END,
 };
 
