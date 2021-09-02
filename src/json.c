@@ -385,7 +385,11 @@ static const int JsonLogic_HexMap[256] = {
 };
 
 #define JSONLOGIC_PARSE_STRING(STR, SIZE, INDEX, ERROR, CODE) \
-    while ((INDEX) < (SIZE)) { \
+    for (;;) { \
+        if ((INDEX) >= (SIZE)) { \
+            (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+            break; \
+        } \
         uint8_t byte1 = (STR)[(INDEX) ++]; \
         if (byte1 < 0x80) { \
             if (byte1 == '"') \
@@ -429,7 +433,7 @@ static const int JsonLogic_HexMap[256] = {
             CODE; \
         } else if (byte1 < 0xBF) { \
             /* unexpected continuation or overlong 2-byte sequence */ \
-            (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+            (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
             break; \
         } else if (byte1 < 0xE0) { \
             if ((INDEX) < (SIZE)) { \
@@ -440,12 +444,12 @@ static const int JsonLogic_HexMap[256] = {
                     CODE; \
                 } else { \
                     /* else illegal byte sequence */ \
-                    (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+                    (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
                     break; \
                 } \
             } else { \
                 /* else unexpected end of multibyte sequence */ \
-                (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+                (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
                 break; \
             } \
         } else if (byte1 < 0xF0) { \
@@ -462,12 +466,12 @@ static const int JsonLogic_HexMap[256] = {
                     CODE; \
                 } else { \
                     /* else illegal byte sequence */ \
-                    (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+                    (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
                     break; \
                 } \
             } else { \
                 /* else unexpected end of multibyte sequence */ \
-                (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+                (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
                 break; \
             } \
         } else if (byte1 < 0xF8) { \
@@ -489,12 +493,12 @@ static const int JsonLogic_HexMap[256] = {
                 } \
             } else { \
                 /* else unexpected end of multibyte sequence */ \
-                (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+                (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
                 break; \
              } \
         } else { \
             /* else illegal byte sequence */ \
-            (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
+            (ERROR) = JSONLOGIC_ERROR_UNICODE_ERROR; \
             break; \
         } \
     }

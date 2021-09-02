@@ -12,6 +12,7 @@ const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_
 const JsonLogic_Handle JsonLogic_Error_StopIteration    = { .intptr = JSONLOGIC_ERROR_STOP_ITERATION    };
 const JsonLogic_Handle JsonLogic_Error_IOError          = { .intptr = JSONLOGIC_ERROR_IO_ERROR          };
 const JsonLogic_Handle JsonLogic_Error_SyntaxError      = { .intptr = JSONLOGIC_ERROR_SYNTAX_ERROR      };
+const JsonLogic_Handle JsonLogic_Error_UnicodeError     = { .intptr = JSONLOGIC_ERROR_UNICODE_ERROR     };
 
 JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
@@ -46,6 +47,9 @@ const char *jsonlogic_get_error_message(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_SYNTAX_ERROR:
             return "Syntax Error";
 
+        case JSONLOGIC_ERROR_UNICODE_ERROR:
+            return "Unicode Error";
+
         default:
             JSONLOGIC_DEBUG("illegal error code: 0x%" PRIx64, error);
             return "(Illegal Error Code)";
@@ -62,6 +66,7 @@ JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_STOP_ITERATION:
         case JSONLOGIC_ERROR_IO_ERROR:
         case JSONLOGIC_ERROR_SYNTAX_ERROR:
+        case JSONLOGIC_ERROR_UNICODE_ERROR:
             return (JsonLogic_Handle){ .intptr = error };
 
         default:

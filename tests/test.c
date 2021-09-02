@@ -612,7 +612,93 @@ cleanup:
     jsonlogic_decref(actual);
 }
 
+void test_parsing(TestContext *test_context) {
+    const char *data = NULL;
+    JsonLogic_Handle handle = JsonLogic_Null;
+
+    data = "\"\xb0\"";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_UnicodeError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_UnicodeError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+    data = "{\"foo\": \"bar\" \"a\":\"b\"}";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_SyntaxError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_SyntaxError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+    data = "[]]";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_SyntaxError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_SyntaxError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+    data = "\"\\j\"";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_SyntaxError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_SyntaxError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+    data = "\"\\u123g\"";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_SyntaxError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_SyntaxError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+    data = "\"foo";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_SyntaxError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_SyntaxError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+    data = "\"foo\",";
+    jsonlogic_decref(handle);
+    handle = jsonlogic_parse(data, NULL);
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(handle, JsonLogic_Error_SyntaxError), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "      data: %s\n", data);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, JsonLogic_Error_SyntaxError);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, handle);
+        fputc('\n', stderr);
+    });
+
+cleanup:
+    jsonlogic_decref(handle);
+}
+
 const TestCase TEST_CASES[] = {
+    TEST_DECL("Unicode and JSON parsing", parsing),
     TEST_DECL("Bad Operator", bad_operator),
     TEST_DECL("Logging", logging),
     TEST_DECL("Edge Cases", edge_cases),
