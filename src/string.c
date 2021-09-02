@@ -68,13 +68,13 @@ JsonLogic_Handle jsonlogic_string_from_utf8(const char *str) {
         if (byte1 < 0x80) { \
             uint32_t codepoint = byte1; \
             CODE; \
-        } else if (byte1 < 0xC2) { \
+        } else if (byte1 < 0xBF) { \
             /* unexpected continuation or overlong 2-byte sequence, ignored */ \
         } else if (byte1 < 0xE0) { \
             if (index < (SIZE)) { \
                 uint8_t byte2 = (STR)[index ++]; \
                 if ((byte2 & 0xC0) == 0x80) { \
-                    uint32_t codepoint = (uint32_t)(byte1 & 0xF1) << 6 | \
+                    uint32_t codepoint = (uint32_t)(byte1 & 0x1F) << 6 | \
                                          (uint32_t)(byte2 & 0x3F); \
                     CODE; \
                 } /* else illegal byte sequence, ignored */ \

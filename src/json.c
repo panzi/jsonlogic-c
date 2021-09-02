@@ -427,7 +427,7 @@ static const int JsonLogic_HexMap[256] = {
                 codepoint = byte1; \
             } \
             CODE; \
-        } else if (byte1 < 0xC2) { \
+        } else if (byte1 < 0xBF) { \
             /* unexpected continuation or overlong 2-byte sequence */ \
             (ERROR) = JSONLOGIC_ERROR_SYNTAX_ERROR; \
             break; \
@@ -435,7 +435,7 @@ static const int JsonLogic_HexMap[256] = {
             if ((INDEX) < (SIZE)) { \
                 uint8_t byte2 = (STR)[(INDEX) ++]; \
                 if ((byte2 & 0xC0) == 0x80) { \
-                    uint32_t codepoint = (uint32_t)(byte1 & 0xF1) << 6 | \
+                    uint32_t codepoint = (uint32_t)(byte1 & 0x1F) << 6 | \
                                          (uint32_t)(byte2 & 0x3F); \
                     CODE; \
                 } else { \
