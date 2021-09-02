@@ -136,7 +136,7 @@ size_t jsonlogic_scan_uint32(const char16_t **str, const char16_t *endptr, const
 
 #define DOUBLE_ILLEGAL_ARGUMENT ((JsonLogic_Handle){ .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT }.number)
 
-double jsonlogic_parse_date_time(const char16_t *str, size_t size) {
+double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
     // Parses rfc3339 date-time strings, but allow more parts to be optional.
     // In particular allow date-only, optional seconds, and optional time-zone offset.
     // In rfc3339 only milliseconds are optional.
@@ -294,7 +294,7 @@ JsonLogic_Handle jsonlogic_extra_FORMAT_TIME(void *context, JsonLogic_Handle dat
         timestamp = handle.number;
     } else if (JSONLOGIC_IS_STRING(handle)) {
         const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
-        timestamp = jsonlogic_parse_date_time(string->str, string->size);
+        timestamp = jsonlogic_parse_date_time_utf16(string->str, string->size);
     } else {
         return JsonLogic_Error_IllegalArgument;
     }
@@ -421,7 +421,7 @@ double jsonlogic_now() {
 #endif
 }
 
-double jsonlogic_parse_time(JsonLogic_Handle handle) {
+double jsonlogic_parse_date_time(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
         return handle.number;
     }
@@ -432,7 +432,7 @@ double jsonlogic_parse_time(JsonLogic_Handle handle) {
 
     const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
 
-    return jsonlogic_parse_date_time(string->str, string->size);
+    return jsonlogic_parse_date_time_utf16(string->str, string->size);
 }
 
 JsonLogic_Handle jsonlogic_extra_NOW(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -444,7 +444,7 @@ JsonLogic_Handle jsonlogic_extra_PARSE_TIME(void *context, JsonLogic_Handle data
         return JsonLogic_Error_IllegalArgument;
     }
 
-    return jsonlogic_number_from(jsonlogic_parse_time(args[0]));
+    return jsonlogic_number_from(jsonlogic_parse_date_time(args[0]));
 }
 
 JsonLogic_Handle jsonlogic_extra_TIME_SINCE(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -452,7 +452,7 @@ JsonLogic_Handle jsonlogic_extra_TIME_SINCE(void *context, JsonLogic_Handle data
         return JsonLogic_Error_IllegalArgument;
     }
 
-    double tv = jsonlogic_parse_time(args[0]);
+    double tv = jsonlogic_parse_date_time(args[0]);
 
     return jsonlogic_number_from(jsonlogic_now() - tv);
 }

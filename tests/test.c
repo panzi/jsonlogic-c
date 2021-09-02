@@ -321,7 +321,7 @@ JsonLogic_Handle mock_time_since(void *context, JsonLogic_Handle data, JsonLogic
         return JsonLogic_Error_IllegalArgument;
     }
 
-    double tv = jsonlogic_parse_time(args[0]);
+    double tv = jsonlogic_parse_date_time(args[0]);
     return jsonlogic_number_from(MOCK_TIME - tv);
 }
 
