@@ -469,7 +469,7 @@ JsonLogic_Handle jsonlogic_extra_ZIP(void *context, JsonLogic_Handle data, JsonL
     const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(args[0]);
     size_t min_len = array->size;
 
-    for (size_t index = 1; index < array->size; ++ index) {
+    for (size_t index = 1; index < argc; ++ index) {
         JsonLogic_Handle handle = args[index];
 
         if (!JSONLOGIC_IS_ARRAY(handle)) {
@@ -482,7 +482,7 @@ JsonLogic_Handle jsonlogic_extra_ZIP(void *context, JsonLogic_Handle data, JsonL
         }
     }
 
-    JsonLogic_Array *new_array = jsonlogic_array_with_capacity(argc);
+    JsonLogic_Array *new_array = jsonlogic_array_with_capacity(min_len);
     if (new_array == NULL) {
         return JsonLogic_Error_OutOfMemory;
     }
@@ -497,6 +497,7 @@ JsonLogic_Handle jsonlogic_extra_ZIP(void *context, JsonLogic_Handle data, JsonL
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(args[argind]);
             item->items[argind] = jsonlogic_incref(array->items[index]);
         }
+        new_array->items[index] = jsonlogic_array_into_handle(item);
     }
 
     return jsonlogic_array_into_handle(new_array);

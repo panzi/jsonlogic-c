@@ -69,7 +69,7 @@ typedef struct TestContext {
 #define TEST_ASSERT_X(EXPR, CODE) \
     if (!(EXPR)) { \
         TEST_FAIL(); \
-        fprintf(stderr, "%s:%u: Assertion failed: ", \
+        fprintf(stderr, "%s:%u: Assertion failed:\n", \
             __FILE__, __LINE__); \
         CODE; \
         goto cleanup; \
@@ -697,6 +697,27 @@ cleanup:
     jsonlogic_decref(handle);
 }
 
+void test_extras(TestContext *test_context) {
+    // TODO: make zip work also on strings and object (keys)?
+    JsonLogic_Handle logic    = jsonlogic_parse("{\"zip\": [[1,2,3],[\"a\",\"b\"]]}", NULL);
+    JsonLogic_Handle expected = jsonlogic_parse("[[1,\"a\"],[2,\"b\"]]", NULL);
+    JsonLogic_Handle actual   = jsonlogic_apply_custom(logic, JsonLogic_Null, NULL, JsonLogic_Extras.entries, JsonLogic_Extras.size);
+
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(expected, actual), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+        fprintf(stderr, "      data: "); jsonlogic_println(stderr, JsonLogic_Null);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
+        fputc('\n', stderr);
+    });
+
+cleanup:
+    jsonlogic_decref(logic);
+    jsonlogic_decref(expected);
+    jsonlogic_decref(actual);
+}
+
 const TestCase TEST_CASES[] = {
     TEST_DECL("Unicode and JSON parsing", parsing),
     TEST_DECL("Bad Operator", bad_operator),
@@ -705,6 +726,7 @@ const TestCase TEST_CASES[] = {
     TEST_DECL("Expanding functionality with custom operators", custom_operators),
     TEST_DECL("Control structures don't eval depth-first", short_circuit),
     TEST_DECL("Sub-string of non-ASCII strings", substr),
+    TEST_DECL("Test extra operators", extras),
     TEST_END,
 };
 
