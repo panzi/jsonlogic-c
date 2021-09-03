@@ -24,10 +24,17 @@ JsonLogic_Handle jsonlogic_iter_next(JsonLogic_Iterator *iter) {
         case JsonLogic_Type_Object:
         {
             const JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
-            if (iter->index >= object->size) {
-                return JsonLogic_Error_StopIteration;
+            for (;;) {
+                if (iter->index >= object->size) {
+                    return JsonLogic_Error_StopIteration;
+                }
+
+                if (!JSONLOGIC_IS_NULL(object->entries[iter->index].key)) {
+                    return jsonlogic_incref(object->entries[iter->index ++].key);
+                }
+
+                iter->index ++;
             }
-            return jsonlogic_incref(object->entries[iter->index ++].key);
         }
         case JsonLogic_Type_String:
         {

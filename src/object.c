@@ -16,6 +16,7 @@ JsonLogic_Handle jsonlogic_empty_object() {
     }
 
     object->refcount = 1;
+    object->used     = 0;
     object->size     = 0;
 
     return jsonlogic_object_into_handle(object);
@@ -43,73 +44,23 @@ int jsonlogic_object_entry_compary(const void *leftptr, const void *rightptr) {
 }
 
 JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
-    JsonLogic_Object *object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * count);
-
-    if (object == NULL) {
-        JSONLOGIC_ERROR_MEMORY();
-        return JsonLogic_Error_OutOfMemory;
-    }
-
-    object->refcount = 1;
-    object->size     = count;
+    JsonLogic_ObjBuf buf = JSONLOGIC_OBJBUF_INIT;
 
     va_list ap;
     va_start(ap, count);
 
     for (size_t index = 0; index < count; ++ index) {
         JsonLogic_Object_Entry entry = va_arg(ap, JsonLogic_Object_Entry);
-        JsonLogic_Handle key = jsonlogic_to_string(entry.key);
-        if (JSONLOGIC_IS_ERROR(key)) {
-            for (size_t free_index = 0; free_index < index; ++ free_index) {
-                JsonLogic_Object_Entry *entry = &object->entries[free_index];
-                jsonlogic_decref(entry->key);
-                jsonlogic_decref(entry->value);
-            }
-            free(object);
-            va_end(ap);
-
-            return key;
+        JsonLogic_Error error = jsonlogic_objbuf_set(&buf, entry.key, entry.value);
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            jsonlogic_objbuf_free(&buf);
+            return (JsonLogic_Handle){ .intptr = error };
         }
-        if (JSONLOGIC_IS_ERROR(entry.value)) {
-            jsonlogic_decref(key);
-            for (size_t free_index = 0; free_index < index; ++ free_index) {
-                JsonLogic_Object_Entry *entry = &object->entries[free_index];
-                jsonlogic_decref(entry->key);
-                jsonlogic_decref(entry->value);
-            }
-            free(object);
-            va_end(ap);
-
-            return entry.value;
-        }
-        jsonlogic_incref(entry.value);
-        object->entries[index] = (JsonLogic_Object_Entry){
-            .key   = key,
-            .value = entry.value,
-        };
     }
 
     va_end(ap);
 
-    qsort(object->entries, object->size,
-        sizeof(JsonLogic_Object_Entry),
-        jsonlogic_object_entry_compary);
-
-    // check uniquness
-    if (count > 1) {
-        const JsonLogic_String *prev = JSONLOGIC_CAST_STRING(object->entries[0].key);
-        for (size_t index = 1; index < count; ++ index) {
-            const JsonLogic_String *key = JSONLOGIC_CAST_STRING(object->entries[index].key);
-            if (jsonlogic_string_equals(prev, key)) {
-                jsonlogic_object_free(object);
-                JSONLOGIC_ERROR("%s", "duplicated key in object");
-                return JsonLogic_Error_IllegalArgument;
-            }
-            prev = key;
-        }
-    }
-
-    return jsonlogic_object_into_handle(object);
+    return jsonlogic_object_into_handle(jsonlogic_objbuf_take(&buf));
 }
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, u"length")
@@ -273,42 +224,50 @@ JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
     }
 }
 
-size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t *key, size_t key_size) {
+size_t jsonlogic_object_get_index_utf16_with_hash(const JsonLogic_Object *object, uint64_t hash, const char16_t *key, size_t key_size) {
     if (object->size == 0) {
         return 0;
     }
-    size_t left  = 0;
-    size_t right = object->size;
-    while (left < right) {
-        size_t mid = (left + right - 1) / 2;
-        const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(object->entries[mid].key);
-        int cmp = jsonlogic_utf16_compare(
-            entrykey->str,
-            entrykey->size,
-            key,
-            key_size);
-        if (cmp < 0) {
-            left = mid + 1;
-        } else if (cmp > 0) {
-            right = mid;
-        } else {
-            return mid;
+    size_t index = hash % object->size;
+    size_t start_index = index;
+
+    do {
+        const JsonLogic_Object_Entry *entry = &object->entries[index];
+
+        if (JSONLOGIC_IS_NULL(entry->key)) {
+            break;
         }
-    }
+
+        const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
+        if (hash == otherkey->hash && jsonlogic_utf16_equals(key, key_size, otherkey->str, otherkey->size)) {
+            return index;
+        }
+
+    } while (index != start_index);
+
     return object->size;
 }
 
-size_t jsonlogic_object_get_index(JsonLogic_Object *object, JsonLogic_Handle key) {
+size_t jsonlogic_object_get_index_utf16(const JsonLogic_Object *object, const char16_t *key, size_t key_size) {
+    return jsonlogic_object_get_index_utf16_with_hash(object, jsonlogic_hash_fnv1a((uint8_t*)key, key_size * sizeof(char16_t)), key, key_size);
+}
+
+size_t jsonlogic_object_get_index(const JsonLogic_Object *object, JsonLogic_Handle key) {
     if (object->size == 0) {
         return 0;
     }
-    JsonLogic_Handle strkey = jsonlogic_to_string(key);
-    if (JSONLOGIC_IS_ERROR(strkey)) {
+
+    JsonLogic_Handle keyhandle = jsonlogic_to_string(key);
+    if (JSONLOGIC_IS_ERROR(keyhandle)) {
         return SIZE_MAX;
     }
-    const JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(strkey);
-    const size_t index = jsonlogic_object_get_index_utf16(object, stringkey->str, stringkey->size);
-    jsonlogic_decref(strkey);
+
+    JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(keyhandle);
+    if (stringkey->hash == JSONLOGIC_HASH_UNSET) {
+        stringkey->hash = jsonlogic_hash_fnv1a((uint8_t*)stringkey->str, stringkey->size * sizeof(char16_t));
+    }
+    size_t index = jsonlogic_object_get_index_utf16_with_hash(object, stringkey->hash, stringkey->str, stringkey->size);
+    jsonlogic_decref(keyhandle);
     return index;
 }
 
@@ -318,72 +277,148 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         return stringkey.intptr;
     }
 
-    const JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(stringkey);
-    JsonLogic_Object_Entry *entry;
+    JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(stringkey);
 
-    if (buf->capacity == 0) {
-        size_t new_capacity = JSONLOGIC_CHUNK_SIZE;
-        JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
+    if (strkey->hash == JSONLOGIC_HASH_UNSET) {
+        strkey->hash = jsonlogic_hash_fnv1a((uint8_t*)strkey->str, strkey->size * sizeof(char16_t));
+    }
+
+    if (buf->object == NULL) {
+        size_t new_size = JSONLOGIC_CHUNK_SIZE;
+        JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
         if (new_object == NULL) {
             jsonlogic_decref(stringkey);
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
         new_object->refcount = 1;
-        new_object->size     = 0;
+        new_object->used     = 1;
+        new_object->size     = new_size;
 
-        buf->object   = new_object;
-        buf->capacity = new_capacity;
+        for (size_t index = 0; index < new_size; ++ index) {
+            new_object->entries[index] = (JsonLogic_Object_Entry) {
+                .key   = JsonLogic_Null,
+                .value = JsonLogic_Null,
+            };
+        }
 
-        entry = new_object->entries;
+        size_t index = strkey->hash % new_size;
+        new_object->entries[index] = (JsonLogic_Object_Entry) {
+            .key   = stringkey,
+            .value = jsonlogic_incref(value),
+        };
+
+        buf->object = new_object;
     } else {
         JsonLogic_Object *object = buf->object;
-        size_t left  = 0;
-        size_t right = object->size;
-        while (left < right) {
-            size_t mid = (left + right - 1) / 2;
-            entry = &object->entries[mid];
-            const JsonLogic_String *entrykey = JSONLOGIC_CAST_STRING(entry->key);
-            int cmp = jsonlogic_utf16_compare(
-                entrykey->str,
-                entrykey->size,
-                strkey->str,
-                strkey->size);
-            if (cmp < 0) {
-                left  = mid + 1;
-            } else if (cmp > 0) {
-                right = mid;
-            } else {
-                jsonlogic_incref(value);
-                jsonlogic_decref(stringkey);
-                jsonlogic_decref(entry->value);
-                entry->value = value;
+        size_t size = object->size;
+        uint64_t hash = strkey->hash;
+        size_t index = hash % size;
+        size_t start_index = index;
+        do {
+            JsonLogic_Object_Entry *entry = &object->entries[index];
+
+            if (JSONLOGIC_IS_NULL(entry->key)) {
+                if (object->used + 1 > object->size / 2) {
+                    // resize and insert instead
+                    break;
+                }
+                object->entries[index] = (JsonLogic_Object_Entry) {
+                    .key   = stringkey,
+                    .value = jsonlogic_incref(value),
+                };
+
+                ++ object->used;
                 return JSONLOGIC_ERROR_SUCCESS;
             }
-        }
 
-        assert(left <= object->size);
+            const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
+            if (hash == otherkey->hash && jsonlogic_utf16_equals(strkey->str, strkey->size, otherkey->str, otherkey->size)) {
+                jsonlogic_decref(entry->key);
+                jsonlogic_decref(entry->value);
 
-        if (buf->capacity == object->size) {
-            size_t new_capacity = buf->capacity + JSONLOGIC_CHUNK_SIZE;
-            JsonLogic_Object *new_object = realloc(object, sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_capacity);
-            if (new_object == NULL) {
-                jsonlogic_decref(stringkey);
-                JSONLOGIC_ERROR_MEMORY();
-                return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+                object->entries[index] = (JsonLogic_Object_Entry) {
+                    .key   = stringkey,
+                    .value = jsonlogic_incref(value),
+                };
+
+                ++ object->used;
+                return JSONLOGIC_ERROR_SUCCESS;
             }
-            buf->object   = new_object;
-            buf->capacity = new_capacity;
+
+            index = (index + 1) % size;
+        } while (index == start_index);
+
+        size_t new_size = object->size * 2;
+        JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
+        if (new_object == NULL) {
+            jsonlogic_decref(stringkey);
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        entry = &buf->object->entries[left];
+        new_object->refcount = 1;
+        new_object->used     = object->used;
+        new_object->size     = new_size;
 
-        memmove(entry + 1, entry, sizeof(JsonLogic_Object_Entry) * (buf->object->size - left));
+        for (size_t index = 0; index < new_size; ++ index) {
+            new_object->entries[index] = (JsonLogic_Object_Entry) {
+                .key   = JsonLogic_Null,
+                .value = JsonLogic_Null,
+            };
+        }
+
+        for (size_t index = 0; index < object->size; ++ index) {
+            JsonLogic_Object_Entry *entry = &object->entries[index];
+
+            if (!JSONLOGIC_IS_NULL(entry->key)) {
+                const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
+                size_t new_index = otherkey->hash % new_size;
+                size_t start_index = new_index;
+
+                for (;;) {
+                    JsonLogic_Object_Entry *new_entry = &new_object->entries[new_index];
+                    if (JSONLOGIC_IS_NULL(new_entry->key)) {
+                        new_object->entries[new_index] = *entry;
+                        break;
+                    }
+
+                    new_index = (new_index + 1) % new_size;
+                    assert(new_index != start_index);
+                }
+            }
+        }
+
+        index = strkey->hash % new_size;
+        start_index = index;
+        for (;;) {
+            JsonLogic_Object_Entry *entry = &new_object->entries[index];
+            if (JSONLOGIC_IS_NULL(entry->key)) {
+                new_object->entries[index] = (JsonLogic_Object_Entry) {
+                    .key   = JsonLogic_Null,
+                    .value = JsonLogic_Null,
+                };
+                break;
+            }
+
+            const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
+            if (hash == otherkey->hash && jsonlogic_utf16_equals(strkey->str, strkey->size, otherkey->str, otherkey->size)) {
+                jsonlogic_decref(entry->key);
+                jsonlogic_decref(entry->value);
+
+                object->entries[index] = (JsonLogic_Object_Entry) {
+                    .key   = stringkey,
+                    .value = jsonlogic_incref(value),
+                };
+            }
+
+            index = (index + 1) % new_size;
+            assert(index != start_index);
+        }
+
+        free(object);
+        buf->object = new_object;
+        ++ new_object->used;
     }
-
-    buf->object->size ++;
-
-    entry->key   = stringkey;
-    entry->value = jsonlogic_incref(value);
 
     return JSONLOGIC_ERROR_SUCCESS;
 }
@@ -396,25 +431,15 @@ JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf) {
             JSONLOGIC_ERROR_MEMORY();
         } else {
             object->refcount = 1;
+            object->used     = 0;
             object->size     = 0;
         }
-    } else {
-        // shrink to fit
-        object = realloc(object, sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * object->size);
-        if (object == NULL) {
-            // should not happen
-            JSONLOGIC_ERROR_MEMORY();
-            object = buf->object;
-        }
-        assert(object->refcount == 1);
     }
-    buf->capacity = 0;
-    buf->object   = NULL;
+    buf->object = NULL;
     return object;
 }
 
 void jsonlogic_objbuf_free(JsonLogic_ObjBuf *buf) {
     jsonlogic_object_free(buf->object);
-    buf->object   = NULL;
-    buf->capacity = 0;
+    buf->object = NULL;
 }

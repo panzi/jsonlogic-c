@@ -98,16 +98,23 @@ static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLog
             TRY(jsonlogic_strbuf_append_ascii(buf, "{"));
 
             JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
-            if (object->size > 0) {
-                TRY(jsonlogic_stringify_intern(buf, object->entries[0].key));
+            size_t index = 0;
+            while (index < object->size && JSONLOGIC_IS_NULL(object->entries[index].key)) {
+                index ++;
+            }
+            if (index < object->size) {
+                TRY(jsonlogic_stringify_intern(buf, object->entries[index].key));
                 TRY(jsonlogic_strbuf_append_ascii(buf, ":"));
-                TRY(jsonlogic_stringify_intern(buf, object->entries[0].value));
+                TRY(jsonlogic_stringify_intern(buf, object->entries[index].value));
 
-                for (size_t index = 1; index < object->size; ++ index) {
-                    TRY(jsonlogic_strbuf_append_ascii(buf, ","));
-                    TRY(jsonlogic_stringify_intern(buf, object->entries[index].key));
-                    TRY(jsonlogic_strbuf_append_ascii(buf, ":"));
-                    TRY(jsonlogic_stringify_intern(buf, object->entries[index].value));
+                for (; index < object->size; ++ index) {
+                    JsonLogic_Handle key = object->entries[index].key;
+                    if (!JSONLOGIC_IS_NULL(key)) {
+                        TRY(jsonlogic_strbuf_append_ascii(buf, ","));
+                        TRY(jsonlogic_stringify_intern(buf, key));
+                        TRY(jsonlogic_strbuf_append_ascii(buf, ":"));
+                        TRY(jsonlogic_stringify_intern(buf, object->entries[index].value));
+                    }
                 }
             }
 

@@ -741,6 +741,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     goto loop_end;
                 }
                 string->refcount = 1;
+                string->hash     = JSONLOGIC_HASH_UNSET;
                 string->size     = utf16_size;
 
                 index = start_index;

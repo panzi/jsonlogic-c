@@ -4,6 +4,7 @@ BUILD_DIR=build
 LIB_OBJS=$(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/boolean.o \
          $(BUILD_DIR)/obj/extras.o \
+         $(BUILD_DIR)/obj/hash.o \
          $(BUILD_DIR)/obj/iterator.o \
          $(BUILD_DIR)/obj/compare.o \
          $(BUILD_DIR)/obj/error.o \

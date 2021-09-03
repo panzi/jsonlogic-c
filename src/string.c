@@ -33,6 +33,7 @@ JsonLogic_Handle jsonlogic_empty_string() {
     }
 
     string->refcount = 1;
+    string->hash     = JSONLOGIC_HASH_UNSET;
     string->size     = 0;
 
     return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
@@ -49,6 +50,7 @@ JsonLogic_Handle jsonlogic_string_from_latin1_sized(const char *str, size_t size
         return JsonLogic_Error_OutOfMemory;
     }
     string->refcount = 1;
+    string->hash     = JSONLOGIC_HASH_UNSET;
     string->size     = size;
 
     for (size_t index = 0; index < size; ++ index) {
@@ -130,6 +132,7 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
         return JsonLogic_Error_OutOfMemory;
     }
     string->refcount = 1;
+    string->hash     = JSONLOGIC_HASH_UNSET;
     string->size     = utf16_size;
 
     size_t utf16_index = 0;
@@ -160,6 +163,7 @@ JsonLogic_Handle jsonlogic_string_from_utf16_sized(const char16_t *str, size_t s
         return JsonLogic_Error_OutOfMemory;
     }
     string->refcount = 1;
+    string->hash     = JSONLOGIC_HASH_UNSET;
     string->size     = size;
 
     memcpy(string->str, str, size * sizeof(char16_t));
@@ -228,6 +232,7 @@ static JsonLogic_Handle jsonlogic_string_substr(const JsonLogic_String *string, 
     }
 
     new_string->refcount = 1;
+    new_string->hash     = JSONLOGIC_HASH_UNSET;
     new_string->size     = sz_size;
 
     memcpy(new_string->str, string->str + sz_index, sz_size * sizeof(char16_t));
@@ -278,6 +283,7 @@ JsonLogic_Error jsonlogic_strbuf_ensure(JsonLogic_StrBuf *buf, size_t want_free_
         }
         if (buf->string == NULL) {
             new_string->refcount = 1;
+            new_string->hash     = JSONLOGIC_HASH_UNSET;
             new_string->size     = 0;
         }
         buf->string   = new_string;

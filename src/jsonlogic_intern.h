@@ -104,8 +104,11 @@ JSONLOGIC_DECL_UTF16(JSONLOGIC_INFINITY_STRING)
 JSONLOGIC_DECL_UTF16(JSONLOGIC_POS_INFINITY_STRING)
 JSONLOGIC_DECL_UTF16(JSONLOGIC_NEG_INFINITY_STRING)
 
+#define JSONLOGIC_HASH_UNSET ((uint64_t)0)
+
 typedef struct JsonLogic_String {
     size_t refcount;
+    uint64_t hash;
     size_t size;
     char16_t str[1];
 } JsonLogic_String;
@@ -119,6 +122,7 @@ typedef struct JsonLogic_Array {
 typedef struct JsonLogic_Object {
     size_t refcount;
     size_t size;
+    size_t used;
     JsonLogic_Object_Entry entries[1];
 } JsonLogic_Object;
 
@@ -134,8 +138,9 @@ extern "C" {
 
 JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_with_capacity(size_t size);
 
-JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index_utf16(JsonLogic_Object *object, const char16_t *key, size_t key_size);
-JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index(JsonLogic_Object *object, JsonLogic_Handle key);
+JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index_utf16_with_hash(const JsonLogic_Object *object, uint64_t hash, const char16_t *key, size_t key_size);
+JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index_utf16(const JsonLogic_Object *object, const char16_t *key, size_t key_size);
+JSONLOGIC_PRIVATE size_t jsonlogic_object_get_index(const JsonLogic_Object *object, JsonLogic_Handle key);
 
 JSONLOGIC_PRIVATE void jsonlogic_string_free(JsonLogic_String *string);
 JSONLOGIC_PRIVATE void jsonlogic_array_free (JsonLogic_Array  *array);
@@ -143,7 +148,7 @@ JSONLOGIC_PRIVATE void jsonlogic_object_free(JsonLogic_Object *object);
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic_String *string) {
     if (string == NULL) {
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
     assert(string->refcount == 1);
     return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
@@ -151,7 +156,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array) {
     if (array == NULL) {
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
     assert(array->refcount == 1);
     return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)array) | JsonLogic_Type_Array };
@@ -159,7 +164,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object) {
     if (object == NULL) {
-        return JsonLogic_Null;
+        return JsonLogic_Error_OutOfMemory;
     }
     assert(object->refcount == 1);
     return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)object) | JsonLogic_Type_Object };
@@ -232,11 +237,10 @@ JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *b
 JSONLOGIC_PRIVATE void jsonlogic_arraybuf_free(JsonLogic_ArrayBuf *buf);
 
 typedef struct JsonLogic_ObjBuf {
-    size_t capacity;
     JsonLogic_Object *object;
 } JsonLogic_ObjBuf;
 
-#define JSONLOGIC_OBJBUF_INIT ((JsonLogic_ObjBuf){ .capacity = 0, .object = NULL })
+#define JSONLOGIC_OBJBUF_INIT ((JsonLogic_ObjBuf){ .object = NULL })
 
 JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key, JsonLogic_Handle value);
 JSONLOGIC_PRIVATE JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf);
@@ -245,10 +249,12 @@ JSONLOGIC_PRIVATE void jsonlogic_objbuf_free(JsonLogic_ObjBuf *buf);
 JSONLOGIC_PRIVATE const char16_t *jsonlogic_find_char(const char16_t *str, size_t size, char16_t ch);
 
 typedef struct JsonLogic_Builtin {
-    const char16_t *key;
-    size_t                key_size;
-    JsonLogic_Operation   operation;
+    const char16_t     *key;
+    size_t              key_size;
+    JsonLogic_Operation operation;
 } JsonLogic_Builtin;
+
+JSONLOGIC_PRIVATE uint64_t jsonlogic_hash_fnv1a(const uint8_t *data, size_t size);
 
 #define TRY(EXPR) { \
         const JsonLogic_Error json_logic_error__ = (EXPR); \

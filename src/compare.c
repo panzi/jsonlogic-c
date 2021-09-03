@@ -51,17 +51,22 @@ bool jsonlogic_deep_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
             const JsonLogic_Object *aobject = JSONLOGIC_CAST_OBJECT(a);
             const JsonLogic_Object *bobject = JSONLOGIC_CAST_OBJECT(b);
 
-            if (aobject->size != bobject->size) {
+            if (aobject->used != bobject->used) {
                 return false;
             }
 
-            // as long as its a sorted list instead of a hashtable this is easy:
-            for (size_t index = 0; index < aobject->size; ++ index) {
-                const JsonLogic_Object_Entry *aentry = &aobject->entries[index];
-                const JsonLogic_Object_Entry *bentry = &bobject->entries[index];
-                if (!jsonlogic_deep_strict_equal(aentry->key,   bentry->key) ||
-                    !jsonlogic_deep_strict_equal(aentry->value, bentry->value)) {
-                    return false;
+            for (size_t aindex = 0; aindex < aobject->size; ++ aindex) {
+                const JsonLogic_Object_Entry *aentry = &aobject->entries[aindex];
+
+                if (!JSONLOGIC_IS_NULL(aentry->key)) {
+                    const JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(aentry->key);
+                    size_t bindex = jsonlogic_object_get_index_utf16_with_hash(bobject, strkey->hash, strkey->str, strkey->size);
+                    if (bindex >= bobject->size) {
+                        return false;
+                    }
+                    if (!jsonlogic_deep_strict_equal(aentry->value, bobject->entries[bindex].value)) {
+                        return false;
+                    }
                 }
             }
 

@@ -8,9 +8,20 @@
 #include <math.h>
 #include <errno.h>
 #include <string.h>
+#include <endian.h>
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+    #define JSONLOGIC_ACCUMULATOR_HASH 0xd70624b7f0caa74d
+    #define JSONLOGIC_CURRENT_HASH     0x1e84ef3a9c8034b4
+#elif BYTE_ORDER == BIG_ENDIAN
+    #define JSONLOGIC_ACCUMULATOR_HASH 0x4b7a3ad162365edd
+    #define JSONLOGIC_CURRENT_HASH     0xd8b673420a4989da
+#else
+    #error "unhandeled platform byte order"
+#endif
 
 const JsonLogic_Handle JsonLogic_Null = { .intptr = JsonLogic_Type_Null };
 
@@ -297,9 +308,6 @@ JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input)
     return jsonlogic_apply_custom(logic, input, NULL, NULL, 0);
 }
 
-#define JSONLOGIC_IS_LOGIC(handle) \
-    (JSONLOGIC_IS_OBJECT(handle) && JSONLOGIC_CAST_OBJECT(handle)->size == 1)
-
 #define JSONLOGIC_IS_OP(OPSRT, OP) \
     jsonlogic_utf16_equals((OPSRT)->str, (OPSRT)->size, (JSONLOGIC_##OP), (JSONLOGIC_##OP##_SIZE))
 
@@ -329,14 +337,29 @@ JsonLogic_Handle jsonlogic_apply_custom(
         return jsonlogic_array_into_handle(new_array);
     }
 
-    if (!JSONLOGIC_IS_LOGIC(logic)) {
+    if (!JSONLOGIC_IS_OBJECT(logic)) {
         jsonlogic_incref(logic);
         return logic;
     }
 
     const JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(logic);
-    JsonLogic_Handle op    = object->entries[0].key;
-    JsonLogic_Handle value = object->entries[0].value;
+
+    if (object->used != 1) {
+        jsonlogic_incref(logic);
+        return logic;
+    }
+
+    const JsonLogic_Object_Entry *entry = NULL;
+    for (size_t index = 0; index < object->size; ++ index) {
+        if (!JSONLOGIC_IS_NULL(object->entries[index].key)) {
+            entry = &object->entries[index];
+            break;
+        }
+    }
+    assert(entry != NULL);
+
+    JsonLogic_Handle op    = entry->key;
+    JsonLogic_Handle value = entry->value;
 
     if (!JSONLOGIC_IS_STRING(op)) {
         jsonlogic_incref(logic);
@@ -564,10 +587,18 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(reduce_context);
         JsonLogic_Handle accumulator = jsonlogic_incref(init);
 
-        size_t accumulator_index = jsonlogic_object_get_index_utf16(object, JSONLOGIC_ACCUMULATOR, JSONLOGIC_ACCUMULATOR_SIZE);
+        size_t accumulator_index = jsonlogic_object_get_index_utf16_with_hash(
+            object,
+            JSONLOGIC_ACCUMULATOR_HASH,
+            JSONLOGIC_ACCUMULATOR,
+            JSONLOGIC_ACCUMULATOR_SIZE);
         assert(accumulator_index < object->size);
 
-        size_t current_index = jsonlogic_object_get_index_utf16(object, JSONLOGIC_CURRENT, JSONLOGIC_CURRENT_SIZE);
+        size_t current_index = jsonlogic_object_get_index_utf16_with_hash(
+            object,
+            JSONLOGIC_CURRENT_HASH,
+            JSONLOGIC_CURRENT,
+            JSONLOGIC_CURRENT_SIZE);
         assert(current_index < object->size);
 
         for (size_t index = 0; index < array->size; ++ index) {
