@@ -141,7 +141,7 @@ bool table_set(Table *tbl, const char16_t *key, const char *ident) {
             }
 
             index = (index + 1) % tbl->capacity;
-        } while (index == start_index);
+        } while (index != start_index);
 
         size_t new_capacity = tbl->capacity * 2;
         Entry *new_entries = calloc(new_capacity, sizeof(Entry));
@@ -184,7 +184,7 @@ bool table_set(Table *tbl, const char16_t *key, const char *ident) {
                 break;
             }
 
-            if (hash == entry->hash && key_size == entry->key_size && memcmp(key, entry->key, key_size * sizeof(char16_t)) == 0) {
+            if (key_size == entry->key_size && memcmp(key, entry->key, key_size * sizeof(char16_t)) == 0) {
                 new_entries[index] = (Entry) {
                     .hash     = hash,
                     .key      = key,

@@ -397,16 +397,7 @@ void test_short_circuit(TestContext *test_context) {
         { u"push.then", { &context, push_then } },
         { NULL,         { NULL,     NULL      } },
     }) == JSONLOGIC_ERROR_SUCCESS);
-/*
-    fprintf(stderr, "\noperations:\n");
-    for (size_t index = 0; index < ops.capacity; ++ index) {
-        if (ops.entries[index].key) {
-            fprintf(stderr, "    ");
-            jsonlogic_println_utf16(stderr, ops.entries[index].key, ops.entries[index].key_size);
-        }
-    }
-    fprintf(stderr, "\n");
-*/
+
     JsonLogic_Handle logic = jsonlogic_parse("{\"if\":["
         "{\"push.if\":[true]},"
         "{\"push.then\":[\"first\"]},"
@@ -429,7 +420,9 @@ void test_short_circuit(TestContext *test_context) {
     jsonlogic_decref(data);
     data = jsonlogic_parse("[\"first\"]", NULL);
 
-    JsonLogic_Handle actual = context.consequences.array == NULL ? JsonLogic_Null : jsonlogic_array_into_handle(context.consequences.array);
+    JsonLogic_Handle actual = context.consequences.array == NULL ?
+        JsonLogic_Null :
+        jsonlogic_array_into_handle(context.consequences.array);
     TEST_ASSERT_X(jsonlogic_deep_strict_equal(
         actual,
         data

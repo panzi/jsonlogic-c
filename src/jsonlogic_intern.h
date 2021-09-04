@@ -248,8 +248,9 @@ JSONLOGIC_PRIVATE void jsonlogic_objbuf_free(JsonLogic_ObjBuf *buf);
 
 JSONLOGIC_PRIVATE const char16_t *jsonlogic_find_char(const char16_t *str, size_t size, char16_t ch);
 
-JSONLOGIC_EXPORT const JsonLogic_Operation *jsonlogic_operations_get_with_hash(const JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size);
-JSONLOGIC_EXPORT const JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct);
+JSONLOGIC_PRIVATE const JsonLogic_Operation *jsonlogic_operations_get_with_hash(const JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size);
+JSONLOGIC_PRIVATE JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct);
+JSONLOGIC_PRIVATE void jsonlogic_operations_debug(const JsonLogic_Operations *operations);
 
 JSONLOGIC_PRIVATE uint64_t jsonlogic_hash_fnv1a(const uint8_t *data, size_t size);
 JSONLOGIC_PRIVATE uint64_t jsonlogic_hash_fnv1a_utf16(const char16_t *str, size_t size);

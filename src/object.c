@@ -226,7 +226,8 @@ size_t jsonlogic_object_get_index_utf16_with_hash(const JsonLogic_Object *object
     if (object->size == 0) {
         return 0;
     }
-    size_t index = hash % object->size;
+    size_t size = object->size;
+    size_t index = hash % size;
     size_t start_index = index;
 
     do {
@@ -237,10 +238,11 @@ size_t jsonlogic_object_get_index_utf16_with_hash(const JsonLogic_Object *object
         }
 
         const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
-        if (hash == otherkey->hash && jsonlogic_utf16_equals(key, key_size, otherkey->str, otherkey->size)) {
+        if (jsonlogic_utf16_equals(key, key_size, otherkey->str, otherkey->size)) {
             return index;
         }
 
+        index = (index + 1) % size;
     } while (index != start_index);
 
     return object->size;
@@ -281,8 +283,9 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         strkey->hash = jsonlogic_hash_fnv1a_utf16(strkey->str, strkey->size);
     }
 
+    uint64_t hash = strkey->hash;
     if (buf->object == NULL) {
-        size_t new_size = 16;
+        size_t new_size = 4;
         JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
         if (new_object == NULL) {
             jsonlogic_decref(stringkey);
@@ -300,7 +303,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             };
         }
 
-        size_t index = strkey->hash % new_size;
+        size_t index = hash % new_size;
         new_object->entries[index] = (JsonLogic_Object_Entry) {
             .key   = stringkey,
             .value = jsonlogic_incref(value),
@@ -310,13 +313,13 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     } else {
         JsonLogic_Object *object = buf->object;
         size_t size = object->size;
-        uint64_t hash = strkey->hash;
         size_t index = hash % size;
         size_t start_index = index;
         do {
             JsonLogic_Object_Entry *entry = &object->entries[index];
 
             if (JSONLOGIC_IS_NULL(entry->key)) {
+                assert(JSONLOGIC_IS_NULL(entry->value));
                 if (object->used + 1 > size / 2) {
                     // resize and insert instead
                     break;
@@ -331,7 +334,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             }
 
             const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
-            if (hash == otherkey->hash && jsonlogic_utf16_equals(strkey->str, strkey->size, otherkey->str, otherkey->size)) {
+            if (jsonlogic_utf16_equals(strkey->str, strkey->size, otherkey->str, otherkey->size)) {
                 jsonlogic_decref(entry->key);
                 jsonlogic_decref(entry->value);
 
@@ -343,7 +346,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             }
 
             index = (index + 1) % size;
-        } while (index == start_index);
+        } while (index != start_index);
 
         size_t new_size = size * 2;
         JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
@@ -363,6 +366,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             };
         }
 
+        // move old entries to new hash-table
         for (size_t index = 0; index < size; ++ index) {
             JsonLogic_Object_Entry *entry = &object->entries[index];
 
@@ -384,20 +388,22 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             }
         }
 
+        // add new entry
         index = strkey->hash % new_size;
         start_index = index;
         for (;;) {
             JsonLogic_Object_Entry *entry = &new_object->entries[index];
             if (JSONLOGIC_IS_NULL(entry->key)) {
+                assert(JSONLOGIC_IS_NULL(entry->value));
                 *entry = (JsonLogic_Object_Entry) {
-                    .key   = JsonLogic_Null,
-                    .value = JsonLogic_Null,
+                    .key   = stringkey,
+                    .value = jsonlogic_incref(value),
                 };
                 break;
             }
 
             const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
-            if (hash == otherkey->hash && jsonlogic_utf16_equals(strkey->str, strkey->size, otherkey->str, otherkey->size)) {
+            if (jsonlogic_utf16_equals(strkey->str, strkey->size, otherkey->str, otherkey->size)) {
                 jsonlogic_decref(entry->key);
                 jsonlogic_decref(entry->value);
 

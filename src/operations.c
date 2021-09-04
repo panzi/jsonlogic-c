@@ -4,12 +4,27 @@
 #include <inttypes.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
+#include <inttypes.h>
+
+void jsonlogic_operations_debug(const JsonLogic_Operations *operations) {
+    fprintf(stderr, "operations: used=%" PRIuPTR " capacity=%" PRIuPTR "\n", operations->used, operations->capacity);
+    for (size_t index = 0; index < operations->capacity; ++ index) {
+        const JsonLogic_Operation_Entry *entry = &operations->entries[index];
+        if (entry->key != NULL) {
+            fprintf(stderr, "    index=%4" PRIuPTR " hash=0x%016" PRIx64 " key=\"", index, entry->hash);
+            jsonlogic_print_utf16(stderr, entry->key, entry->key_size);
+            fprintf(stderr, "\"\n");
+        }
+    }
+}
 
 const JsonLogic_Operation *jsonlogic_operations_get_with_hash(const JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size) {
     if (operations->used == 0) {
         return NULL;
     }
-    size_t index = hash % operations->capacity;
+    size_t capacity = operations->capacity;
+    size_t index = hash % capacity;
     size_t start_index = index;
 
     do {
@@ -19,10 +34,11 @@ const JsonLogic_Operation *jsonlogic_operations_get_with_hash(const JsonLogic_Op
             break;
         }
 
-        if (hash == entry->hash && jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
+        if (jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
             return &entry->operation;
         }
 
+        index = (index + 1) % capacity;
     } while (index != start_index);
 
     return NULL;
@@ -82,7 +98,7 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
                 return JSONLOGIC_ERROR_SUCCESS;
             }
 
-            if (hash == entry->hash && jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
+            if (jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
                 *entry = (JsonLogic_Operation_Entry) {
                     .hash      = hash,
                     .key       = key,
@@ -96,7 +112,7 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
             }
 
             index = (index + 1) % capacity;
-        } while (index == start_index);
+        } while (index != start_index);
 
         size_t new_capacity = capacity * 2;
         JsonLogic_Operation_Entry *new_entries = calloc(new_capacity, sizeof(JsonLogic_Operation_Entry));
@@ -142,7 +158,7 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
                 break;
             }
 
-            if (hash == entry->hash && jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
+            if (jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
                 *entry = (JsonLogic_Operation_Entry) {
                     .hash      = hash,
                     .key       = key,

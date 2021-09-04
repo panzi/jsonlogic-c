@@ -634,6 +634,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
     if (opptr == NULL) {
         // JSONLOGIC_DEBUG_UTF16("%s", opstr->str, opstr->size, "illegal operation");
+        // jsonlogic_operations_debug(operations);
         return JsonLogic_Error_IllegalOperation;
     }
 
