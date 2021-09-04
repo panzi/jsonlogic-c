@@ -155,7 +155,7 @@ bool table_set(Table *tbl, const char16_t *key, const char *ident) {
 
             if (entry->key != NULL) {
                 size_t new_index = entry->hash % new_capacity;
-                size_t start_index = new_index;
+                JSONLOGIC_DEBUG_CODE(size_t start_index = new_index;)
 
                 for (;;) {
                     Entry *new_entry = &new_entries[new_index];

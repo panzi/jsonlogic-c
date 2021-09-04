@@ -178,8 +178,7 @@ JsonLogic_Error jsonlogic_parse_date_time_utf16_intern(const char16_t *str, size
         }
 
         if (ptr < endptr) {
-            size_t index = (size_t)(ptr - str);
-            JSONLOGIC_DEBUG_UTF16("illegal date-time string, unexpected characters at index %" PRIuPTR, str, size, index);
+            JSONLOGIC_DEBUG_UTF16("illegal date-time string, unexpected characters at index %" PRIuPTR, str, size, (size_t)(ptr - str));
             return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
         }
     }
@@ -263,7 +262,11 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
     }
 #endif
 
-    int count = snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wformat-truncation"
+#endif
+    JSONLOGIC_DEBUG_CODE(int count = )snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
         time_info.tm_year + 1900,
         time_info.tm_mon + 1,
         time_info.tm_mday,
@@ -272,6 +275,9 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
         time_info.tm_sec,
         msec
     );
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
     assert(count < sizeof(buf));
 
     return jsonlogic_string_from_latin1(buf);

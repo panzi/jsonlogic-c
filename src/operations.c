@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <inttypes.h>
 
 void jsonlogic_operations_debug(const JsonLogic_Operations *operations) {
@@ -126,7 +127,7 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
 
             if (entry->key != NULL) {
                 size_t new_index = entry->hash % new_capacity;
-                size_t start_index = new_index;
+                JSONLOGIC_DEBUG_CODE(size_t start_index = new_index;)
 
                 for (;;) {
                     JsonLogic_Operation_Entry *new_entry = &new_entries[new_index];

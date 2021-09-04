@@ -17,6 +17,7 @@
     #define JSONLOGIC_DEBUG_UTF16(...)
     #define JSONLOGIC_ERROR_UTF16(...)
     #define JSONLOGIC_ASSERT(...)
+    #define JSONLOGIC_DEBUG_CODE(...)
 #else
     #define JSONLOGIC_DEBUG_(PREFIX, FMT, ...) \
         fprintf(stderr, "" PREFIX "%s:%u: in %s: " FMT "\n", \
@@ -51,6 +52,7 @@
     #define JSONLOGIC_ASSERT(EXPR, ...) \
         if (!(EXPR)) { JSONLOGIC_ERROR(__VA_ARGS__); }
 
+    #define JSONLOGIC_DEBUG_CODE(...) __VA_ARGS__
 #endif
 
 #define JSONLOGIC_ERROR_MEMORY() \
