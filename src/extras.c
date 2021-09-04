@@ -22,7 +22,7 @@
 #endif
 
 #define JSONLOGIC_EXTRA(NAME) \
-    { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = (jsonlogic_extra_##NAME) }
+    { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = { .context = NULL, .funct = (jsonlogic_extra_##NAME) } }
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ADD_YEARS,    u"addYears")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_COMBINATIONS, u"combinations")
