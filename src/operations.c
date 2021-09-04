@@ -2,6 +2,7 @@
 
 #include <errno.h>
 #include <inttypes.h>
+#include <stdlib.h>
 #include <assert.h>
 
 static int jsonlogic_operation_entry_compare(const void *leftptr, const void *rightptr) {
