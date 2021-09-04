@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+#ifndef NDEBUG
 void jsonlogic_operations_debug(const JsonLogic_Operations *operations) {
     fprintf(stderr, "operations: used=%" PRIuPTR " capacity=%" PRIuPTR "\n", operations->used, operations->capacity);
     for (size_t index = 0; index < operations->capacity; ++ index) {
@@ -20,6 +21,7 @@ void jsonlogic_operations_debug(const JsonLogic_Operations *operations) {
         }
     }
 }
+#endif
 
 const JsonLogic_Operation *jsonlogic_operations_get_with_hash(const JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size) {
     if (operations->used == 0) {

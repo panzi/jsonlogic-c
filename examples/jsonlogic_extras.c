@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    JsonLogic_Handle result = jsonlogic_apply_custom(logic, data, JsonLogic_Extras.entries, JsonLogic_Extras.size);
+    JsonLogic_Handle result = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
 
     jsonlogic_decref(logic);
     jsonlogic_decref(data);
