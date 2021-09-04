@@ -256,7 +256,7 @@ static JsonLogic_Handle jsonlogic_op_SUBSTR      (void *context, JsonLogic_Handl
 static JsonLogic_Handle jsonlogic_op_VAR         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 #define JSONLOGIC_BUILTIN(NAME) \
-    { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = (jsonlogic_op_##NAME) }
+    { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = { .context = NULL, .funct = (jsonlogic_op_##NAME) } }
 
 #define JSONLOGIC_BUILTIN_COUNT 25
 
@@ -294,7 +294,7 @@ const JsonLogic_Operations JsonLogic_Builtins = {
 };
 
 JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input) {
-    return jsonlogic_apply_custom(logic, input, NULL, NULL, 0);
+    return jsonlogic_apply_custom(logic, input, NULL, 0);
 }
 
 #define JSONLOGIC_IS_LOGIC(handle) \
@@ -306,7 +306,6 @@ JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input)
 JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle logic,
         JsonLogic_Handle input,
-        void *context,
         const JsonLogic_Operation_Entry *operations,
         size_t operation_count) {
     JsonLogic_Handle result = JsonLogic_Null;
@@ -322,7 +321,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             new_array->items[index] = jsonlogic_apply_custom(
                 array->items[index],
                 input,
-                context,
                 operations,
                 operation_count);
         }
@@ -366,7 +364,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle value = jsonlogic_apply_custom(
                 values[index],
                 input,
-                context,
                 operations,
                 operation_count);
             bool condition = jsonlogic_to_bool(value);
@@ -375,7 +372,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
                 return jsonlogic_apply_custom(
                     values[index + 1],
                     input,
-                    context,
                     operations,
                     operation_count);
             }
@@ -385,7 +381,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return jsonlogic_apply_custom(
                 values[index],
                 input,
-                context,
                 operations,
                 operation_count);
         }
@@ -398,7 +393,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle value = jsonlogic_apply_custom(
                 values[index],
                 input,
-                context,
                 operations,
                 operation_count);
             if (!jsonlogic_to_bool(value)) {
@@ -409,7 +403,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         return jsonlogic_apply_custom(
             values[value_count - 1],
             input,
-            context,
             operations,
             operation_count);
     } else if (JSONLOGIC_IS_OP(opstr, OR)) {
@@ -420,7 +413,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle value = jsonlogic_apply_custom(
                 values[index],
                 input,
-                context,
                 operations,
                 operation_count);
             if (jsonlogic_to_bool(value)) {
@@ -431,7 +423,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         return jsonlogic_apply_custom(
             values[value_count - 1],
             input,
-            context,
             operations,
             operation_count);
     } else if (JSONLOGIC_IS_OP(opstr, FILTER)) {
@@ -441,7 +432,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle items = jsonlogic_apply_custom(
             values[0],
             input,
-            context,
             operations,
             operation_count);
         if (JSONLOGIC_IS_ERROR(items)) {
@@ -467,7 +457,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle condition = jsonlogic_apply_custom(
                 logic,
                 item,
-                context,
                 operations,
                 operation_count);
             if (jsonlogic_to_bool(condition)) {
@@ -487,7 +476,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle items = jsonlogic_apply_custom(
             values[0],
             input,
-            context,
             operations,
             operation_count);
         if (JSONLOGIC_IS_ERROR(items)) {
@@ -512,7 +500,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle value = jsonlogic_apply_custom(
                 logic,
                 item,
-                context,
                 operations,
                 operation_count);
             mapped->items[index] = value;
@@ -536,7 +523,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle items = jsonlogic_apply_custom(
             values[0],
             input,
-            context,
             operations,
             operation_count);
         if (JSONLOGIC_IS_ERROR(items)) {
@@ -577,7 +563,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle new_accumulator = jsonlogic_apply_custom(
                 logic,
                 reduce_context,
-                context,
                 operations,
                 operation_count);
 
@@ -603,7 +588,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle items = jsonlogic_apply_custom(
             values[0],
             input,
-            context,
             operations,
             operation_count);
         if (JSONLOGIC_IS_ERROR(items)) {
@@ -628,7 +612,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle condition = jsonlogic_apply_custom(
                 logic,
                 item,
-                context,
                 operations,
                 operation_count);
             if (!jsonlogic_to_bool(condition)) {
@@ -649,7 +632,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle items = jsonlogic_apply_custom(
             values[0],
             input,
-            context,
             operations,
             operation_count);
         if (JSONLOGIC_IS_ERROR(items)) {
@@ -674,7 +656,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle condition = jsonlogic_apply_custom(
                 logic,
                 item,
-                context,
                 operations,
                 operation_count);
             if (jsonlogic_to_bool(condition)) {
@@ -695,7 +676,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle items = jsonlogic_apply_custom(
             values[0],
             input,
-            context,
             operations,
             operation_count);
         if (JSONLOGIC_IS_ERROR(items)) {
@@ -720,7 +700,6 @@ JsonLogic_Handle jsonlogic_apply_custom(
             JsonLogic_Handle condition = jsonlogic_apply_custom(
                 logic,
                 item,
-                context,
                 operations,
                 operation_count);
             if (jsonlogic_to_bool(condition)) {
@@ -735,10 +714,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
         return JsonLogic_True;
     }
 
-    JsonLogic_Operation opfunc = jsonlogic_operations_get(operations, operation_count, opstr->str, opstr->size);
-    if (opfunc == NULL) {
-        opfunc = jsonlogic_operations_get(JsonLogic_Builtins.entries, JsonLogic_Builtins.size, opstr->str, opstr->size);
-        if (opfunc == NULL) {
+    const JsonLogic_Operation *opptr = jsonlogic_operations_get(operations, operation_count, opstr->str, opstr->size);
+    if (opptr == NULL) {
+        opptr = jsonlogic_operations_get(JsonLogic_Builtins.entries, JsonLogic_Builtins.size, opstr->str, opstr->size);
+        if (opptr == NULL) {
             //fprintf(stderr, "\n*** error: illegal operation: ");
             //jsonlogic_println_utf16(stderr, opstr->str, opstr->size);
             return JsonLogic_Error_IllegalOperation;
@@ -763,12 +742,11 @@ JsonLogic_Handle jsonlogic_apply_custom(
         args[index] = jsonlogic_apply_custom(
             values[index],
             input,
-            context,
             operations,
             operation_count);
     }
 
-    result = opfunc(context, input, args, value_count);
+    result = opptr->funct(opptr->context, input, args, value_count);
 
     for (size_t index = 0; index < value_count; ++ index) {
         jsonlogic_decref(args[index]);

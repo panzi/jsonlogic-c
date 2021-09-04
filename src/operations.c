@@ -11,7 +11,7 @@ static int jsonlogic_operation_entry_compare(const void *leftptr, const void *ri
     return jsonlogic_utf16_compare(left->key, left->key_size, right->key, right->key_size);
 }
 
-JsonLogic_Operation jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size) {
+const JsonLogic_Operation *jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size) {
     if (count == 0) {
         return NULL;
     }
@@ -31,7 +31,7 @@ JsonLogic_Operation jsonlogic_operations_get(const JsonLogic_Operation_Entry *op
         } else if (cmp > 0) {
             right = mid;
         } else {
-            return entry->operation;
+            return &entry->operation;
         }
     }
 

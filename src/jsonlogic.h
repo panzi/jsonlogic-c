@@ -161,7 +161,12 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle obj
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);
 
-typedef JsonLogic_Handle (*JsonLogic_Operation)(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+typedef JsonLogic_Handle (*JsonLogic_Operation_Funct)(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+
+typedef struct JsonLogic_Operation {
+    void *context;
+    JsonLogic_Operation_Funct funct;
+} JsonLogic_Operation;
 
 typedef struct JsonLogic_Operation_Entry {
     const char16_t *key;
@@ -169,10 +174,10 @@ typedef struct JsonLogic_Operation_Entry {
     JsonLogic_Operation operation;
 } JsonLogic_Operation_Entry;
 
-#define jsonlogic_operation(KEY, OPERATION) { \
+#define jsonlogic_operation(KEY, CONTEXT, FUNCT) { \
         .key = KEY, \
         .key_size = sizeof(KEY) / sizeof(char16_t) - 1, \
-        .operation = OPERATION, \
+        .operation = { .context = CONTEXT, .funct = FUNCT }, \
     }
 
 #define jsonlogic_operations(...) \
@@ -187,7 +192,7 @@ typedef struct JsonLogic_Operations {
 } JsonLogic_Operations;
 
 JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry *operations, size_t count);
-JSONLOGIC_EXPORT JsonLogic_Operation jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size);
+JSONLOGIC_EXPORT const JsonLogic_Operation *jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size);
 
 JSONLOGIC_EXPORT extern const JsonLogic_Operations JsonLogic_Builtins;
 
@@ -238,7 +243,6 @@ JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply_custom(
     JsonLogic_Handle logic,
     JsonLogic_Handle input,
-    void *context,
     const JsonLogic_Operation_Entry *operations,
     size_t operation_count
 );

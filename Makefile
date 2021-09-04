@@ -98,7 +98,7 @@ else
 endif
 endif
 
-.PHONY: static shared lib so inc examples examples_shared clean install uninstall test test_shared
+.PHONY: static shared lib so inc examples examples_shared clean install uninstall test test_shared valgrind
 
 static: lib inc
 
@@ -109,6 +109,9 @@ test: $(BUILD_DIR)/bin/test$(BIN_EXT)
 
 test_shared: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
 	LD_LIBRARY_PATH=$(BUILD_DIR)/lib $<
+
+valgrind: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
+	LD_LIBRARY_PATH=$(BUILD_DIR)/lib valgrind --tool=memcheck --leak-check=full --track-origins=yes $<
 
 lib: $(LIB)
 
