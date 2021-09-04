@@ -279,7 +279,7 @@ int main(int argc, char *argv[]) {
     for (size_t index = 0; index < tbl.capacity; ++ index) {
         const Entry *entry = &tbl.entries[index];
         if (entry->key) {
-            fprintf(fp, "        { .hash = 0x%" PRIxPTR ", .key = u\"", entry->hash);
+            fprintf(fp, "        { .hash = 0x%" PRIx64 ", .key = u\"", entry->hash);
             print_ascii_utf16(fp, entry->key);
             fprintf(fp,
                 "\", .key_size = %" PRIuPTR ", .operation = { .context = NULL, .funct = %s } },\n",
@@ -328,7 +328,7 @@ int main(int argc, char *argv[]) {
     for (size_t index = 0; index < tbl.capacity; ++ index) {
         const Entry *entry = &tbl.entries[index];
         if (entry->key) {
-            fprintf(fp, "        { .hash = 0x%" PRIxPTR ", .key = u\"", entry->hash);
+            fprintf(fp, "        { .hash = 0x%" PRIx64 ", .key = u\"", entry->hash);
             print_ascii_utf16(fp, entry->key);
             fprintf(fp,
                 "\", .key_size = %" PRIuPTR ", .operation = { .context = NULL, .funct = %s } },\n",
@@ -346,8 +346,8 @@ int main(int argc, char *argv[]) {
 
     printf("written: %s\n", path);
 
-    printf("hash of u\"accumulator\": 0x%zx\n", jsonlogic_hash_fnv1a_utf16(u"accumulator", utf16_len(u"accumulator")));
-    printf("hash of u\"current\":     0x%zx\n", jsonlogic_hash_fnv1a_utf16(u"current", utf16_len(u"current")));
+    printf("hash of u\"accumulator\": 0x%" PRIx64 "\n", jsonlogic_hash_fnv1a_utf16(u"accumulator", utf16_len(u"accumulator")));
+    printf("hash of u\"current\":     0x%" PRIx64 "\n", jsonlogic_hash_fnv1a_utf16(u"current", utf16_len(u"current")));
 
     goto cleanup;
 
