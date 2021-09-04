@@ -3,119 +3,230 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <string.h>
 
-static int jsonlogic_operation_entry_compare(const void *leftptr, const void *rightptr) {
-    const JsonLogic_Operation_Entry *left  = leftptr;
-    const JsonLogic_Operation_Entry *right = rightptr;
-
-    return jsonlogic_utf16_compare(left->key, left->key_size, right->key, right->key_size);
-}
-
-const JsonLogic_Operation *jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size) {
-    if (count == 0) {
+const JsonLogic_Operation *jsonlogic_operations_get_with_hash(const JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size) {
+    if (operations->used == 0) {
         return NULL;
     }
+    size_t index = hash % operations->capacity;
+    size_t start_index = index;
 
-    assert(operations != NULL);
+    do {
+        const JsonLogic_Operation_Entry *entry = &operations->entries[index];
 
-    size_t left  = 0;
-    size_t right = count;
-    while (left < right) {
-        size_t mid = (left + right - 1) / 2;
-        const JsonLogic_Operation_Entry *entry = &operations[mid];
-        int cmp = jsonlogic_utf16_compare(
-            entry->key, entry->key_size,
-            key, key_size);
-        if (cmp < 0) {
-            left  = mid + 1;
-        } else if (cmp > 0) {
-            right = mid;
-        } else {
+        if (entry->key == NULL) {
+            break;
+        }
+
+        if (hash == entry->hash && jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
             return &entry->operation;
         }
-    }
+
+    } while (index != start_index);
 
     return NULL;
 }
 
-void jsonlogic_operations_sort(JsonLogic_Operation_Entry *operations, size_t count) {
-    qsort(operations, count, sizeof(JsonLogic_Operation_Entry), jsonlogic_operation_entry_compare);
-}
-
-JsonLogic_Operation_Entry *jsonlogic_operations_merge(const JsonLogic_Operations ops[], size_t ops_size, size_t *new_size_ptr) {
-    if (new_size_ptr == NULL) {
-        JSONLOGIC_DEBUG("%s", "illegal argument: new_size_ptr is NULL");
-        errno = EINVAL;
-        return NULL;
-    }
-
-    if (ops_size > 0 && ops == NULL) {
-        JSONLOGIC_DEBUG("%s", "illegal argument: ops_size > 0, but ops == NULL");
-        errno = EINVAL;
-        return NULL;
-    }
-
-    size_t new_size = 0;
-    for (size_t ops_index = 0; ops_index < ops_size; ++ ops_index) {
-        size_t size = ops[ops_index].size;
-        if (SIZE_MAX - size < new_size) {
-            JSONLOGIC_DEBUG("resulting array would be bigger than SIZE_MAX: %" PRIuPTR " + %" PRIuPTR " > %" PRIuPTR, new_size, size, SIZE_MAX);
-            errno = ENOMEM;
-            return NULL;
+JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operations, uint64_t hash, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct) {
+    assert(operations != NULL);
+    JsonLogic_Operation_Entry *entries = operations->entries;
+    if (entries == NULL) {
+        assert(operations->used == 0 && operations->capacity == 0);
+        size_t new_capacity = 16;
+        JsonLogic_Operation_Entry *new_entries = calloc(new_capacity, sizeof(JsonLogic_Operation_Entry));
+        if (new_entries == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        new_size += size;
-    }
 
-    if (SIZE_MAX / sizeof(JsonLogic_Operation_Entry) < new_size) {
-        JSONLOGIC_DEBUG("resulting array would need more than SIZE_MAX memory: %" PRIuPTR " * %" PRIuPTR " > %" PRIuPTR, new_size, sizeof(JsonLogic_Operation_Entry), SIZE_MAX);
-        errno = ENOMEM;
-        return NULL;
-    }
+        size_t index = hash % new_capacity;
+        new_entries[index] = (JsonLogic_Operation_Entry) {
+            .hash      = hash,
+            .key       = key,
+            .key_size  = key_size,
+            .operation = {
+                .context = context,
+                .funct   = funct,
+            }
+        };
 
-    JsonLogic_Operation_Entry *new_entries = malloc(new_size * sizeof(JsonLogic_Operation_Entry));
-    if (new_entries == NULL) {
-        JSONLOGIC_ERROR_MEMORY();
-        errno = ENOMEM;
-        return NULL;
-    }
+        operations->entries  = new_entries;
+        operations->capacity = new_capacity;
+        operations->used     = 1;
+    } else {
+        size_t capacity = operations->capacity;
+        size_t index = hash % capacity;
+        size_t start_index = index;
 
-    size_t new_index = 0;
-    for (size_t ops_index = 0; ops_index < ops_size; ++ ops_index) {
-        const JsonLogic_Operations *this_ops = &ops[ops_index];
+        do {
+            JsonLogic_Operation_Entry *entry = &entries[index];
 
-        for (size_t index = 0; index < this_ops->size; ++ index) {
-            const JsonLogic_Operation_Entry *entry = &this_ops->entries[index];
-
-            bool found = false;
-            for (size_t next_ops_index = ops_index + 1; next_ops_index < ops_size; ++ next_ops_index) {
-                const JsonLogic_Operations *other_ops = &ops[next_ops_index];
-                if (jsonlogic_operations_get(other_ops->entries, other_ops->size, entry->key, entry->key_size) != NULL) {
-                    found = true;
+            if (entry->key == NULL) {
+                if (operations->used + 1 > capacity / 2) {
+                    // resize and insert instead
                     break;
                 }
+
+                *entry = (JsonLogic_Operation_Entry) {
+                    .hash      = hash,
+                    .key       = key,
+                    .key_size  = key_size,
+                    .operation = {
+                        .context = context,
+                        .funct   = funct,
+                    }
+                };
+
+                ++ operations->used;
+                return JSONLOGIC_ERROR_SUCCESS;
             }
 
-            if (!found) {
-                new_entries[new_index ++] = *entry;
+            if (hash == entry->hash && jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
+                *entry = (JsonLogic_Operation_Entry) {
+                    .hash      = hash,
+                    .key       = key,
+                    .key_size  = key_size,
+                    .operation = {
+                        .context = context,
+                        .funct   = funct,
+                    }
+                };
+                return JSONLOGIC_ERROR_SUCCESS;
+            }
+
+            index = (index + 1) % capacity;
+        } while (index == start_index);
+
+        size_t new_capacity = capacity * 2;
+        JsonLogic_Operation_Entry *new_entries = calloc(new_capacity, sizeof(JsonLogic_Operation_Entry));
+        if (new_entries == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+        }
+
+        for (size_t index = 0; index < capacity; ++ index) {
+            JsonLogic_Operation_Entry *entry = &entries[index];
+
+            if (entry->key != NULL) {
+                size_t new_index = entry->hash % new_capacity;
+                size_t start_index = new_index;
+
+                for (;;) {
+                    JsonLogic_Operation_Entry *new_entry = &new_entries[new_index];
+                    if (new_entry->key == NULL) {
+                        new_entries[new_index] = *entry;
+                        break;
+                    }
+
+                    new_index = (new_index + 1) % new_capacity;
+                    assert(new_index != start_index);
+                }
+            }
+        }
+
+        index = hash % new_capacity;
+        start_index = index;
+        for (;;) {
+            JsonLogic_Operation_Entry *entry = &new_entries[index];
+            if (entry->key == NULL) {
+                *entry = (JsonLogic_Operation_Entry) {
+                    .hash      = hash,
+                    .key       = key,
+                    .key_size  = key_size,
+                    .operation = {
+                        .context = context,
+                        .funct   = funct,
+                    }
+                };
+                break;
+            }
+
+            if (hash == entry->hash && jsonlogic_utf16_equals(key, key_size, entry->key, entry->key_size)) {
+                *entry = (JsonLogic_Operation_Entry) {
+                    .hash      = hash,
+                    .key       = key,
+                    .key_size  = key_size,
+                    .operation = {
+                        .context = context,
+                        .funct   = funct,
+                    }
+                };
+                break;
+            }
+
+            index = (index + 1) % new_capacity;
+            assert(index != start_index);
+        }
+
+        free(entries);
+        operations->capacity = new_capacity;
+        operations->entries = new_entries;
+        ++ operations->used;
+    }
+    return JSONLOGIC_ERROR_SUCCESS;
+}
+
+const JsonLogic_Operation *jsonlogic_operations_get_sized(const JsonLogic_Operations *operations, const char16_t *key, size_t key_size) {
+    return jsonlogic_operations_get_with_hash(operations, jsonlogic_hash_fnv1a_utf16(key, key_size), key, key_size);
+}
+
+JsonLogic_Error jsonlogic_operations_set_sized(JsonLogic_Operations *operations, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct) {
+    return jsonlogic_operations_set_with_hash(operations, jsonlogic_hash_fnv1a_utf16(key, key_size), key, key_size, context, funct);
+}
+
+JsonLogic_Error jsonlogic_operations_extend(JsonLogic_Operations *operations, const JsonLogic_Operations *more_operations) {
+    assert(operations != NULL && more_operations != NULL);
+
+    if (operations->entries == NULL) {
+        assert(operations->capacity == 0 && operations->used == 0);
+
+        size_t byte_size = more_operations->capacity * sizeof(JsonLogic_Operation_Entry);
+        JsonLogic_Operation_Entry *new_entries = malloc(byte_size);
+        if (new_entries == NULL) {
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+        }
+
+        memcpy(new_entries, more_operations->entries, byte_size);
+
+        operations->entries  = new_entries;
+        operations->capacity = more_operations->capacity;
+        operations->used     = more_operations->used;
+
+        return JSONLOGIC_ERROR_SUCCESS;
+    }
+
+    for (size_t index = 0; index < more_operations->capacity; ++ index) {
+        const JsonLogic_Operation_Entry *entry = &more_operations->entries[index];
+        if (entry->key != NULL) {
+            JsonLogic_Error error = jsonlogic_operations_set_with_hash(operations, entry->hash, entry->key, entry->key_size, entry->operation.context, entry->operation.funct);
+            if (error != JSONLOGIC_ERROR_SUCCESS) {
+                return error;
             }
         }
     }
 
-    assert(new_index <= new_size);
+    return JSONLOGIC_ERROR_SUCCESS;
+}
 
-    if (new_index < new_size) {
-        new_size = new_index;
-        JsonLogic_Operation_Entry *truncated_entries = realloc(new_entries, sizeof(JsonLogic_Operation_Entry) * new_size);
-        if (truncated_entries == NULL) {
-            JSONLOGIC_ERROR("%s", "failed to truncate operations array");
-        } else {
-            new_entries = truncated_entries;
+JsonLogic_Error jsonlogic_operations_build(JsonLogic_Operations *operations, const JsonLogic_Operations_BuildEntry *build_operations) {
+    const JsonLogic_Operations_BuildEntry *entry = build_operations;
+    while (entry->key != NULL) {
+        size_t key_size = jsonlogic_utf16_len(entry->key);
+        uint64_t hash = jsonlogic_hash_fnv1a_utf16(entry->key, key_size);
+        JsonLogic_Error error = jsonlogic_operations_set_with_hash(operations, hash, entry->key, key_size, entry->operation.context, entry->operation.funct);
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            return error;
         }
+        ++ entry;
     }
+    return JSONLOGIC_ERROR_SUCCESS;
+}
 
-    jsonlogic_operations_sort(new_entries, new_size);
-
-    *new_size_ptr = new_size;
-
-    return new_entries;
+void jsonlogic_operations_free(JsonLogic_Operations *operations) {
+    free(operations->entries);
+    operations->capacity = 0;
+    operations->used     = 0;
+    operations->entries  = NULL;
 }

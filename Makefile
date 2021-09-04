@@ -1,7 +1,9 @@
 CC=gcc
 CFLAGS=-std=c11 -Wall -Werror -pedantic
 BUILD_DIR=build
-LIB_OBJS=$(BUILD_DIR)/obj/array.o \
+LIB_OBJS=$(BUILD_DIR)/obj/tbl/builtins_tbl.o \
+         $(BUILD_DIR)/obj/tbl/extras_tbl.o \
+         $(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/boolean.o \
          $(BUILD_DIR)/obj/extras.o \
          $(BUILD_DIR)/obj/hash.o \
@@ -144,14 +146,14 @@ uninstall:
 
 $(BUILD_DIR)/bin/compile_operations$(BIN_EXT): $(BUILD_DIR)/obj/compile_operations.o $(BUILD_DIR)/obj/hash.o src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(BUILD_DIR)/obj/hash.o $(STATIC_LIBS) -o $@
+	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(BUILD_DIR)/obj/hash.o $(LIBS) -o $@
 
-$(BUILD_DIR)/bin/test$(BIN_EXT): $(BUILD_DIR)/obj/test.o src/jsonlogic.h src/jsonlogic_intern.h lib
+$(BUILD_DIR)/bin/test$(BIN_EXT): $(BUILD_DIR)/obj/test.o src/jsonlogic.h src/jsonlogic_intern.h $(LIB)
 	@mkdir -p $(BUILD_DIR)/bin
 	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(STATIC_LIBS) -o $@
 
 # shared binary but statically linked objects, because we're using internal APIs in tests
-$(BUILD_DIR)/bin/test_shared$(BIN_EXT): $(BUILD_DIR)/shared-obj/test.o src/jsonlogic.h src/jsonlogic_intern.h $(SO_OBJS)
+$(BUILD_DIR)/bin/test_shared$(BIN_EXT): $(BUILD_DIR)/shared-obj/test.o src/jsonlogic.h src/jsonlogic_intern.h $(SO_OBJS) $(SO)
 	@mkdir -p $(BUILD_DIR)/bin
 	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $(SO_OBJS) $(LIBS) $< -o $@
 
@@ -163,9 +165,23 @@ $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.o $
 	@mkdir -p $(BUILD_DIR)/examples-shared
 	$(CC) $(CFLAGS) $< $(LIB_DIRS) -ljsonlogic $(LIBS) -o $@
 
+$(BUILD_DIR)/src/builtins_tbl.c: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
+	@mkdir -p $(BUILD_DIR)/src
+	$< $(BUILD_DIR)/src
+
+$(BUILD_DIR)/src/extras_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
+
+$(BUILD_DIR)/obj/tbl/%.o: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
+	@mkdir -p $(BUILD_DIR)/obj/tbl
+	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC $< -c -o $@
+
 $(BUILD_DIR)/obj/%.o: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
 	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC $< -c -o $@
+
+$(BUILD_DIR)/shared-obj/tbl/%.o: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
+	@mkdir -p $(BUILD_DIR)/shared-obj/tbl
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
 
 $(BUILD_DIR)/shared-obj/%.o: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
@@ -220,4 +236,5 @@ clean:
 	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) \
 	       $(BUILD_DIR)/bin/test$(BIN_EXT) $(BUILD_DIR)/bin/test_shared$(BIN_EXT) \
 	       $(BUILD_DIR)/obj/test.o $(BUILD_DIR)/shared-obj/test.o \
-	       $(BUILD_DIR)/src/compile_operations.o $(BUILD_DIR)/bin/compile_operations || true
+	       $(BUILD_DIR)/obj/compile_operations.o $(BUILD_DIR)/bin/compile_operations$(BIN_EXT) \
+	       $(BUILD_DIR)/src/extras_tbl.c $(BUILD_DIR)/src/builtins_tbl.c || true

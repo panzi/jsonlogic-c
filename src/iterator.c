@@ -2,8 +2,6 @@
 
 #include <assert.h>
 
-JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle);
-
 JsonLogic_Handle jsonlogic_iter_next(JsonLogic_Iterator *iter) {
     assert(iter != NULL);
 

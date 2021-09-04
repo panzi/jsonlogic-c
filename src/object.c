@@ -65,8 +65,6 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, u"length")
 
-JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key);
-
 JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16_t *key, size_t size) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
         return JsonLogic_Null;
@@ -284,7 +282,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     }
 
     if (buf->object == NULL) {
-        size_t new_size = JSONLOGIC_CHUNK_SIZE;
+        size_t new_size = 16;
         JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
         if (new_object == NULL) {
             jsonlogic_decref(stringkey);
@@ -319,11 +317,11 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             JsonLogic_Object_Entry *entry = &object->entries[index];
 
             if (JSONLOGIC_IS_NULL(entry->key)) {
-                if (object->used + 1 > object->size / 2) {
+                if (object->used + 1 > size / 2) {
                     // resize and insert instead
                     break;
                 }
-                object->entries[index] = (JsonLogic_Object_Entry) {
+                *entry = (JsonLogic_Object_Entry) {
                     .key   = stringkey,
                     .value = jsonlogic_incref(value),
                 };
@@ -337,7 +335,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                 jsonlogic_decref(entry->key);
                 jsonlogic_decref(entry->value);
 
-                object->entries[index] = (JsonLogic_Object_Entry) {
+                *entry = (JsonLogic_Object_Entry) {
                     .key   = stringkey,
                     .value = jsonlogic_incref(value),
                 };
@@ -347,7 +345,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             index = (index + 1) % size;
         } while (index == start_index);
 
-        size_t new_size = object->size * 2;
+        size_t new_size = size * 2;
         JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
         if (new_object == NULL) {
             jsonlogic_decref(stringkey);
@@ -365,7 +363,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             };
         }
 
-        for (size_t index = 0; index < object->size; ++ index) {
+        for (size_t index = 0; index < size; ++ index) {
             JsonLogic_Object_Entry *entry = &object->entries[index];
 
             if (!JSONLOGIC_IS_NULL(entry->key)) {
@@ -391,7 +389,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         for (;;) {
             JsonLogic_Object_Entry *entry = &new_object->entries[index];
             if (JSONLOGIC_IS_NULL(entry->key)) {
-                new_object->entries[index] = (JsonLogic_Object_Entry) {
+                *entry = (JsonLogic_Object_Entry) {
                     .key   = JsonLogic_Null,
                     .value = JsonLogic_Null,
                 };
@@ -403,7 +401,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                 jsonlogic_decref(entry->key);
                 jsonlogic_decref(entry->value);
 
-                new_object->entries[index] = (JsonLogic_Object_Entry) {
+                *entry = (JsonLogic_Object_Entry) {
                     .key   = stringkey,
                     .value = jsonlogic_incref(value),
                 };

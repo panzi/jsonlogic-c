@@ -21,47 +21,6 @@
     #include <sys/time.h>
 #endif
 
-#define JSONLOGIC_EXTRA(NAME) \
-    { .key = (JSONLOGIC_##NAME), .key_size = (JSONLOGIC_##NAME##_SIZE), .operation = { .context = NULL, .funct = (jsonlogic_extra_##NAME) } }
-
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ADD_YEARS,    u"addYears")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_COMBINATIONS, u"combinations")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_DAYS,         u"days")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_FORMAT_TIME,  u"formatTime")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_HOURS,        u"hours")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_NOW,          u"now")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_PARSE_TIME,   u"parseTime")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_TIME_SINCE,   u"timeSince")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_ZIP,          u"zip")
-
-static JsonLogic_Handle jsonlogic_extra_ADD_YEARS   (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_DAYS        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_FORMAT_TIME (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_HOURS       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_NOW         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_ZIP         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-
-#define JSONLOGIC_EXTRAS_COUNT 9
-const JsonLogic_Operation_Entry JsonLogic_Extras_Entries[JSONLOGIC_EXTRAS_COUNT] = {
-    JSONLOGIC_EXTRA(ADD_YEARS),
-    JSONLOGIC_EXTRA(COMBINATIONS),
-    JSONLOGIC_EXTRA(DAYS),
-    JSONLOGIC_EXTRA(FORMAT_TIME),
-    JSONLOGIC_EXTRA(HOURS),
-    JSONLOGIC_EXTRA(NOW),
-    JSONLOGIC_EXTRA(PARSE_TIME),
-    JSONLOGIC_EXTRA(TIME_SINCE),
-    JSONLOGIC_EXTRA(ZIP),
-};
-
-const JsonLogic_Operations JsonLogic_Extras = {
-    .size = JSONLOGIC_EXTRAS_COUNT,
-    .entries = JsonLogic_Extras_Entries,
-};
-
 #define IS_NUM(CH) ((CH) >= u'0' && (CH) <= u'9')
 
 const char16_t *jsonlogic_parse_uint(const char16_t *str, const char16_t *endptr, uint32_t *value_ptr) {

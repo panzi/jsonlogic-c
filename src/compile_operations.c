@@ -258,7 +258,7 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    path = concat(outdir, "/bulitins_tbl.c");
+    path = concat(outdir, "/builtins_tbl.c");
     if (path == NULL) {
         fprintf(stderr, "*** error: allocating memory for path\n");
         goto error;
@@ -300,9 +300,6 @@ int main(int argc, char *argv[]) {
     free(path);
     path = NULL;
 
-    table_free(&tbl);
-
-    tbl.init_capacity = 64;
     for (const Op *ptr = extra_names; ptr->name; ++ ptr) {
         if (!table_set(&tbl, ptr->name, ptr->ident)) {
             fprintf(stderr, "*** error: creating hash table\n");

@@ -169,64 +169,51 @@ typedef struct JsonLogic_Operation {
 } JsonLogic_Operation;
 
 typedef struct JsonLogic_Operation_Entry {
+    uint64_t hash;
     const char16_t *key;
     size_t key_size;
     JsonLogic_Operation operation;
 } JsonLogic_Operation_Entry;
 
-#define jsonlogic_operation(KEY, CONTEXT, FUNCT) { \
-        .key = KEY, \
-        .key_size = sizeof(KEY) / sizeof(char16_t) - 1, \
-        .operation = { .context = CONTEXT, .funct = FUNCT }, \
-    }
-
-#define jsonlogic_operations(...) \
-    { \
-        .size = sizeof((JsonLogic_Operation_Entry[]){ __VA_ARGS__ }) / sizeof(JsonLogic_Operation_Entry), \
-        .entries = (JsonLogic_Operation_Entry[]){ __VA_ARGS__ }, \
-    }
-
 typedef struct JsonLogic_Operations {
-    size_t size;
-    const JsonLogic_Operation_Entry *entries;
+    size_t capacity;
+    size_t used;
+    JsonLogic_Operation_Entry *entries;
 } JsonLogic_Operations;
 
-JSONLOGIC_EXPORT void jsonlogic_operations_sort(JsonLogic_Operation_Entry *operations, size_t count);
-JSONLOGIC_EXPORT const JsonLogic_Operation *jsonlogic_operations_get(const JsonLogic_Operation_Entry *operations, size_t count, const char16_t *key, size_t key_size);
+JSONLOGIC_EXPORT const JsonLogic_Operation *jsonlogic_operations_get_sized(const JsonLogic_Operations *operations, const char16_t *key, size_t key_size);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_operations_set_sized(JsonLogic_Operations *operations, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct);
 
 JSONLOGIC_EXPORT extern const JsonLogic_Operations JsonLogic_Builtins;
 
-JSONLOGIC_EXPORT JsonLogic_Operation_Entry *jsonlogic_operations_merge(const JsonLogic_Operations ops[], size_t ops_size, size_t *new_size_ptr);
+typedef struct JsonLogic_Operations_BuildEntry {
+    const char16_t *key;
+    JsonLogic_Operation operation;
+} JsonLogic_Operations_BuildEntry;
 
-#define JSONLOGIC_OPERATIONS_INIT { .size = 0, .entries = NULL }
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_operations_build(JsonLogic_Operations *operations, const JsonLogic_Operations_BuildEntry *build_operations);
+JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_operations_extend(JsonLogic_Operations *operations, const JsonLogic_Operations *more_operations);
+JSONLOGIC_EXPORT void jsonlogic_operations_free(JsonLogic_Operations *operations);
+
+#define JSONLOGIC_OPERATIONS_INIT { .capacity = 0, .used = 0, .entries = NULL }
 
 typedef struct JsonLogic_Iterator {
     JsonLogic_Handle handle;
     size_t index;
 } JsonLogic_Iterator;
 
-#if defined(JSONLOGIC_INLINE_SUPPORTED)
-JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key) {
-    return jsonlogic_get_utf16_sized(object, key, jsonlogic_utf16_len(key));
-}
+// can't get JSONLOGIC_EXPORT inline to work, so I its marcos
+#define jsonlogic_get_utf16(object, key) jsonlogic_get_utf16_sized((object), (key), jsonlogic_utf16_len((key)))
+#define jsonlogic_boolean_from(value) ((value) ? JsonLogic_True : JsonLogic_False)
+#define jsonlogic_iter(HANDLE) (JsonLogic_Iterator) { \
+        .handle = jsonlogic_incref((HANDLE)), \
+        .index  = 0, \
+    }
+#define jsonlogic_operations_get(operations, key) \
+    jsonlogic_operations_get_sized((operations), (key), jsonlogic_utf16_len((key)))
 
-JSONLOGIC_EXPORT inline JsonLogic_Handle jsonlogic_boolean_from(bool value) {
-    return value ? JsonLogic_True : JsonLogic_False;
-}
-
-JSONLOGIC_EXPORT inline JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle) {
-    return (JsonLogic_Iterator){
-        .handle = jsonlogic_incref(handle),
-        .index  = 0,
-    };
-}
-#else
-
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_get_utf16(JsonLogic_Handle object, const char16_t *key);
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_boolean_from(bool value);
-JSONLOGIC_EXPORT JsonLogic_Iterator jsonlogic_iter(JsonLogic_Handle handle);
-
-#endif
+#define jsonlogic_operations_set(operations, key, context, funct) \
+    jsonlogic_operations_set_sized((operations), (key), jsonlogic_utf16_len((key)), (context), (funct))
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_iter_next(JsonLogic_Iterator *iter);
 JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);
@@ -243,8 +230,7 @@ JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply_custom(
     JsonLogic_Handle logic,
     JsonLogic_Handle input,
-    const JsonLogic_Operation_Entry *operations,
-    size_t operation_count
+    const JsonLogic_Operations *operations
 );
 
 #ifdef __cplusplus

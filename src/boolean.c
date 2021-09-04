@@ -6,8 +6,6 @@
 const JsonLogic_Handle JsonLogic_True  = { .intptr = JSONLOGIC_TURE  };
 const JsonLogic_Handle JsonLogic_False = { .intptr = JSONLOGIC_FALSE };
 
-JsonLogic_Handle jsonlogic_boolean_from(bool value);
-
 JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
         return handle.number == 0.0 || isnan(handle.number) ?
