@@ -249,7 +249,7 @@ size_t jsonlogic_object_get_index_utf16_with_hash(const JsonLogic_Object *object
 }
 
 size_t jsonlogic_object_get_index_utf16(const JsonLogic_Object *object, const char16_t *key, size_t key_size) {
-    return jsonlogic_object_get_index_utf16_with_hash(object, jsonlogic_hash_fnv1a((uint8_t*)key, key_size * sizeof(char16_t)), key, key_size);
+    return jsonlogic_object_get_index_utf16_with_hash(object, jsonlogic_hash_fnv1a_utf16(key, key_size), key, key_size);
 }
 
 size_t jsonlogic_object_get_index(const JsonLogic_Object *object, JsonLogic_Handle key) {
@@ -264,7 +264,7 @@ size_t jsonlogic_object_get_index(const JsonLogic_Object *object, JsonLogic_Hand
 
     JsonLogic_String *stringkey = JSONLOGIC_CAST_STRING(keyhandle);
     if (stringkey->hash == JSONLOGIC_HASH_UNSET) {
-        stringkey->hash = jsonlogic_hash_fnv1a((uint8_t*)stringkey->str, stringkey->size * sizeof(char16_t));
+        stringkey->hash = jsonlogic_hash_fnv1a_utf16(stringkey->str, stringkey->size);
     }
     size_t index = jsonlogic_object_get_index_utf16_with_hash(object, stringkey->hash, stringkey->str, stringkey->size);
     jsonlogic_decref(keyhandle);
@@ -280,7 +280,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(stringkey);
 
     if (strkey->hash == JSONLOGIC_HASH_UNSET) {
-        strkey->hash = jsonlogic_hash_fnv1a((uint8_t*)strkey->str, strkey->size * sizeof(char16_t));
+        strkey->hash = jsonlogic_hash_fnv1a_utf16(strkey->str, strkey->size);
     }
 
     if (buf->object == NULL) {
@@ -341,8 +341,6 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                     .key   = stringkey,
                     .value = jsonlogic_incref(value),
                 };
-
-                ++ object->used;
                 return JSONLOGIC_ERROR_SUCCESS;
             }
 
@@ -405,10 +403,11 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                 jsonlogic_decref(entry->key);
                 jsonlogic_decref(entry->value);
 
-                object->entries[index] = (JsonLogic_Object_Entry) {
+                new_object->entries[index] = (JsonLogic_Object_Entry) {
                     .key   = stringkey,
                     .value = jsonlogic_incref(value),
                 };
+                break;
             }
 
             index = (index + 1) % new_size;

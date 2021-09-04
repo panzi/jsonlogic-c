@@ -8,20 +8,12 @@
 #include <math.h>
 #include <errno.h>
 #include <string.h>
-#include <endian.h>
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
 
-#if BYTE_ORDER == LITTLE_ENDIAN
-    #define JSONLOGIC_ACCUMULATOR_HASH 0xd70624b7f0caa74d
-    #define JSONLOGIC_CURRENT_HASH     0x1e84ef3a9c8034b4
-#elif BYTE_ORDER == BIG_ENDIAN
-    #define JSONLOGIC_ACCUMULATOR_HASH 0x4b7a3ad162365edd
-    #define JSONLOGIC_CURRENT_HASH     0xd8b673420a4989da
-#else
-    #error "unhandeled platform byte order"
-#endif
+#define JSONLOGIC_ACCUMULATOR_HASH 0xd70624b7f0caa74d
+#define JSONLOGIC_CURRENT_HASH     0x1e84ef3a9c8034b4
 
 const JsonLogic_Handle JsonLogic_Null = { .intptr = JsonLogic_Type_Null };
 

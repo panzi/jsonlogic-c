@@ -255,6 +255,7 @@ typedef struct JsonLogic_Builtin {
 } JsonLogic_Builtin;
 
 JSONLOGIC_PRIVATE uint64_t jsonlogic_hash_fnv1a(const uint8_t *data, size_t size);
+JSONLOGIC_PRIVATE uint64_t jsonlogic_hash_fnv1a_utf16(const char16_t *str, size_t size);
 
 #define TRY(EXPR) { \
         const JsonLogic_Error json_logic_error__ = (EXPR); \

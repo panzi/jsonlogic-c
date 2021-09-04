@@ -99,7 +99,9 @@ else
 endif
 endif
 
-.PHONY: static shared lib so inc examples examples_shared clean install uninstall test test_shared valgrind
+.PHONY: static shared lib so inc examples examples_shared \
+        clean install uninstall test test_shared valgrind \
+        ops
 
 static: lib inc
 
@@ -113,6 +115,10 @@ test_shared: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
 
 valgrind: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
 	LD_LIBRARY_PATH=$(BUILD_DIR)/lib valgrind --tool=memcheck --leak-check=full --track-origins=yes $<
+
+ops: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
+	@mkdir -p $(BUILD_DIR)/src
+	$< $(BUILD_DIR)/src
 
 lib: $(LIB)
 
@@ -135,6 +141,10 @@ uninstall:
 	   $(PREFIX)/include/jsonlogic_defs.h \
 	   $(PREFIX)/include/jsonlogic_extras.h \
 	   $(PREFIX)/include/jsonlogic.h
+
+$(BUILD_DIR)/bin/compile_operations$(BIN_EXT): $(BUILD_DIR)/obj/compile_operations.o $(BUILD_DIR)/obj/hash.o src/jsonlogic.h src/jsonlogic_intern.h
+	@mkdir -p $(BUILD_DIR)/bin
+	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(BUILD_DIR)/obj/hash.o $(STATIC_LIBS) -o $@
 
 $(BUILD_DIR)/bin/test$(BIN_EXT): $(BUILD_DIR)/obj/test.o src/jsonlogic.h src/jsonlogic_intern.h lib
 	@mkdir -p $(BUILD_DIR)/bin
@@ -209,4 +219,5 @@ $(INC): src/jsonlogic.h src/jsonlogic_defs.h src/jsonlogic_extras.h
 clean:
 	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) \
 	       $(BUILD_DIR)/bin/test$(BIN_EXT) $(BUILD_DIR)/bin/test_shared$(BIN_EXT) \
-	       $(BUILD_DIR)/obj/test.o $(BUILD_DIR)/shared-obj/test.o || true
+	       $(BUILD_DIR)/obj/test.o $(BUILD_DIR)/shared-obj/test.o \
+	       $(BUILD_DIR)/src/compile_operations.o $(BUILD_DIR)/bin/compile_operations || true

@@ -37,10 +37,10 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_ZIP,          u"zip")
 static JsonLogic_Handle jsonlogic_extra_ADD_YEARS   (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_DAYS        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_FORMAT_TIME (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_HOURS       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_NOW         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-static JsonLogic_Handle jsonlogic_extra_FORMAT_TIME (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+static JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 static JsonLogic_Handle jsonlogic_extra_ZIP         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
