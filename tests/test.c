@@ -807,6 +807,22 @@ JsonLogic_Handle parse_file(const char *filename) {
     return handle;
 }
 
+const char *CertLogicTests[] = {
+    "tests/certlogic/and.json",
+    "tests/certlogic/comparison.json",
+    "tests/certlogic/date-times.json",
+    "tests/certlogic/detect-missing-values.json",
+    "tests/certlogic/equality.json",
+    "tests/certlogic/extractFromUCVI.json",
+    "tests/certlogic/if.json",
+    "tests/certlogic/in.json",
+    "tests/certlogic/ins-with-nulls.json",
+    "tests/certlogic/JsonLogic-testSuite.json",
+    "tests/certlogic/patched-reduce.json",
+    "tests/certlogic/var.json",
+    NULL,
+};
+
 int main(int argc, char *argv[]) {
     int status = 0;
     JsonLogic_Handle tests = JsonLogic_Null;
@@ -894,6 +910,7 @@ int main(int argc, char *argv[]) {
             fflush(stdout); \
             test_context.newline = true; \
         } \
+        test_context.passed = false; \
         fprintf(stderr, "      test: %" PRIuPTR "\n", test_count);
 
     JsonLogic_Iterator iter = jsonlogic_iter(tests);
@@ -1109,6 +1126,134 @@ int main(int argc, char *argv[]) {
     }
 
     jsonlogic_iter_free(&iter);
+
+    putchar('\n');
+    puts("CertLogic TestSuit");
+    for (const char **filename = CertLogicTests; *filename; ++ filename) {
+        JsonLogic_Handle test_group = parse_file(*filename);
+
+        if (JSONLOGIC_IS_ERROR(test_group)) {
+            ++ test_count;
+            fprintf(stderr, "*** error: loading tests from %s: %s\n", *filename,
+                jsonlogic_get_error_message(jsonlogic_get_error(test_group)));
+            continue;
+        }
+
+        size_t size = 0;
+        JsonLogic_Handle test_group_name = jsonlogic_get_utf16(test_group, u"name");
+        const char16_t *str = jsonlogic_get_string_content(test_group_name, &size);
+        if (str == NULL) {
+            if (jsonlogic_is_string(test_group_name)) {
+                fprintf(stderr, "*** error: in %s: error getting test group name\n", *filename);
+            } else {
+                fprintf(stderr, "*** error: in %s: error getting test group name: ", *filename);
+                jsonlogic_println(stderr, test_group_name);
+            }
+            jsonlogic_decref(test_group);
+            jsonlogic_decref(test_group_name);
+            continue;
+        }
+
+        JsonLogic_Handle cases = jsonlogic_get_utf16(test_group, u"cases");
+        printf(" - "); jsonlogic_println_utf16(stdout, str, size);
+        fflush(stdout);
+
+        JsonLogic_Iterator case_iter = jsonlogic_iter(cases);
+
+        test_context.newline = false;
+        test_context.passed  = true;
+
+        for (;;) {
+            JsonLogic_Handle test_case = jsonlogic_iter_next(&case_iter);
+            JsonLogic_Error error = jsonlogic_get_error(test_case);
+
+            if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
+                break;
+            } else if (error != JSONLOGIC_ERROR_SUCCESS) {
+                ++ test_count;
+                fprintf(stderr, "*** error: loading tests from %s: %s\n", *filename,
+                    jsonlogic_get_error_message(error));
+                break;
+            }
+
+            ++ test_count;
+            JsonLogic_Handle test_case_name = jsonlogic_get_utf16(test_case, u"name");
+
+            str = jsonlogic_get_string_content(test_case_name, &size);
+            if (str == NULL) {
+                if (jsonlogic_is_string(test_group_name)) {
+                    fprintf(stderr, "*** error: in %s: error getting test case name\n", *filename);
+                } else {
+                    fprintf(stderr, "*** error: in %s: error getting test case name: ", *filename);
+                    jsonlogic_println(stderr, test_group_name);
+                }
+                jsonlogic_decref(test_case);
+                jsonlogic_decref(test_case_name);
+                continue;
+            }
+            printf("   + "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
+            fflush(stdout);
+
+            JsonLogic_Handle logic      = jsonlogic_get_utf16(test_case, u"certLogicExpression");
+            JsonLogic_Handle assertions = jsonlogic_get_utf16(test_case, u"assertions");
+
+            JsonLogic_Iterator assert_iter = jsonlogic_iter(assertions);
+
+            for (;;) {
+                JsonLogic_Handle assertion = jsonlogic_iter_next(&assert_iter);
+                error = jsonlogic_get_error(assertion);
+
+                if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
+                    if (!test_context.newline) {
+                        puts("OK");
+                        fflush(stdout);
+                        test_context.newline = false;
+                    }
+                    break;
+                } else if (error != JSONLOGIC_ERROR_SUCCESS) {
+                    FAIL();
+                    fprintf(stderr, "     error: in %s: %s\n", *filename, jsonlogic_get_error_message(error));
+                    break;
+                }
+
+                JsonLogic_Handle data = jsonlogic_get_utf16(assertion, u"data");
+                JsonLogic_Handle expected = jsonlogic_get_utf16(assertion, u"expected");
+                JsonLogic_Handle actual = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
+
+                if (!jsonlogic_deep_strict_equal(actual, expected)) {
+                    FAIL();
+                    fprintf(stderr, "     error: Wrong result\n");
+                    fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+                    fprintf(stderr, "      data: "); jsonlogic_println(stderr, data);
+                    fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
+                    fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
+                    fputc('\n', stderr);
+                }
+
+                jsonlogic_decref(assertion);
+                jsonlogic_decref(data);
+                jsonlogic_decref(expected);
+                jsonlogic_decref(actual);
+            }
+
+            if (test_context.passed) {
+                ++ pass_count;
+            }
+
+            jsonlogic_iter_free(&assert_iter);
+
+            jsonlogic_decref(assertions);
+            jsonlogic_decref(logic);
+            jsonlogic_decref(test_case);
+            jsonlogic_decref(test_case_name);
+        }
+
+        jsonlogic_iter_free(&case_iter);
+
+        jsonlogic_decref(cases);
+        jsonlogic_decref(test_group_name);
+        jsonlogic_decref(test_group);
+    }
 
     printf("\ntests: %" PRIuPTR ", failed: %" PRIuPTR ", passed: %" PRIuPTR "\n",
         test_count, test_count - pass_count, pass_count);

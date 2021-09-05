@@ -604,6 +604,10 @@ char *jsonlogic_utf16_to_utf8(const char16_t *str, size_t size) {
 }
 
 JsonLogic_Error jsonlogic_print_utf16(FILE *stream, const char16_t *str, size_t size) {
+    assert(str != NULL);
+    if (str == NULL) {
+        return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
+    }
     JSONLOGIC_DECODE_UTF16(str, size, {
         char utf8[6];
         size_t utf8_index = 0;
