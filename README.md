@@ -20,4 +20,3 @@ floating-point NaNs, i.e. only strings, arrays, and objects are heap allocated,
 numbers, booleans, null, and error codes are directly in the tagged pointer.
 This requires pointers to never actually use more than 48 bits, which is ture
 for e.g. x86-64 and ARMv8. This library is only tested on x86-64, though.
-

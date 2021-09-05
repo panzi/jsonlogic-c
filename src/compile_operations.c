@@ -43,16 +43,22 @@ const Op bultin_names[] = {
 };
 
 const Op extra_names[] = {
-    { u"addYears",     "jsonlogic_extra_ADD_YEARS"    },
-    { u"combinations", "jsonlogic_extra_COMBINATIONS" },
-    { u"days",         "jsonlogic_extra_DAYS"         },
-    { u"formatTime",   "jsonlogic_extra_FORMAT_TIME"  },
-    { u"hours",        "jsonlogic_extra_HOURS"        },
-    { u"now",          "jsonlogic_extra_NOW"          },
-    { u"parseTime",    "jsonlogic_extra_PARSE_TIME"   },
-    { u"timeSince",    "jsonlogic_extra_TIME_SINCE"   },
-    { u"zip",          "jsonlogic_extra_ZIP"          },
-    { NULL,            NULL                           },
+    { u"addYears",        "jsonlogic_extra_ADD_YEARS"         },
+    { u"after",           "jsonlogic_extra_AFTER"             },
+    { u"before",          "jsonlogic_extra_BEFORE"            },
+    { u"combinations",    "jsonlogic_extra_COMBINATIONS"      },
+    { u"days",            "jsonlogic_extra_DAYS"              },
+    { u"extractFromUVCI", "jsonlogic_extra_EXTRACT_FROM_UVCI" },
+    { u"formatTime",      "jsonlogic_extra_FORMAT_TIME"       },
+    { u"hours",           "jsonlogic_extra_HOURS"             },
+    { u"not-after",       "jsonlogic_extra_NOT_AFTER"         },
+    { u"not-before",      "jsonlogic_extra_NOT_BEFORE"        },
+    { u"now",             "jsonlogic_extra_NOW"               },
+    { u"parseTime",       "jsonlogic_extra_PARSE_TIME"        },
+    { u"plusTime",        "jsonlogic_extra_PLUS_TIME"         },
+    { u"timeSince",       "jsonlogic_extra_TIME_SINCE"        },
+    { u"zip",             "jsonlogic_extra_ZIP"               },
+    { NULL,               NULL                                },
 };
 
 typedef struct Entry {

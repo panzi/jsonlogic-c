@@ -285,15 +285,21 @@ JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_op_MISSING_SOME(void *context, Json
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_op_SUBSTR      (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_op_VAR         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_ADD_YEARS   (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_DAYS        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_FORMAT_TIME (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_HOURS       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_NOW         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PARSE_TIME  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_TIME_SINCE  (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
-JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_ZIP         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_ADD_YEARS        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_AFTER            (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_BEFORE           (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_COMBINATIONS     (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_DAYS             (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_EXTRACT_FROM_UVCI(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_FORMAT_TIME      (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_HOURS            (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_NOT_AFTER        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_NOT_BEFORE       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_NOW              (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PARSE_TIME       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PLUS_TIME        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_TIME_SINCE       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_ZIP              (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 #define TRY(EXPR) { \
         const JsonLogic_Error json_logic_error__ = (EXPR); \
