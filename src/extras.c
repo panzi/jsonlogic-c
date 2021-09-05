@@ -644,35 +644,71 @@ JsonLogic_Handle jsonlogic_extra_ZIP(void *context, JsonLogic_Handle data, JsonL
 }
 
 JsonLogic_Handle jsonlogic_extra_AFTER(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    if (argc != 2) {
-        return JsonLogic_Error_IllegalArgument;
+    switch (argc) {
+        case 2:
+            return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) > jsonlogic_parse_date_time(args[1]));
+
+        case 3:
+        {
+            double dt1 = jsonlogic_parse_date_time(args[0]);
+            double dt2 = jsonlogic_parse_date_time(args[1]);
+            double dt3 = jsonlogic_parse_date_time(args[2]);
+            return jsonlogic_boolean_from(dt1 > dt2 && dt2 > dt3);
+        }
     }
 
-    return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) > jsonlogic_parse_date_time(args[1]));
+    return JsonLogic_Error_IllegalArgument;
 }
 
 JsonLogic_Handle jsonlogic_extra_BEFORE(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    if (argc != 2) {
-        return JsonLogic_Error_IllegalArgument;
+    switch (argc) {
+        case 2:
+            return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) < jsonlogic_parse_date_time(args[1]));
+
+        case 3:
+        {
+            double dt1 = jsonlogic_parse_date_time(args[0]);
+            double dt2 = jsonlogic_parse_date_time(args[1]);
+            double dt3 = jsonlogic_parse_date_time(args[2]);
+            return jsonlogic_boolean_from(dt1 < dt2 && dt2 < dt3);
+        }
     }
 
-    return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) < jsonlogic_parse_date_time(args[1]));
+    return JsonLogic_Error_IllegalArgument;
 }
 
 JsonLogic_Handle jsonlogic_extra_NOT_AFTER(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    if (argc != 2) {
-        return JsonLogic_Error_IllegalArgument;
+    switch (argc) {
+        case 2:
+            return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) <= jsonlogic_parse_date_time(args[1]));
+
+        case 3:
+        {
+            double dt1 = jsonlogic_parse_date_time(args[0]);
+            double dt2 = jsonlogic_parse_date_time(args[1]);
+            double dt3 = jsonlogic_parse_date_time(args[2]);
+            return jsonlogic_boolean_from(dt1 <= dt2 && dt2 <= dt3);
+        }
     }
 
-    return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) <= jsonlogic_parse_date_time(args[1]));
+    return JsonLogic_Error_IllegalArgument;
 }
 
 JsonLogic_Handle jsonlogic_extra_NOT_BEFORE(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
-    if (argc != 2) {
-        return JsonLogic_Error_IllegalArgument;
+    switch (argc) {
+        case 2:
+            return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) >= jsonlogic_parse_date_time(args[1]));
+
+        case 3:
+        {
+            double dt1 = jsonlogic_parse_date_time(args[0]);
+            double dt2 = jsonlogic_parse_date_time(args[1]);
+            double dt3 = jsonlogic_parse_date_time(args[2]);
+            return jsonlogic_boolean_from(dt1 >= dt2 && dt2 >= dt3);
+        }
     }
 
-    return jsonlogic_boolean_from(jsonlogic_parse_date_time(args[0]) >= jsonlogic_parse_date_time(args[1]));
+    return JsonLogic_Error_IllegalArgument;
 }
 
 JsonLogic_Handle jsonlogic_extra_PLUS_TIME(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -712,7 +748,7 @@ JsonLogic_Handle jsonlogic_extra_EXTRACT_FROM_UVCI(void *context, JsonLogic_Hand
     double dbl_index = jsonlogic_to_double(args[1]);
     size_t sz_index = dbl_index;
     if (!isfinite(dbl_index) || sz_index != dbl_index) {
-        return JsonLogic_Error_IllegalArgument;
+        return JsonLogic_Null;
     }
 
     if (!JSONLOGIC_IS_STRING(args[0])) {

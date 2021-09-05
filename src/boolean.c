@@ -30,6 +30,12 @@ JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
         case JsonLogic_Type_Error:
             return handle;
 
+#ifdef JSONLOGIC_EMPTY_OBJECTS_FALSY
+        case JsonLogic_Type_Object:
+            // this is for CertLogic, conflicts with JsonLogic
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_OBJECT(handle)->used > 0) | JsonLogic_Type_Boolean };
+#endif
+
         default:
             return JsonLogic_True;
     }
@@ -64,6 +70,11 @@ JsonLogic_Handle jsonlogic_not(JsonLogic_Handle handle) {
         case JsonLogic_Type_Error:
             return handle;
 
+#ifdef JSONLOGIC_EMPTY_OBJECTS_FALSY
+        case JsonLogic_Type_Object:
+            // this is for CertLogic, conflicts with JsonLogic
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_OBJECT(handle)->used == 0) | JsonLogic_Type_Boolean };
+#endif
         default:
             return JsonLogic_False;
     }

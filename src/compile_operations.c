@@ -354,6 +354,7 @@ int main(int argc, char *argv[]) {
 
     printf("hash of u\"accumulator\": 0x%" PRIx64 "\n", jsonlogic_hash_fnv1a_utf16(u"accumulator", utf16_len(u"accumulator")));
     printf("hash of u\"current\":     0x%" PRIx64 "\n", jsonlogic_hash_fnv1a_utf16(u"current", utf16_len(u"current")));
+    printf("hash of u\"data\":        0x%" PRIx64 "\n", jsonlogic_hash_fnv1a_utf16(u"data", utf16_len(u"data")));
 
     goto cleanup;
 

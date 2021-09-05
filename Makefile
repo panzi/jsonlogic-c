@@ -29,6 +29,16 @@ RELEASE=OFF
 PREFIX=/usr/local
 SO_FLAGS=-fPIC
 SHARED_BIN_OBJS=
+EMPTY_OBJECTS_FALSY=ON
+
+ifeq ($(EMPTY_OBJECTS_FALSY),ON)
+    # stritctly this breaks JsonLogic compatibility but is needed for CertLogic ugh.
+    CFLAGS += -DJSONLOGIC_EMPTY_OBJECTS_FALSY
+else
+ifneq ($(EMPTY_OBJECTS_FALSY),OFF)
+    $(error illegal value for EMPTY_OBJECTS_FALSY=$(EMPTY_OBJECTS_FALSY))
+endif
+endif
 
 ifeq ($(patsubst %32,32,$(TARGET)),32)
     CFLAGS += -m32

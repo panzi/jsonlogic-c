@@ -1191,7 +1191,7 @@ int main(int argc, char *argv[]) {
                 jsonlogic_decref(test_case_name);
                 continue;
             }
-            printf("   + "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
+            printf("   - "); jsonlogic_print_utf16(stdout, str, size); printf(" ... ");
             fflush(stdout);
 
             JsonLogic_Handle logic      = jsonlogic_get_utf16(test_case, u"certLogicExpression");
@@ -1216,14 +1216,16 @@ int main(int argc, char *argv[]) {
                     break;
                 }
 
+                JsonLogic_Handle assert_logic = jsonlogic_get_utf16(assertion, u"certLogicExpression");
                 JsonLogic_Handle data = jsonlogic_get_utf16(assertion, u"data");
                 JsonLogic_Handle expected = jsonlogic_get_utf16(assertion, u"expected");
-                JsonLogic_Handle actual = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
+                JsonLogic_Handle used_logic = JSONLOGIC_IS_NULL(assert_logic) ? logic : assert_logic;
+                JsonLogic_Handle actual = jsonlogic_apply_custom(used_logic, data, &JsonLogic_Extras);
 
                 if (!jsonlogic_deep_strict_equal(actual, expected)) {
                     FAIL();
                     fprintf(stderr, "     error: Wrong result\n");
-                    fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+                    fprintf(stderr, "     logic: "); jsonlogic_println(stderr, used_logic);
                     fprintf(stderr, "      data: "); jsonlogic_println(stderr, data);
                     fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
                     fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
@@ -1231,6 +1233,7 @@ int main(int argc, char *argv[]) {
                 }
 
                 jsonlogic_decref(assertion);
+                jsonlogic_decref(assert_logic);
                 jsonlogic_decref(data);
                 jsonlogic_decref(expected);
                 jsonlogic_decref(actual);

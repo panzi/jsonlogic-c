@@ -5,8 +5,25 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+#include <inttypes.h>
 
 JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object);
+
+#ifndef NDEBUG
+void jsonlogic_object_debug(const JsonLogic_Object *object) {
+    fprintf(stderr, "object: refcount=%" PRIuPTR " used=%" PRIuPTR " capacity=%" PRIuPTR "\n",
+        object->refcount, object->used, object->size);
+    for (size_t index = 0; index < object->size; ++ index) {
+        const JsonLogic_Object_Entry *entry = &object->entries[index];
+        if (!JSONLOGIC_IS_NULL(entry->key)) {
+            fprintf(stderr, "    index=%4" PRIuPTR " key=", index);
+            jsonlogic_print(stderr, entry->key);
+            fprintf(stderr, " value=");
+            jsonlogic_println(stderr, entry->value);
+        }
+    }
+}
+#endif
 
 JsonLogic_Handle jsonlogic_empty_object() {
     JsonLogic_Object *object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry));

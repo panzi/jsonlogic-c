@@ -172,6 +172,10 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
     return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)object) | JsonLogic_Type_Object };
 }
 
+#ifndef NDEBUG
+JSONLOGIC_PRIVATE void jsonlogic_object_debug(const JsonLogic_Object *object);
+#endif
+
 JSONLOGIC_PRIVATE bool jsonlogic_string_equals(const JsonLogic_String *a, const JsonLogic_String *b);
 
 JSONLOGIC_PRIVATE inline int jsonlogic_string_compare(const JsonLogic_String *a, const JsonLogic_String *b) {

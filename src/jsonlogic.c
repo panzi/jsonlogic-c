@@ -9,9 +9,11 @@
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_DATA,        u"data")
 
 #define JSONLOGIC_ACCUMULATOR_HASH 0xd70624b7f0caa74d
 #define JSONLOGIC_CURRENT_HASH     0x1e84ef3a9c8034b4
+#define JSONLOGIC_DATA_HASH        0xf8c35b7f283d7585
 
 const JsonLogic_Handle JsonLogic_Null = { .intptr = JsonLogic_Type_Null };
 
@@ -447,12 +449,15 @@ JsonLogic_Handle jsonlogic_apply_custom(
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         JsonLogic_Handle str_accumulator = jsonlogic_string_from_utf16_sized(JSONLOGIC_ACCUMULATOR, JSONLOGIC_ACCUMULATOR_SIZE);
         JsonLogic_Handle str_current     = jsonlogic_string_from_utf16_sized(JSONLOGIC_CURRENT, JSONLOGIC_CURRENT_SIZE);
+        JsonLogic_Handle str_data        = jsonlogic_string_from_utf16_sized(JSONLOGIC_DATA, JSONLOGIC_DATA_SIZE);
         JsonLogic_Handle reduce_context = jsonlogic_object_from(
             jsonlogic_entry(str_accumulator, JsonLogic_Null),
-            jsonlogic_entry(str_current,     JsonLogic_Null)
+            jsonlogic_entry(str_current,     JsonLogic_Null),
+            jsonlogic_entry(str_data,        input)
         );
         jsonlogic_decref(str_accumulator);
         jsonlogic_decref(str_current);
+        jsonlogic_decref(str_data);
         if (JSONLOGIC_IS_ERROR(reduce_context)) {
             jsonlogic_decref(items);
             return reduce_context;

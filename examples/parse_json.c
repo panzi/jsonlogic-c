@@ -42,6 +42,14 @@ int main(int argc, char *argv[]) {
                 putchar('\n');
             }
         }
+/*
+#ifndef NDEBUG
+        if (JSONLOGIC_IS_OBJECT(value)) {
+            JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(value);
+            jsonlogic_object_debug(object);
+        }
+#endif
+*/
         jsonlogic_decref(value);
     }
     return status;
