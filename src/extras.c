@@ -23,10 +23,11 @@
 
 #define IS_NUM(CH) ((CH) >= u'0' && (CH) <= u'9')
 
-JSONLOGIC_DEF_UTF16(JSONLOGIC_YEAR,  u"year")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_MONTH, u"month")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_DAY,   u"day")
-JSONLOGIC_DEF_UTF16(JSONLOGIC_HOUR,  u"hour")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_YEAR,        u"year")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_MONTH,       u"month")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_DAY,         u"day")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_HOUR,        u"hour")
+JSONLOGIC_DEF_UTF16(JSONLOGIC_UVCI_PREFIX, u"URN:UVCI:")
 
 const char16_t *jsonlogic_parse_uint(const char16_t *str, const char16_t *endptr, uint32_t *value_ptr) {
     uint32_t value = 0;
@@ -702,8 +703,6 @@ JsonLogic_Handle jsonlogic_extra_PLUS_TIME(void *context, JsonLogic_Handle data,
 
     return jsonlogic_number_from(jsonlogic_combine_date_time(&date_time));
 }
-
-JSONLOGIC_DEF_UTF16(JSONLOGIC_UVCI_PREFIX, u"URN:UVCI:")
 
 JsonLogic_Handle jsonlogic_extra_EXTRACT_FROM_UVCI(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc != 2 || JSONLOGIC_IS_NULL(args[0])) {
