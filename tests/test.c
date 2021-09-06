@@ -12,6 +12,14 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <assert.h>
+#include <limits.h>
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <process.h>
+#else
+    #include <sys/types.h>
+    #include <unistd.h>
+#endif
 
 struct TestContext;
 
@@ -47,6 +55,14 @@ typedef struct TestContext {
         TEST_FAIL(); \
         fprintf(stderr, "%s:%u: Assertion failed: %s\n", \
             __FILE__, __LINE__, TEST_STR(EXPR)); \
+        goto cleanup; \
+    }
+
+#define TEST_ASSERT_ERRNO(EXPR) \
+    if (!(EXPR)) { \
+        TEST_FAIL(); \
+        fprintf(stderr, "%s:%u: Assertion failed: %s: %s\n", \
+            __FILE__, __LINE__, TEST_STR(EXPR), strerror(errno)); \
         goto cleanup; \
     }
 
@@ -94,44 +110,75 @@ cleanup:
 }
 
 void test_logging(TestContext *test_context) {
+    struct stat stbuf;
     JsonLogic_Handle logic  = JsonLogic_Null;
     JsonLogic_Handle result = JsonLogic_Null;
-    int pair[2] = { -1, -1 };
-    int stdout_backup = dup(STDOUT_FILENO);
+    FILE *stdout_backup = stdout;
+    FILE *fp = NULL;
+    char path[PATH_MAX];
+    char *actual = NULL;
+    bool need_unlink = false;
 
-    TEST_ASSERT_FMT(stdout_backup != -1, "dup(STDOUT_FILENO): %s", strerror(errno));
 #if defined(_WIN32) || defined(_WIN64)
-    TEST_ASSERT_FMT(_pipe(pair, 1024, 0) != -1, "_pipe(&pair, 1024, 0): %s", strerror(errno));
+    int pid = _getpid();
 #else
-    TEST_ASSERT_FMT(pipe(pair) != -1, "pipe(&pair): %s", strerror(errno));
+    pid_t pid = getpid();
 #endif
-    TEST_ASSERT_FMT(dup2(pair[1], STDOUT_FILENO) != -1, "dup2(pair[1], STDOUT_FILENO): %s", strerror(errno))
 
-    logic  = jsonlogic_parse("{\"log\": [1]}", NULL);
+    int count = snprintf(path, sizeof(path), "test_logging.%" PRIi64 ".txt", (int64_t)pid);
+    TEST_ASSERT_ERRNO(count >= 0);
+    TEST_ASSERT(count < sizeof(path));
+
+    fp = fopen(path, "w");
+    TEST_ASSERT_ERRNO(fp != NULL);
+    stdout = fp;
+    need_unlink = true;
+
+    logic  = jsonlogic_parse("{\"log\": [[1,\"foo\\u000a\", \t\n true,null, {   }]]}", NULL);
     result = jsonlogic_apply(logic, JsonLogic_Null);
+
+    stdout = stdout_backup;
+
+    fclose(fp);
+    fp = NULL;
 
     TEST_ASSERT(jsonlogic_get_error(result) == JSONLOGIC_ERROR_SUCCESS);
 
-    char buf[2];
+    fp = fopen(path, "r");
+    TEST_ASSERT(fp != NULL);
 
-    TEST_ASSERT(read(pair[0], buf, sizeof(buf)) == 2);
-    TEST_ASSERT(memcmp(buf, "1\n", sizeof(buf)) == 0);
+    TEST_ASSERT_ERRNO(fstat(fileno(fp), &stbuf) == 0);
+
+    actual = malloc(stbuf.st_size);
+    TEST_ASSERT_ERRNO(actual != NULL);
+    TEST_ASSERT_ERRNO(fread(actual, stbuf.st_size, 1, fp) == 1);
+    fclose(fp);
+    fp = NULL;
+
+    const char *expected = "[1,\"foo\\n\",true,null,{}]\n";
+
+    TEST_ASSERT_X(stbuf.st_size == strlen(expected) && memcmp(actual, expected, stbuf.st_size) == 0, {
+        fprintf(stderr, "     error: Wrong output\n");
+        fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+        fprintf(stderr, "      data: null\n");
+        fprintf(stderr, "  expected: (length=%" PRIuPTR ") %s\n", strlen(expected), expected);
+        fprintf(stderr, "    actual: (length=%" PRIuPTR ") \n", stbuf.st_size);
+        fwrite(actual, stbuf.st_size, 1, stderr);
+        fputc('\n', stderr);
+    });
 
 cleanup:
+    if (need_unlink) {
+        unlink(path);
+    }
+    free(actual);
+    stdout = stdout_backup;
+
     jsonlogic_decref(result);
     jsonlogic_decref(logic);
 
-    if (pair[0] != -1) {
-        close(pair[0]);
-    }
-
-    if (pair[1] != -1) {
-        close(pair[1]);
-    }
-
-    if (stdout_backup != -1) {
-        dup2(stdout_backup, STDOUT_FILENO);
-        close(stdout_backup);
+    if (fp != NULL) {
+        fclose(fp);
     }
 }
 

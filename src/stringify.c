@@ -121,8 +121,7 @@ static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLog
             return jsonlogic_strbuf_append_ascii(buf, "}");
 
         case JsonLogic_Type_Error:
-            jsonlogic_strbuf_append_ascii(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
-            return handle.intptr;
+            return jsonlogic_strbuf_append_ascii(buf, jsonlogic_get_error_message(jsonlogic_get_error(handle)));
 
         default:
             assert(false);
