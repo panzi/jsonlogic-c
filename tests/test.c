@@ -148,22 +148,24 @@ void test_logging(TestContext *test_context) {
     TEST_ASSERT(fp != NULL);
 
     TEST_ASSERT_ERRNO(fstat(fileno(fp), &stbuf) == 0);
+    TEST_ASSERT(stbuf.st_size >= 0);
 
-    actual = malloc(stbuf.st_size);
+    size_t actual_size = stbuf.st_size;
+    actual = malloc(actual_size);
     TEST_ASSERT_ERRNO(actual != NULL);
-    TEST_ASSERT_ERRNO(fread(actual, stbuf.st_size, 1, fp) == 1);
+    TEST_ASSERT_ERRNO(fread(actual, actual_size, 1, fp) == 1);
     fclose(fp);
     fp = NULL;
 
     const char *expected = "[1,\"foo\\n\",true,null,{}]\n";
 
-    TEST_ASSERT_X(stbuf.st_size == strlen(expected) && memcmp(actual, expected, stbuf.st_size) == 0, {
+    TEST_ASSERT_X(actual_size == strlen(expected) && memcmp(actual, expected, actual_size) == 0, {
         fprintf(stderr, "     error: Wrong output\n");
         fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
         fprintf(stderr, "      data: null\n");
         fprintf(stderr, "  expected: (length=%" PRIuPTR ") %s\n", strlen(expected), expected);
-        fprintf(stderr, "    actual: (length=%" PRIuPTR ") \n", stbuf.st_size);
-        fwrite(actual, stbuf.st_size, 1, stderr);
+        fprintf(stderr, "    actual: (length=%" PRIuPTR ") \n", actual_size);
+        fwrite(actual, actual_size, 1, stderr);
         fputc('\n', stderr);
     });
 
