@@ -109,6 +109,7 @@ cleanup:
     jsonlogic_decref(logic);
 }
 
+#if !defined(_WIN32) && !defined(_WIN64)
 void test_logging(TestContext *test_context) {
     struct stat stbuf;
     JsonLogic_Handle logic  = JsonLogic_Null;
@@ -183,6 +184,7 @@ cleanup:
         fclose(fp);
     }
 }
+#endif
 
 void test_edge_cases(TestContext *test_context) {
     JsonLogic_Handle logic = jsonlogic_parse("{\"var\": \"\"}", NULL);
@@ -801,7 +803,9 @@ cleanup:
 const TestCase TEST_CASES[] = {
     TEST_DECL("Unicode and JSON parsing", parsing),
     TEST_DECL("Bad Operator", bad_operator),
+#if !defined(_WIN32) && !defined(_WIN64)
     TEST_DECL("Logging", logging),
+#endif
     TEST_DECL("Edge Cases", edge_cases),
     TEST_DECL("Expanding functionality with custom operators", custom_operators),
     TEST_DECL("Control structures don't eval depth-first", short_circuit),
