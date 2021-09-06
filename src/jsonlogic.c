@@ -893,7 +893,7 @@ JsonLogic_Handle jsonlogic_op_LOG(void *context, JsonLogic_Handle data, JsonLogi
         putchar('\n');
     }
 
-    return value;
+    return jsonlogic_incref(value);
 }
 
 JsonLogic_Handle jsonlogic_op_MAX(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
