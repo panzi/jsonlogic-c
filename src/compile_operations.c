@@ -57,6 +57,7 @@ const Op extra_names[] = {
     { u"parseTime",       "jsonlogic_extra_PARSE_TIME"        },
     { u"plusTime",        "jsonlogic_extra_PLUS_TIME"         },
     { u"timeSince",       "jsonlogic_extra_TIME_SINCE"        },
+    { u"toArray",         "jsonlogic_extra_TO_ARRAY"          },
     { u"zip",             "jsonlogic_extra_ZIP"               },
     { NULL,               NULL                                },
 };
@@ -120,6 +121,7 @@ const Op certlogic_extra_names[] = {
     { u"parseTime",       "jsonlogic_extra_PARSE_TIME"        },
     { u"plusTime",        "jsonlogic_extra_PLUS_TIME"         },
     { u"timeSince",       "jsonlogic_extra_TIME_SINCE"        },
+    { u"toArray",         "jsonlogic_extra_TO_ARRAY"          },
     { u"zip",             "jsonlogic_extra_ZIP"               },
     { NULL,               NULL                                },
 };

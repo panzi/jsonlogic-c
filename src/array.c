@@ -196,3 +196,60 @@ void jsonlogic_arraybuf_free(JsonLogic_ArrayBuf *buf) {
     buf->array    = NULL;
     buf->capacity = 0;
 }
+
+JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    switch (handle.intptr & JsonLogic_TypeMask) {
+        case JsonLogic_Type_Array:
+            return jsonlogic_incref(handle);
+
+        case JsonLogic_Type_String:
+        {
+            const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
+            size_t size = string->size;
+            JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + size * sizeof(JsonLogic_Handle));
+            if (array == NULL) {
+                JSONLOGIC_ERROR_MEMORY();
+                return JsonLogic_Error_OutOfMemory;
+            }
+            for (size_t index = 0; index < size; ++ index) {
+                JsonLogic_Handle item = jsonlogic_string_from_utf16_sized(string->str + index, 1);
+                if (JSONLOGIC_IS_ERROR(item)) {
+                    for (size_t free_index = 0; free_index < index; ++ index) {
+                        jsonlogic_decref(array->items[free_index]);
+                    }
+                    free(array);
+                    return item;
+                }
+                array->items[index] = item;
+            }
+            return jsonlogic_array_into_handle(array);
+        }
+        case JsonLogic_Type_Object:
+        {
+            const JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
+            size_t size = object->used;
+            JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + size * sizeof(JsonLogic_Handle));
+            if (array == NULL) {
+                JSONLOGIC_ERROR_MEMORY();
+                return JsonLogic_Error_OutOfMemory;
+            }
+            size_t array_index = 0;
+            for (size_t obj_index = 0; obj_index < object->size; ++ obj_index) {
+                const JsonLogic_Object_Entry *entry = &object->entries[obj_index];
+                if (!JSONLOGIC_IS_NULL(entry->key)) {
+                    array->items[array_index ++] = jsonlogic_incref(entry->key);
+                }
+            }
+            return jsonlogic_array_into_handle(array);
+        }
+        case JsonLogic_Type_Error:
+            return handle;
+
+        default:
+            return JsonLogic_Error_IllegalArgument;
+    }
+}

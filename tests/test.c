@@ -780,7 +780,6 @@ cleanup:
 }
 
 void test_extras(TestContext *test_context) {
-    // TODO: make zip work also on strings and object (keys)?
     JsonLogic_Handle logic    = jsonlogic_parse("{\"zip\": [[1,2,3],[\"a\",\"b\"]]}", NULL);
     JsonLogic_Handle expected = jsonlogic_parse("[[1,\"a\"],[2,\"b\"]]", NULL);
     JsonLogic_Handle actual   = jsonlogic_apply_custom(logic, JsonLogic_Null, &JsonLogic_Extras);

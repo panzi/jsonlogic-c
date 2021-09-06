@@ -324,6 +324,7 @@ JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_NOW              (void *conte
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PARSE_TIME       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PLUS_TIME        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_TIME_SINCE       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_TO_ARRAY         (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_ZIP              (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 JSONLOGIC_PRIVATE JsonLogic_Handle certlogic_op_NOT    (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);

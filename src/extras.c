@@ -587,6 +587,14 @@ JsonLogic_Handle jsonlogic_extra_PARSE_TIME(void *context, JsonLogic_Handle data
     return jsonlogic_number_from(jsonlogic_parse_date_time(args[0]));
 }
 
+JsonLogic_Handle jsonlogic_extra_TO_ARRAY(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+    if (argc != 1) {
+        return JsonLogic_Error_IllegalArgument;
+    }
+
+    return jsonlogic_to_array(args[0]);
+}
+
 JsonLogic_Handle jsonlogic_extra_TIME_SINCE(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc != 1) {
         return JsonLogic_Error_IllegalArgument;

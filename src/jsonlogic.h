@@ -69,7 +69,8 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_array_from_vararg (size_t count, ...
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...);
 
 #define jsonlogic_count_values(...) (sizeof((JsonLogic_Handle[]){__VA_ARGS__} / sizeof(JsonLogic_Handle)))
-#define jsonlogic_array_from(...) jsonlogic_array_from_vararg(jsonlogic_count_values(__VA_ARGS__), __VA_ARGS__)
+#define jsonlogic_array_build(...) jsonlogic_array_from_vararg(jsonlogic_count_values(__VA_ARGS__), __VA_ARGS__)
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle);
 
 
 #define jsonlogic_count_entries(...) (sizeof((JsonLogic_Object_Entry[]){__VA_ARGS__}) / sizeof(JsonLogic_Object_Entry))
