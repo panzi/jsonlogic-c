@@ -185,6 +185,7 @@ JSONLOGIC_EXPORT const JsonLogic_Operation *jsonlogic_operations_get_sized(const
 JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_operations_set_sized(JsonLogic_Operations *operations, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct);
 
 JSONLOGIC_EXPORT extern const JsonLogic_Operations JsonLogic_Builtins;
+JSONLOGIC_EXPORT extern const JsonLogic_Operations CertLogic_Builtins;
 
 typedef struct JsonLogic_Operations_BuildEntry {
     const char16_t *key;
@@ -228,6 +229,18 @@ JSONLOGIC_EXPORT void             jsonlogic_iter_free(JsonLogic_Iterator *iter);
  * @return JSONLOGIC_EXPORT 
  */
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_apply_custom(
+    JsonLogic_Handle logic,
+    JsonLogic_Handle input,
+    const JsonLogic_Operations *operations
+);
+
+JSONLOGIC_EXPORT JsonLogic_Handle certlogic_to_boolean(JsonLogic_Handle handle);
+JSONLOGIC_EXPORT bool             certlogic_to_bool   (JsonLogic_Handle handle);
+JSONLOGIC_EXPORT JsonLogic_Handle certlogic_not       (JsonLogic_Handle value);
+
+JSONLOGIC_EXPORT JsonLogic_Handle certlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input);
+
+JSONLOGIC_EXPORT JsonLogic_Handle certlogic_apply_custom(
     JsonLogic_Handle logic,
     JsonLogic_Handle input,
     const JsonLogic_Operations *operations

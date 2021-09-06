@@ -30,12 +30,6 @@ JsonLogic_Handle jsonlogic_to_boolean(JsonLogic_Handle handle) {
         case JsonLogic_Type_Error:
             return handle;
 
-#ifdef JSONLOGIC_EMPTY_OBJECTS_FALSY
-        case JsonLogic_Type_Object:
-            // this is for CertLogic, conflicts with JsonLogic
-            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_OBJECT(handle)->used > 0) | JsonLogic_Type_Boolean };
-#endif
-
         default:
             return JsonLogic_True;
     }
@@ -70,11 +64,77 @@ JsonLogic_Handle jsonlogic_not(JsonLogic_Handle handle) {
         case JsonLogic_Type_Error:
             return handle;
 
-#ifdef JSONLOGIC_EMPTY_OBJECTS_FALSY
+        default:
+            return JsonLogic_False;
+    }
+}
+
+JsonLogic_Handle certlogic_to_boolean(JsonLogic_Handle handle) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
+        return handle.number == 0.0 || isnan(handle.number) ?
+            JsonLogic_False :
+            JsonLogic_True;
+    }
+
+    switch (handle.intptr & JsonLogic_TypeMask) {
+        case JsonLogic_Type_Boolean:
+            return handle;
+
+        case JsonLogic_Type_String:
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_STRING(handle)->size > 0) | JsonLogic_Type_Boolean };
+
+        case JsonLogic_Type_Null:
+            return JsonLogic_False;
+
+        case JsonLogic_Type_Array:
+            // this is different to JavaScript
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_ARRAY(handle)->size > 0) | JsonLogic_Type_Boolean };
+
+        case JsonLogic_Type_Error:
+            return handle;
+
+        case JsonLogic_Type_Object:
+            // this is for CertLogic, conflicts with JsonLogic
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_OBJECT(handle)->used > 0) | JsonLogic_Type_Boolean };
+
+        default:
+            return JsonLogic_True;
+    }
+}
+
+bool certlogic_to_bool(JsonLogic_Handle handle) {
+    // interpretes errors as false
+    return certlogic_to_boolean(handle).intptr == JSONLOGIC_TURE;
+}
+
+JsonLogic_Handle certlogic_not(JsonLogic_Handle handle) {
+    if (JSONLOGIC_IS_NUMBER(handle)) {
+        return handle.number == 0.0 || isnan(handle.number) ?
+            JsonLogic_True :
+            JsonLogic_False;
+    }
+
+    switch (handle.intptr & JsonLogic_TypeMask) {
+        case JsonLogic_Type_Boolean:
+            return (JsonLogic_Handle){ .intptr = (~handle.intptr & 1) | JsonLogic_Type_Boolean };
+
+        case JsonLogic_Type_String:
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_STRING(handle)->size == 0) | JsonLogic_Type_Boolean };
+
+        case JsonLogic_Type_Null:
+            return JsonLogic_True;
+
+        case JsonLogic_Type_Array:
+            // this is different to JavaScript
+            return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_ARRAY(handle)->size == 0) | JsonLogic_Type_Boolean };
+
+        case JsonLogic_Type_Error:
+            return handle;
+
         case JsonLogic_Type_Object:
             // this is for CertLogic, conflicts with JsonLogic
             return (JsonLogic_Handle){ .intptr = (JSONLOGIC_CAST_OBJECT(handle)->used == 0) | JsonLogic_Type_Boolean };
-#endif
+
         default:
             return JsonLogic_False;
     }

@@ -19,12 +19,6 @@ The operations defined in `JsonLogic_Extras` (`jsonlogic_extras.h`) include the
 operations needed to pass the [CertLogic](https://github.com/ehn-dcc-development/dgc-business-rules/tree/main/certlogic)
 test suit (included in the tests of this library).
 
-**NOTE:** In order to pass the CertLogic test suite this meant that the JsonLogic
-implementation isn't 100% conformant. In particular empty object are also
-considered falsy (like empty arrays and strings), even though in JsonLogic they
-are considered truthy. In order to get the correct JsonLogic behavior you need
-to compile with `make EMPTY_OBJECTS_FALSY=OFF` (default is `ON`).
-
 Limitations
 -----------
 

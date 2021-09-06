@@ -3,6 +3,8 @@ CFLAGS=-std=c11 -Wall -Werror -pedantic
 BUILD_DIR=build
 LIB_OBJS=$(BUILD_DIR)/obj/tbl/builtins_tbl.o \
          $(BUILD_DIR)/obj/tbl/extras_tbl.o \
+         $(BUILD_DIR)/obj/tbl/certlogic_tbl.o \
+         $(BUILD_DIR)/obj/tbl/certlogic_extras_tbl.o \
          $(BUILD_DIR)/obj/array.o \
          $(BUILD_DIR)/obj/boolean.o \
          $(BUILD_DIR)/obj/extras.o \
@@ -12,6 +14,7 @@ LIB_OBJS=$(BUILD_DIR)/obj/tbl/builtins_tbl.o \
          $(BUILD_DIR)/obj/error.o \
          $(BUILD_DIR)/obj/json.o \
          $(BUILD_DIR)/obj/jsonlogic.o \
+         $(BUILD_DIR)/obj/certlogic.o \
          $(BUILD_DIR)/obj/number.o \
          $(BUILD_DIR)/obj/object.o \
          $(BUILD_DIR)/obj/operations.o \
@@ -29,16 +32,6 @@ RELEASE=OFF
 PREFIX=/usr/local
 SO_FLAGS=-fPIC
 SHARED_BIN_OBJS=
-EMPTY_OBJECTS_FALSY=ON
-
-ifeq ($(EMPTY_OBJECTS_FALSY),ON)
-    # stritctly this breaks JsonLogic compatibility but is needed for CertLogic ugh.
-    CFLAGS += -DJSONLOGIC_EMPTY_OBJECTS_FALSY
-else
-ifneq ($(EMPTY_OBJECTS_FALSY),OFF)
-    $(error illegal value for EMPTY_OBJECTS_FALSY=$(EMPTY_OBJECTS_FALSY))
-endif
-endif
 
 ifeq ($(patsubst %32,32,$(TARGET)),32)
     CFLAGS += -m32
@@ -181,6 +174,10 @@ $(BUILD_DIR)/src/builtins_tbl.c: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
 
 $(BUILD_DIR)/src/extras_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
 
+$(BUILD_DIR)/src/certlogic_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
+
+$(BUILD_DIR)/src/certlogic_extras_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
+
 $(BUILD_DIR)/obj/tbl/%.o: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj/tbl
 	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC $< -c -o $@
@@ -247,4 +244,5 @@ clean:
 	       $(BUILD_DIR)/bin/test$(BIN_EXT) $(BUILD_DIR)/bin/test_shared$(BIN_EXT) \
 	       $(BUILD_DIR)/obj/test.o $(BUILD_DIR)/shared-obj/test.o \
 	       $(BUILD_DIR)/obj/compile_operations.o $(BUILD_DIR)/bin/compile_operations$(BIN_EXT) \
-	       $(BUILD_DIR)/src/extras_tbl.c $(BUILD_DIR)/src/builtins_tbl.c || true
+	       $(BUILD_DIR)/src/extras_tbl.c $(BUILD_DIR)/src/builtins_tbl.c \
+	       $(BUILD_DIR)/src/certlogic_extras_tbl.c $(BUILD_DIR)/src/certlogic_tbl.c || true

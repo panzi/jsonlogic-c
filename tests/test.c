@@ -1213,9 +1213,6 @@ int main(int argc, char *argv[]) {
 
         JsonLogic_Iterator case_iter = jsonlogic_iter(cases);
 
-        test_context.newline = false;
-        test_context.passed  = true;
-
         for (;;) {
             JsonLogic_Handle test_case = jsonlogic_iter_next(&case_iter);
             JsonLogic_Error error = jsonlogic_get_error(test_case);
@@ -1230,6 +1227,8 @@ int main(int argc, char *argv[]) {
             }
 
             ++ test_count;
+            test_context.newline = false;
+            test_context.passed  = true;
             JsonLogic_Handle test_case_name = jsonlogic_get_utf16(test_case, u"name");
 
             str = jsonlogic_get_string_content(test_case_name, &size);
@@ -1273,7 +1272,7 @@ int main(int argc, char *argv[]) {
                 JsonLogic_Handle data = jsonlogic_get_utf16(assertion, u"data");
                 JsonLogic_Handle expected = jsonlogic_get_utf16(assertion, u"expected");
                 JsonLogic_Handle used_logic = JSONLOGIC_IS_NULL(assert_logic) ? logic : assert_logic;
-                JsonLogic_Handle actual = jsonlogic_apply_custom(used_logic, data, &JsonLogic_Extras);
+                JsonLogic_Handle actual = certlogic_apply(used_logic, data);
 
                 if (!jsonlogic_deep_strict_equal(actual, expected)) {
                     FAIL();

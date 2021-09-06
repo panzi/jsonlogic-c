@@ -61,6 +61,69 @@ const Op extra_names[] = {
     { NULL,               NULL                                },
 };
 
+const Op certlogic_names[] = {
+    { u"!",               "certlogic_op_NOT"                  },
+    { u"+",               "jsonlogic_op_ADD"                  },
+    { u"<",               "jsonlogic_op_LT"                   },
+    { u">",               "jsonlogic_op_GT"                   },
+    { u"<=",              "jsonlogic_op_LE"                   },
+    { u">=",              "jsonlogic_op_GE"                   },
+    { u"===",             "jsonlogic_op_STRICT_EQ"            },
+    { u"var",             "jsonlogic_op_VAR"                  },
+    { u"in",              "jsonlogic_op_IN"                   },
+    { u"after",           "jsonlogic_extra_AFTER"             },
+    { u"before",          "jsonlogic_extra_BEFORE"            },
+    { u"extractFromUVCI", "jsonlogic_extra_EXTRACT_FROM_UVCI" },
+    { u"not-after",       "jsonlogic_extra_NOT_AFTER"         },
+    { u"not-before",      "jsonlogic_extra_NOT_BEFORE"        },
+    { u"plusTime",        "jsonlogic_extra_PLUS_TIME"         },
+    { NULL,               NULL                                },
+};
+
+const Op certlogic_extra_names[] = {
+    { u"!",               "certlogic_op_NOT"                  },
+    { u"!!",              "certlogic_op_TO_BOOL"              },
+    { u"!=",              "jsonlogic_op_NE"                   },
+    { u"!==",             "jsonlogic_op_STRICT_NE"            },
+    { u"%",               "jsonlogic_op_MOD"                  },
+    { u"*",               "jsonlogic_op_MUL"                  },
+    { u"+",               "jsonlogic_op_ADD"                  },
+    { u"-",               "jsonlogic_op_SUB"                  },
+    { u"/",               "jsonlogic_op_DIV"                  },
+    { u"<",               "jsonlogic_op_LT"                   },
+    { u"<=",              "jsonlogic_op_LE"                   },
+    { u"==",              "jsonlogic_op_EQ"                   },
+    { u"===",             "jsonlogic_op_STRICT_EQ"            },
+    { u">",               "jsonlogic_op_GT"                   },
+    { u">=",              "jsonlogic_op_GE"                   },
+    { u"cat",             "jsonlogic_op_CAT"                  },
+    { u"in",              "jsonlogic_op_IN"                   },
+    { u"log",             "jsonlogic_op_LOG"                  },
+    { u"max",             "jsonlogic_op_MAX"                  },
+    { u"merge",           "jsonlogic_op_MERGE"                },
+    { u"min",             "jsonlogic_op_MIN"                  },
+    { u"missing",         "jsonlogic_op_MISSING"              },
+    { u"missing_some",    "jsonlogic_op_MISSING_SOME"         },
+    { u"substr",          "jsonlogic_op_SUBSTR"               },
+    { u"var",             "jsonlogic_op_VAR"                  },
+    { u"addYears",        "jsonlogic_extra_ADD_YEARS"         },
+    { u"after",           "jsonlogic_extra_AFTER"             },
+    { u"before",          "jsonlogic_extra_BEFORE"            },
+    { u"combinations",    "jsonlogic_extra_COMBINATIONS"      },
+    { u"days",            "jsonlogic_extra_DAYS"              },
+    { u"extractFromUVCI", "jsonlogic_extra_EXTRACT_FROM_UVCI" },
+    { u"formatTime",      "jsonlogic_extra_FORMAT_TIME"       },
+    { u"hours",           "jsonlogic_extra_HOURS"             },
+    { u"not-after",       "jsonlogic_extra_NOT_AFTER"         },
+    { u"not-before",      "jsonlogic_extra_NOT_BEFORE"        },
+    { u"now",             "jsonlogic_extra_NOW"               },
+    { u"parseTime",       "jsonlogic_extra_PARSE_TIME"        },
+    { u"plusTime",        "jsonlogic_extra_PLUS_TIME"         },
+    { u"timeSince",       "jsonlogic_extra_TIME_SINCE"        },
+    { u"zip",             "jsonlogic_extra_ZIP"               },
+    { NULL,               NULL                                },
+};
+
 typedef struct Entry {
     uint64_t hash;
     const char16_t *key;
@@ -243,6 +306,31 @@ void print_ascii_utf16(FILE *fp, const char16_t *str) {
     }
 }
 
+void generate_source(FILE *fp, const char *symname, const Table *tbl) {
+    fprintf(fp, "#include \"jsonlogic_intern.h\"\n");
+    fprintf(fp, "\n");
+    fprintf(fp, "const JsonLogic_Operations %s = {\n", symname);
+    fprintf(fp, "    .capacity = %" PRIuPTR ",\n", tbl->capacity);
+    fprintf(fp, "    .used     = %" PRIuPTR ",\n", tbl->used);
+    fprintf(fp, "    .entries  = (JsonLogic_Operation_Entry[]) {\n");
+
+    for (size_t index = 0; index < tbl->capacity; ++ index) {
+        const Entry *entry = &tbl->entries[index];
+        if (entry->key) {
+            fprintf(fp, "        { .hash = 0x%" PRIx64 ", .key = u\"", entry->hash);
+            print_ascii_utf16(fp, entry->key);
+            fprintf(fp,
+                "\", .key_size = %" PRIuPTR ", .operation = { .context = NULL, .funct = %s } },\n",
+                utf16_len(entry->key), entry->ident);
+        } else {
+            fprintf(fp, "        { .hash = 0x0, .key = NULL, .key_size = 0, .operation = { .context = NULL, .funct = NULL } },\n");
+        }
+    }
+
+    fprintf(fp, "    }\n");
+    fprintf(fp, "};\n");
+}
+
 int main(int argc, char *argv[]) {
     Table tbl = TABLE_INIT;
     int status = 0;
@@ -275,28 +363,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    fprintf(fp, "#include \"jsonlogic_intern.h\"\n");
-    fprintf(fp, "\n");
-    fprintf(fp, "const JsonLogic_Operations JsonLogic_Builtins = {\n");
-    fprintf(fp, "    .capacity = %" PRIuPTR ",\n", tbl.capacity);
-    fprintf(fp, "    .used     = %" PRIuPTR ",\n", tbl.used);
-    fprintf(fp, "    .entries  = (JsonLogic_Operation_Entry[]) {\n");
-
-    for (size_t index = 0; index < tbl.capacity; ++ index) {
-        const Entry *entry = &tbl.entries[index];
-        if (entry->key) {
-            fprintf(fp, "        { .hash = 0x%" PRIx64 ", .key = u\"", entry->hash);
-            print_ascii_utf16(fp, entry->key);
-            fprintf(fp,
-                "\", .key_size = %" PRIuPTR ", .operation = { .context = NULL, .funct = %s } },\n",
-                utf16_len(entry->key), entry->ident);
-        } else {
-            fprintf(fp, "        { .hash = 0x0, .key = NULL, .key_size = 0, .operation = { .context = NULL, .funct = NULL } },\n");
-        }
-    }
-
-    fprintf(fp, "    }\n");
-    fprintf(fp, "};\n");
+    generate_source(fp, "JsonLogic_Builtins", &tbl);
 
     fclose(fp);
     fp = NULL;
@@ -324,28 +391,65 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    fprintf(fp, "#include \"jsonlogic_intern.h\"\n");
-    fprintf(fp, "\n");
-    fprintf(fp, "const JsonLogic_Operations JsonLogic_Extras = {\n");
-    fprintf(fp, "    .capacity = %" PRIuPTR ",\n", tbl.capacity);
-    fprintf(fp, "    .used     = %" PRIuPTR ",\n", tbl.used);
-    fprintf(fp, "    .entries  = (JsonLogic_Operation_Entry[]) {\n");
+    generate_source(fp, "JsonLogic_Extras", &tbl);
 
-    for (size_t index = 0; index < tbl.capacity; ++ index) {
-        const Entry *entry = &tbl.entries[index];
-        if (entry->key) {
-            fprintf(fp, "        { .hash = 0x%" PRIx64 ", .key = u\"", entry->hash);
-            print_ascii_utf16(fp, entry->key);
-            fprintf(fp,
-                "\", .key_size = %" PRIuPTR ", .operation = { .context = NULL, .funct = %s } },\n",
-                utf16_len(entry->key), entry->ident);
-        } else {
-            fprintf(fp, "        { .hash = 0x0, .key = NULL, .key_size = 0, .operation = { .context = NULL, .funct = NULL } },\n");
+    fclose(fp);
+    fp = NULL;
+
+    printf("written: %s\n", path);
+
+    free(path);
+    path = NULL;
+
+    table_free(&tbl);
+    for (const Op *ptr = certlogic_names; ptr->name; ++ ptr) {
+        if (!table_set(&tbl, ptr->name, ptr->ident)) {
+            fprintf(stderr, "*** error: creating hash table\n");
+            goto error;
         }
     }
 
-    fprintf(fp, "    }\n");
-    fprintf(fp, "};\n");
+    path = concat(outdir, "/certlogic_tbl.c");
+    if (path == NULL) {
+        fprintf(stderr, "*** error: allocating memory for path\n");
+        goto error;
+    }
+    fp = fopen(path, "w");
+    if (fp == NULL) {
+        perror(path);
+        goto error;
+    }
+
+    generate_source(fp, "CertLogic_Builtins", &tbl);
+
+    fclose(fp);
+    fp = NULL;
+
+    printf("written: %s\n", path);
+
+    free(path);
+    path = NULL;
+
+    table_free(&tbl);
+    for (const Op *ptr = certlogic_extra_names; ptr->name; ++ ptr) {
+        if (!table_set(&tbl, ptr->name, ptr->ident)) {
+            fprintf(stderr, "*** error: creating hash table\n");
+            goto error;
+        }
+    }
+
+    path = concat(outdir, "/certlogic_extras_tbl.c");
+    if (path == NULL) {
+        fprintf(stderr, "*** error: allocating memory for path\n");
+        goto error;
+    }
+    fp = fopen(path, "w");
+    if (fp == NULL) {
+        perror(path);
+        goto error;
+    }
+
+    generate_source(fp, "CertLogic_Extras", &tbl);
 
     fclose(fp);
     fp = NULL;

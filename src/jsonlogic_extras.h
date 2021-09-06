@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 JSONLOGIC_EXPORT extern const JsonLogic_Operations JsonLogic_Extras;
+JSONLOGIC_EXPORT extern const JsonLogic_Operations CertLogic_Extras;
 
 JSONLOGIC_EXPORT double jsonlogic_now();
 JSONLOGIC_EXPORT double jsonlogic_parse_date_time(JsonLogic_Handle handle);

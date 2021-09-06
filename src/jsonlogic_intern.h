@@ -106,6 +106,27 @@ JSONLOGIC_DECL_UTF16(JSONLOGIC_INFINITY_STRING)
 JSONLOGIC_DECL_UTF16(JSONLOGIC_POS_INFINITY_STRING)
 JSONLOGIC_DECL_UTF16(JSONLOGIC_NEG_INFINITY_STRING)
 
+JSONLOGIC_DECL_UTF16(JSONLOGIC_ALT_IF)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_ALL)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_AND)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_FILTER)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_IF)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_MAP)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_NONE)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_OR)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_REDUCE)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_SOME)
+
+JSONLOGIC_DECL_UTF16(JSONLOGIC_ACCUMULATOR)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_CURRENT)
+JSONLOGIC_DECL_UTF16(JSONLOGIC_DATA)
+
+#define JSONLOGIC_ACCUMULATOR_HASH 0xd70624b7f0caa74d
+#define JSONLOGIC_CURRENT_HASH     0x1e84ef3a9c8034b4
+#define JSONLOGIC_DATA_HASH        0xf8c35b7f283d7585
+
+#define JSONLOGIC_STATIC_ARGC 8
+
 #define JSONLOGIC_HASH_UNSET ((uint64_t)0)
 
 typedef struct JsonLogic_String {
@@ -304,6 +325,9 @@ JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PARSE_TIME       (void *conte
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_PLUS_TIME        (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_TIME_SINCE       (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 JSONLOGIC_PRIVATE JsonLogic_Handle jsonlogic_extra_ZIP              (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+
+JSONLOGIC_PRIVATE JsonLogic_Handle certlogic_op_NOT    (void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
+JSONLOGIC_PRIVATE JsonLogic_Handle certlogic_op_TO_BOOL(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc);
 
 #define TRY(EXPR) { \
         const JsonLogic_Error json_logic_error__ = (EXPR); \
