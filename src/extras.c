@@ -150,12 +150,12 @@ JsonLogic_Error jsonlogic_parse_date_time_handle(JsonLogic_Handle handle, JsonLo
         errno_t errnum = gmtime_s(&time_info, &tv);
         if (errnum != 0) {
             JSONLOGIC_DEBUG("failed to convert timestamp %.*g to date-time string: %s", DBL_DIG, timestamp, strerror(errnum));
-            return JsonLogic_Error_IllegalArgument;
+            return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
         }
 #else
         if (gmtime_r(&tv, &time_info) == NULL) {
             JSONLOGIC_DEBUG("failed to convert timestamp %.*g to date-time string: %s", DBL_DIG, timestamp, strerror(errno));
-            return DOUBLE_ILLEGAL_ARGUMENT;
+            return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
         }
 #endif
 
@@ -174,7 +174,7 @@ JsonLogic_Error jsonlogic_parse_date_time_handle(JsonLogic_Handle handle, JsonLo
         const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
         return jsonlogic_parse_date_time_utf16_intern(string->str, string->size, date_time_ptr);
     } else {
-        return DOUBLE_ILLEGAL_ARGUMENT;
+        return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
     }
 }
 
