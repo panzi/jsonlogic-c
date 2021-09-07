@@ -68,7 +68,9 @@ LIB_DIRS=-L$(BUILD_DIR)/lib
 INC_DIRS=-Isrc
 EXAMPLES=$(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
          $(BUILD_DIR)/examples/jsonlogic$(BIN_EXT) \
-         $(BUILD_DIR)/examples/jsonlogic_extras$(BIN_EXT)
+         $(BUILD_DIR)/examples/jsonlogic_extras$(BIN_EXT) \
+         $(BUILD_DIR)/examples/certlogic$(BIN_EXT) \
+         $(BUILD_DIR)/examples/certlogic_extras$(BIN_EXT)
 EXAMPLES_SHARED=$(patsubst $(BUILD_DIR)/examples/%,$(BUILD_DIR)/examples-shared/%,$(EXAMPLES))
 LIB=$(BUILD_DIR)/lib/libjsonlogic.a
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)

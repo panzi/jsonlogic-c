@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        const char *progname = argc > 0 ? argv[0] : "jsonlogic_extras";
+        const char *progname = argc > 0 ? argv[0] : "certlogic_extras";
         fprintf(stderr, "usage: %s <logic> <data>\n", progname);
         return 1;
     }
@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    JsonLogic_Handle result = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
+    JsonLogic_Handle result = certlogic_apply_custom(logic, data, &CertLogic_Extras);
 
     jsonlogic_decref(logic);
     jsonlogic_decref(data);

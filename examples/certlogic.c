@@ -1,5 +1,4 @@
 #include "jsonlogic.h"
-#include "jsonlogic_extras.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,11 +7,11 @@
 
 int main(int argc, char *argv[]) {
     if (argc != 3) {
-        const char *progname = argc > 0 ? argv[0] : "jsonlogic_extras";
+        const char *progname = argc > 0 ? argv[0] : "certlogic";
         fprintf(stderr, "usage: %s <logic> <data>\n", progname);
         return 1;
     }
-    JsonLogic_LineInfo info = JSONLOGIC_LINEINFO_INIT;
+    JsonLogic_LineInfo info  = JSONLOGIC_LINEINFO_INIT;
     JsonLogic_Handle logic = jsonlogic_parse(argv[1], &info);
     JsonLogic_Error  error = jsonlogic_get_error(logic);
     if (error != JSONLOGIC_ERROR_SUCCESS) {
@@ -28,7 +27,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    JsonLogic_Handle result = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
+    JsonLogic_Handle result = certlogic_apply(logic, data);
 
     jsonlogic_decref(logic);
     jsonlogic_decref(data);
