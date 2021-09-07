@@ -160,6 +160,9 @@ JSONLOGIC_DECL_UTF16(JSONLOGIC_DATA)
 
 #define JSONLOGIC_STATIC_ARGC 8
 
+#define JSONLOGIC_IS_OP(OPSRT, OP) \
+    jsonlogic_utf16_equals((OPSRT)->str, (OPSRT)->size, (JSONLOGIC_##OP), (JSONLOGIC_##OP##_SIZE))
+
 #define JSONLOGIC_HASH_UNSET ((uint64_t)0)
 
 typedef struct JsonLogic_String {

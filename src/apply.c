@@ -1,9 +1,5 @@
 #include "jsonlogic_intern.h"
 
-
-#define JSONLOGIC_IS_OP(OPSRT, OP) \
-    jsonlogic_utf16_equals((OPSRT)->str, (OPSRT)->size, (JSONLOGIC_##OP), (JSONLOGIC_##OP##_SIZE))
-
 JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle logic,
         JsonLogic_Handle input,
