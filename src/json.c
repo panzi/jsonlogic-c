@@ -733,7 +733,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     goto loop_end;
                 }
 
-                JsonLogic_String *string = malloc(sizeof(JsonLogic_String) - sizeof(char16_t) + sizeof(char16_t) * utf16_size);
+                JsonLogic_String *string = JSONLOGIC_MALLOC_STRING(utf16_size);
                 if (string == NULL) {
                     JSONLOGIC_ERROR_MEMORY();
                     state = JsonLogic_ParserState_Error;

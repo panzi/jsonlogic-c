@@ -26,7 +26,7 @@ void jsonlogic_object_debug(const JsonLogic_Object *object) {
 #endif
 
 JsonLogic_Handle jsonlogic_empty_object() {
-    JsonLogic_Object *object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry));
+    JsonLogic_Object *object = JSONLOGIC_MALLOC_EMPTY_OBJECT();
     if (object == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -304,7 +304,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
     uint64_t hash = strkey->hash;
     if (buf->object == NULL) {
         size_t new_size = 4;
-        JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
+        JsonLogic_Object *new_object = JSONLOGIC_MALLOC_OBJECT(new_size);
         if (new_object == NULL) {
             jsonlogic_decref(stringkey);
             JSONLOGIC_ERROR_MEMORY();
@@ -371,7 +371,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         } while (index != start_index);
 
         size_t new_size = size * 2;
-        JsonLogic_Object *new_object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry) + sizeof(JsonLogic_Object_Entry) * new_size);
+        JsonLogic_Object *new_object = JSONLOGIC_MALLOC_OBJECT(new_size);
         if (new_object == NULL) {
             jsonlogic_decref(stringkey);
             JSONLOGIC_ERROR_MEMORY();
@@ -458,7 +458,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
 JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf) {
     JsonLogic_Object *object = buf->object;
     if (object == NULL) {
-        object = malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry));
+        object = JSONLOGIC_MALLOC_EMPTY_OBJECT();
         if (object == NULL) {
             JSONLOGIC_ERROR_MEMORY();
         } else {

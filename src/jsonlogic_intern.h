@@ -6,10 +6,43 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <errno.h>
 
 #define JsonLogic_PtrMask  (~(uint64_t)0xffff000000000000)
 #define JsonLogic_TypeMask  ((uint64_t)0xffff000000000000)
 #define JsonLogic_MaxNumber ((uint64_t)0xfff8000000000000)
+
+#define JSONLOGIC_MALLOC(HEAD_SIZE, ITEM_SIZE, ITEM_COUNT) \
+    ((ITEM_COUNT) >= (SIZE_MAX - (HEAD_SIZE)) / (ITEM_SIZE) ? (errno = ENOMEM, NULL) : \
+    malloc((HEAD_SIZE) + (ITEM_SIZE) * (ITEM_COUNT)))
+
+#define JSONLOGIC_REALLOC(PTR, HEAD_SIZE, ITEM_SIZE, ITEM_COUNT) \
+    ((ITEM_COUNT) >= (SIZE_MAX - (HEAD_SIZE)) / (ITEM_SIZE) ? (errno = ENOMEM, NULL) : \
+    realloc((PTR), (HEAD_SIZE) + (ITEM_SIZE) * (ITEM_COUNT)))
+
+#define JSONLOGIC_MALLOC_OBJECT(ITEM_COUNT) \
+    (JsonLogic_Object*)JSONLOGIC_MALLOC(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry), sizeof(JsonLogic_Object_Entry), (ITEM_COUNT))
+
+#define JSONLOGIC_MALLOC_EMPTY_OBJECT() \
+    (JsonLogic_Object*)malloc(sizeof(JsonLogic_Object) - sizeof(JsonLogic_Object_Entry))
+
+#define JSONLOGIC_MALLOC_ARRAY(ITEM_COUNT) \
+    (JsonLogic_Array*)JSONLOGIC_MALLOC(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle), sizeof(JsonLogic_Handle), (ITEM_COUNT))
+
+#define JSONLOGIC_REALLOC_ARRAY(ARRAY, ITEM_COUNT) \
+    (JsonLogic_Array*)JSONLOGIC_REALLOC((ARRAY), sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle), sizeof(JsonLogic_Handle), (ITEM_COUNT))
+
+#define JSONLOGIC_MALLOC_EMPTY_ARRAY() \
+    (JsonLogic_Array*)malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle))
+
+#define JSONLOGIC_MALLOC_STRING(SIZE) \
+    (JsonLogic_String*)JSONLOGIC_MALLOC(sizeof(JsonLogic_String) - sizeof(char16_t), sizeof(char16_t), (SIZE))
+
+#define JSONLOGIC_REALLOC_STRING(STRING, SIZE) \
+    (JsonLogic_String*)JSONLOGIC_REALLOC((STRING), sizeof(JsonLogic_String) - sizeof(char16_t), sizeof(char16_t), (SIZE))
+
+#define JSONLOGIC_MALLOC_EMPTY_STRING() \
+    (JsonLogic_String*)malloc(sizeof(JsonLogic_String) - sizeof(char16_t))
 
 #if defined(NDEBUG)
     #define JSONLOGIC_DEBUG(...)

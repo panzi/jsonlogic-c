@@ -8,7 +8,7 @@
 JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array);
 
 JsonLogic_Handle jsonlogic_empty_array() {
-    JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
+    JsonLogic_Array *array = JSONLOGIC_MALLOC_EMPTY_ARRAY();
     if (array == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -21,7 +21,7 @@ JsonLogic_Handle jsonlogic_empty_array() {
 }
 
 JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
-    JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * size);
+    JsonLogic_Array *array = JSONLOGIC_MALLOC_ARRAY(size);
     if (array == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return NULL;
@@ -38,7 +38,7 @@ JsonLogic_Array *jsonlogic_array_with_capacity(size_t size) {
 }
 
 JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
-    JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * count);
+    JsonLogic_Array *array = JSONLOGIC_MALLOC_ARRAY(count);
     if (array == NULL) {
         JSONLOGIC_ERROR_MEMORY();
         return JsonLogic_Error_OutOfMemory;
@@ -123,7 +123,7 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
             array->items[index] = JsonLogic_Null;
         }
 
-        JsonLogic_Array *new_array = realloc(array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * size);
+        JsonLogic_Array *new_array = JSONLOGIC_REALLOC_ARRAY(array, size);
         if (new_array == NULL) {
             JSONLOGIC_DEBUG("%s", "shrinking realloc() failed");
         } else {
@@ -139,7 +139,7 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
 JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Handle handle) {
     if (buf->capacity == 0 || buf->capacity == buf->array->size) {
         size_t new_capacity = buf->capacity + 1024;
-        JsonLogic_Array *new_array = realloc(buf->array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * new_capacity);
+        JsonLogic_Array *new_array = JSONLOGIC_REALLOC_ARRAY(buf->array, new_capacity);
         if (new_array == NULL) {
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
@@ -159,7 +159,7 @@ JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Han
 JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *buf) {
     JsonLogic_Array *array = buf->array;
     if (array == NULL) {
-        array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle));
+        array = JSONLOGIC_MALLOC_EMPTY_ARRAY();
         if (array == NULL) {
             JSONLOGIC_ERROR_MEMORY();
         } else {
@@ -168,7 +168,7 @@ JsonLogic_Array *jsonlogic_arraybuf_take(JsonLogic_ArrayBuf *buf) {
         }
     } else {
         // shrink to fit
-        array = realloc(array, sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + sizeof(JsonLogic_Handle) * array->size);
+        array = JSONLOGIC_REALLOC_ARRAY(array, array->size);
         if (array == NULL) {
             // should not happen
             JSONLOGIC_ERROR_MEMORY();
@@ -210,7 +210,7 @@ JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle) {
         {
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
             size_t size = string->size;
-            JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + size * sizeof(JsonLogic_Handle));
+            JsonLogic_Array *array = JSONLOGIC_MALLOC_ARRAY(size);
             if (array == NULL) {
                 JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Error_OutOfMemory;
@@ -232,7 +232,7 @@ JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle) {
         {
             const JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(handle);
             size_t size = object->used;
-            JsonLogic_Array *array = malloc(sizeof(JsonLogic_Array) - sizeof(JsonLogic_Handle) + size * sizeof(JsonLogic_Handle));
+            JsonLogic_Array *array = JSONLOGIC_MALLOC_ARRAY(size);
             if (array == NULL) {
                 JSONLOGIC_ERROR_MEMORY();
                 return JsonLogic_Error_OutOfMemory;
