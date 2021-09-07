@@ -65,11 +65,39 @@ JsonLogic_Handle jsonlogic_apply_custom(
 
     JsonLogic_String *opstr = JSONLOGIC_CAST_STRING(op);
 
-    if (JSONLOGIC_IS_OP(opstr, IF)
-#ifndef JSONLOGIC_COMPILE_CERTLOGIC
-        || JSONLOGIC_IS_OP(opstr, ALT_IF)
-#endif
-     ) {
+#ifdef JSONLOGIC_COMPILE_CERTLOGIC
+    if (JSONLOGIC_IS_OP(opstr, IF)) {
+        if (value_count == 0) {
+            return JsonLogic_Null;
+        }
+
+        JsonLogic_Handle value = jsonlogic_apply_custom(
+            values[0],
+            input,
+            operations);
+        bool condition = jsonlogic_to_bool(value);
+        jsonlogic_decref(value);
+        if (condition) {
+            if (value_count < 2) {
+                return JsonLogic_Null;
+            }
+
+            return jsonlogic_apply_custom(
+                values[1],
+                input,
+                operations);
+        } else {
+            if (value_count < 3) {
+                return JsonLogic_Null;
+            }
+
+            return jsonlogic_apply_custom(
+                values[2],
+                input,
+                operations);
+        }
+#else
+    if (JSONLOGIC_IS_OP(opstr, IF) || JSONLOGIC_IS_OP(opstr, ALT_IF)) {
         if (value_count == 0) {
             return JsonLogic_Null;
         }
@@ -96,6 +124,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
                 operations);
         }
         return JsonLogic_Null;
+#endif
     } else if (JSONLOGIC_IS_OP(opstr, AND)) {
         if (value_count == 0) {
             return JsonLogic_Null;
