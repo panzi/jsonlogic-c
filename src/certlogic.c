@@ -1,5 +1,7 @@
 #include "jsonlogic_intern.h"
 
+#include <stdlib.h>
+
 JsonLogic_Handle certlogic_apply(JsonLogic_Handle logic, JsonLogic_Handle input) {
     return certlogic_apply_custom(logic, input, &CertLogic_Builtins);
 }

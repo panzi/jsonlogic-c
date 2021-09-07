@@ -649,7 +649,15 @@ JsonLogic_Error jsonlogic_utf8buf_ensure(JsonLogic_Utf8Buf *buf, size_t want_fre
 
     if (has_free_size < want_free_size) {
         size_t add_size = want_free_size - has_free_size;
-        size_t new_size = buf->capacity + (add_size < JSONLOGIC_CHUNK_SIZE ? JSONLOGIC_CHUNK_SIZE : add_size);
+        if (add_size < JSONLOGIC_CHUNK_SIZE) {
+            add_size = JSONLOGIC_CHUNK_SIZE;
+        }
+        if (buf->capacity > SIZE_MAX - add_size) {
+            errno = ENOMEM;
+            JSONLOGIC_ERROR_MEMORY();
+            return JSONLOGIC_ERROR_OUT_OF_MEMORY;
+        }
+        size_t new_size = buf->capacity + add_size;
         char *new_string = realloc(buf->string, new_size);
         if (new_string == NULL) {
             JSONLOGIC_ERROR_MEMORY();

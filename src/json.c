@@ -540,6 +540,11 @@ static JsonLogic_ParseItem *jsonlogic_parsestack_push(JsonLogic_ParseStack *stac
             return NULL;
         }
         size_t new_capacity = stack->capacity + JSONLOGIC_PARSESTACK_CHUNK_SIZE;
+        if (new_capacity >= SIZE_MAX / sizeof(JsonLogic_ParseItem)) {
+            JSONLOGIC_ERROR_MEMORY();
+            errno = ENOMEM;
+            return NULL;
+        }
         JsonLogic_ParseItem *new_items = realloc(stack->items, sizeof(JsonLogic_ParseItem) * new_capacity);
         if (new_items == NULL) {
             JSONLOGIC_ERROR_MEMORY();
