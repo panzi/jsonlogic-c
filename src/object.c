@@ -81,6 +81,38 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
     return jsonlogic_object_into_handle(jsonlogic_objbuf_take(&buf));
 }
 
+JsonLogic_Handle jsonlogic_object_from(const JsonLogic_Object_Entry entries[], size_t size) {
+    JsonLogic_ObjBuf buf = JSONLOGIC_OBJBUF_INIT;
+
+    for (size_t index = 0; index < size; ++ index) {
+        JsonLogic_Object_Entry entry = entries[index];
+        JsonLogic_Error error = jsonlogic_objbuf_set(&buf, entry.key, entry.value);
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            jsonlogic_objbuf_free(&buf);
+            return (JsonLogic_Handle){ .intptr = error };
+        }
+    }
+
+    return jsonlogic_object_into_handle(jsonlogic_objbuf_take(&buf));
+}
+
+JsonLogic_Handle jsonlogic_object_from_utf16(const JsonLogic_Object_Utf16Entry entries[], size_t size) {
+    JsonLogic_ObjBuf buf = JSONLOGIC_OBJBUF_INIT;
+
+    for (size_t index = 0; index < size; ++ index) {
+        JsonLogic_Object_Utf16Entry entry = entries[index];
+        JsonLogic_Handle key = jsonlogic_string_from_utf16(entry.key);
+        JsonLogic_Error error = jsonlogic_objbuf_set(&buf, key, entry.value);
+        jsonlogic_decref(key);
+        if (error != JSONLOGIC_ERROR_SUCCESS) {
+            jsonlogic_objbuf_free(&buf);
+            return (JsonLogic_Handle){ .intptr = error };
+        }
+    }
+
+    return jsonlogic_object_into_handle(jsonlogic_objbuf_take(&buf));
+}
+
 JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, u"length")
 
 JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16_t *key, size_t size) {
@@ -310,9 +342,9 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        new_object->refcount    = 1;
-        new_object->used        = 1;
-        new_object->size        = new_size;
+        new_object->refcount = 1;
+        new_object->used     = 1;
+        new_object->size     = new_size;
 
         for (size_t index = 0; index < new_size; ++ index) {
             new_object->entries[index] = (JsonLogic_Object_Entry) {

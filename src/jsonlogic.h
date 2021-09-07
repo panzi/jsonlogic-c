@@ -65,27 +65,28 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_string();
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_array();
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_object();
 
+typedef struct JsonLogic_Object_Utf16Entry {
+    const char16_t *key;
+    JsonLogic_Handle value;
+} JsonLogic_Object_Utf16Entry;
+
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_array_from (const JsonLogic_Handle items[], size_t size);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from(const JsonLogic_Object_Entry entries[], size_t size);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_utf16(const JsonLogic_Object_Utf16Entry entries[], size_t size);
+
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_array_from_vararg (size_t count, ...);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...);
 
 #define jsonlogic_count_values(...) (sizeof((JsonLogic_Handle[]){__VA_ARGS__} / sizeof(JsonLogic_Handle)))
-#define jsonlogic_array_build(...) jsonlogic_array_from_vararg(jsonlogic_count_values(__VA_ARGS__), __VA_ARGS__)
+#define jsonlogic_array_build(...) jsonlogic_array_from((JsonLogic_Handle[]){ __VA_ARGS__ }, jsonlogic_count_values(__VA_ARGS__))
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle);
 
 
 #define jsonlogic_count_entries(...) (sizeof((JsonLogic_Object_Entry[]){__VA_ARGS__}) / sizeof(JsonLogic_Object_Entry))
-/**
- * @code
- * JsonLogic_Handle object = jsonlogic_object_from(
- *      jsonlogic_entry_latin1("foo", jsonlogic_number_from(1.2)),
- *      jsonlogic_entry_latin1("bar", jsonlogic_string_from_latin1("blubb")),
- *      jsonlogic_entry(key_handle, value_handle)
- * );
- * @endcode
- * 
- */
-#define jsonlogic_object_from(...) jsonlogic_object_from_vararg(jsonlogic_count_entries(__VA_ARGS__), __VA_ARGS__)
-#define jsonlogic_entry(KEY, VALUE) (JsonLogic_Object_Entry){ .key = (KEY), .value = (VALUE) }
+#define jsonlogic_object_build(...) jsonlogic_object_from((JsonLogic_Object_Entry[]){ __VA_ARGS__ }, jsonlogic_count_entries(__VA_ARGS__))
+
+#define jsonlogic_count_entries_utf16(...) (sizeof((JsonLogic_Object_Utf16Entry[]){__VA_ARGS__}) / sizeof(JsonLogic_Object_Utf16Entry))
+#define jsonlogic_object_build_utf16(...) jsonlogic_object_from_utf16((JsonLogic_Object_Utf16Entry[]){ __VA_ARGS__ }, jsonlogic_count_entries_utf16(__VA_ARGS__))
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_to_string (JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_to_number (JsonLogic_Handle handle);

@@ -67,6 +67,31 @@ JsonLogic_Handle jsonlogic_array_from_vararg(size_t count, ...) {
     return jsonlogic_array_into_handle(array);
 }
 
+JsonLogic_Handle jsonlogic_array_from(const JsonLogic_Handle items[], size_t size) {
+    JsonLogic_Array *array = JSONLOGIC_MALLOC_ARRAY(size);
+    if (array == NULL) {
+        JSONLOGIC_ERROR_MEMORY();
+        return JsonLogic_Error_OutOfMemory;
+    }
+
+    array->refcount = 1;
+    array->size     = size;
+
+    for (size_t index = 0; index < size; ++ index) {
+        JsonLogic_Handle item = items[index];
+        if (JSONLOGIC_IS_ERROR(item)) {
+            for (size_t free_index = 0; free_index < index; ++ free_index) {
+                jsonlogic_decref(array->items[free_index]);
+            }
+            free(array);
+            return item;
+        }
+        array->items[index] = jsonlogic_incref(item);
+    }
+
+    return jsonlogic_array_into_handle(array);
+}
+
 void jsonlogic_array_free(JsonLogic_Array *array) {
     if (array != NULL) {
         for (size_t index = 0; index < array->size; ++ index) {

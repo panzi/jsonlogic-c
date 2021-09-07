@@ -272,15 +272,15 @@ JsonLogic_Handle jsonlogic_apply_custom(
         JsonLogic_Handle str_current     = jsonlogic_string_from_utf16_sized(JSONLOGIC_CURRENT, JSONLOGIC_CURRENT_SIZE);
 #ifdef JSONLOGIC_COMPILE_CERTLOGIC
         JsonLogic_Handle str_data        = jsonlogic_string_from_utf16_sized(JSONLOGIC_DATA, JSONLOGIC_DATA_SIZE);
-        JsonLogic_Handle reduce_context  = jsonlogic_object_from(
-            jsonlogic_entry(str_accumulator, JsonLogic_Null),
-            jsonlogic_entry(str_current,     JsonLogic_Null),
-            jsonlogic_entry(str_data,        input)
+        JsonLogic_Handle reduce_context  = jsonlogic_object_build(
+            { .key = str_accumulator, .value = JsonLogic_Null },
+            { .key = str_current,     .value = JsonLogic_Null },
+            { .key = str_data,        .value = input          },
         );
 #else
-        JsonLogic_Handle reduce_context  = jsonlogic_object_from(
-            jsonlogic_entry(str_accumulator, JsonLogic_Null),
-            jsonlogic_entry(str_current,     JsonLogic_Null)
+        JsonLogic_Handle reduce_context  = jsonlogic_object_build(
+            { .key = str_accumulator, .value = JsonLogic_Null },
+            { .key = str_current,     .value = JsonLogic_Null },
         );
 #endif
         jsonlogic_decref(str_accumulator);
