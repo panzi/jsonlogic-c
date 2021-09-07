@@ -146,6 +146,7 @@ typedef struct JsonLogic_Object {
     size_t refcount;
     size_t size;
     size_t used;
+    size_t first_index;
     JsonLogic_Object_Entry entries[1];
 } JsonLogic_Object;
 

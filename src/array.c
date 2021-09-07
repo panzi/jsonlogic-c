@@ -238,7 +238,7 @@ JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle) {
                 return JsonLogic_Error_OutOfMemory;
             }
             size_t array_index = 0;
-            for (size_t obj_index = 0; obj_index < object->size; ++ obj_index) {
+            for (size_t obj_index = object->first_index; obj_index < object->size; ++ obj_index) {
                 const JsonLogic_Object_Entry *entry = &object->entries[obj_index];
                 if (!JSONLOGIC_IS_NULL(entry->key)) {
                     array->items[array_index ++] = jsonlogic_incref(entry->key);

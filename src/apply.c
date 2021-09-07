@@ -39,7 +39,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
     }
 
     const JsonLogic_Object_Entry *entry = NULL;
-    for (size_t index = 0; index < object->size; ++ index) {
+    for (size_t index = object->first_index; index < object->size; ++ index) {
         if (!JSONLOGIC_IS_NULL(object->entries[index].key)) {
             entry = &object->entries[index];
             break;

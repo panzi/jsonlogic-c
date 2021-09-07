@@ -55,7 +55,7 @@ bool jsonlogic_deep_strict_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
                 return false;
             }
 
-            for (size_t aindex = 0; aindex < aobject->size; ++ aindex) {
+            for (size_t aindex = aobject->first_index; aindex < aobject->size; ++ aindex) {
                 const JsonLogic_Object_Entry *aentry = &aobject->entries[aindex];
 
                 if (!JSONLOGIC_IS_NULL(aentry->key)) {

@@ -32,16 +32,17 @@ JsonLogic_Handle jsonlogic_empty_object() {
         return JsonLogic_Error_OutOfMemory;
     }
 
-    object->refcount = 1;
-    object->used     = 0;
-    object->size     = 0;
+    object->refcount    = 1;
+    object->used        = 0;
+    object->size        = 0;
+    object->first_index = 0;
 
     return jsonlogic_object_into_handle(object);
 }
 
 void jsonlogic_object_free(JsonLogic_Object *object) {
     if (object != NULL) {
-        for (size_t index = 0; index < object->size; ++ index) {
+        for (size_t index = object->first_index; index < object->size; ++ index) {
             JsonLogic_Object_Entry *entry = &object->entries[index];
             jsonlogic_decref(entry->key);
             jsonlogic_decref(entry->value);
@@ -309,9 +310,9 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        new_object->refcount = 1;
-        new_object->used     = 1;
-        new_object->size     = new_size;
+        new_object->refcount    = 1;
+        new_object->used        = 1;
+        new_object->size        = new_size;
 
         for (size_t index = 0; index < new_size; ++ index) {
             new_object->entries[index] = (JsonLogic_Object_Entry) {
@@ -325,6 +326,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             .key   = stringkey,
             .value = jsonlogic_incref(value),
         };
+        new_object->first_index = index;
 
         buf->object = new_object;
     } else {
@@ -345,6 +347,9 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                     .key   = stringkey,
                     .value = jsonlogic_incref(value),
                 };
+                if (index < object->first_index) {
+                    object->first_index = index;
+                }
 
                 ++ object->used;
                 return JSONLOGIC_ERROR_SUCCESS;
@@ -372,9 +377,10 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             JSONLOGIC_ERROR_MEMORY();
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
-        new_object->refcount = 1;
-        new_object->used     = object->used;
-        new_object->size     = new_size;
+        new_object->refcount    = 1;
+        new_object->used        = object->used;
+        new_object->size        = new_size;
+        new_object->first_index = new_size;
 
         for (size_t index = 0; index < new_size; ++ index) {
             new_object->entries[index] = (JsonLogic_Object_Entry) {
@@ -384,7 +390,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         }
 
         // move old entries to new hash-table
-        for (size_t index = 0; index < size; ++ index) {
+        for (size_t index = object->first_index; index < size; ++ index) {
             JsonLogic_Object_Entry *entry = &object->entries[index];
 
             if (!JSONLOGIC_IS_NULL(entry->key)) {
@@ -396,6 +402,9 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                     JsonLogic_Object_Entry *new_entry = &new_object->entries[new_index];
                     if (JSONLOGIC_IS_NULL(new_entry->key)) {
                         new_object->entries[new_index] = *entry;
+                        if (new_index < new_object->first_index) {
+                            new_object->first_index = new_index;
+                        }
                         break;
                     }
 
@@ -434,6 +443,9 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             index = (index + 1) % new_size;
             assert(index != start_index);
         }
+        if (index < new_object->first_index) {
+            new_object->first_index = index;
+        }
 
         free(object);
         buf->object = new_object;
@@ -450,9 +462,10 @@ JsonLogic_Object *jsonlogic_objbuf_take(JsonLogic_ObjBuf *buf) {
         if (object == NULL) {
             JSONLOGIC_ERROR_MEMORY();
         } else {
-            object->refcount = 1;
-            object->used     = 0;
-            object->size     = 0;
+            object->refcount    = 1;
+            object->used        = 0;
+            object->size        = 0;
+            object->first_index = 0;
         }
     }
     buf->object = NULL;
