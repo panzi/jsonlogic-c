@@ -264,7 +264,7 @@ JsonLogic_Handle jsonlogic_not_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
     return (JsonLogic_Handle){ .intptr = (~value & 1) | JsonLogic_Type_Boolean };
 }
 
-int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b) {
+int jsonlogic_compare(JsonLogic_Handle a, JsonLogic_Handle b) {
     if (JSONLOGIC_IS_NUMBER(a)) {
         double bnum = jsonlogic_to_double(b);
         return a.number < bnum ? -1 : a.number > bnum ? 1 : 0;

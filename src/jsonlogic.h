@@ -132,7 +132,7 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_mod(JsonLogic_Handle a, JsonLogic_Ha
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_negative(JsonLogic_Handle value);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_not(JsonLogic_Handle value);
 
-JSONLOGIC_EXPORT int jsonlogic_comapre(JsonLogic_Handle a, JsonLogic_Handle b);
+JSONLOGIC_EXPORT int jsonlogic_compare(JsonLogic_Handle a, JsonLogic_Handle b);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_lt(JsonLogic_Handle a, JsonLogic_Handle b);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_gt(JsonLogic_Handle a, JsonLogic_Handle b);
