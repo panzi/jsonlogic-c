@@ -200,7 +200,7 @@ typedef struct JsonLogic_Object {
 extern "C" {
 #endif
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
     #define JSONLOGIC_LOCALE_T _locale_t
     #define JSONLOGIC_STRTOD_L _strtod_l
     #define JSONLOGIC_CREATE_C_LOCALE() _create_locale(LC_ALL, "C")

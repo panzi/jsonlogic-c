@@ -14,7 +14,7 @@
 #include <assert.h>
 #include <limits.h>
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
     #include <process.h>
 #else
     #include <sys/types.h>
@@ -109,7 +109,7 @@ cleanup:
     jsonlogic_decref(logic);
 }
 
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(JSONLOGIC_WINDOWS)
 void test_logging(TestContext *test_context) {
     struct stat stbuf;
     JsonLogic_Handle logic  = JsonLogic_Null;
@@ -120,7 +120,7 @@ void test_logging(TestContext *test_context) {
     char *actual = NULL;
     bool need_unlink = false;
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
     int pid = _getpid();
 #else
     pid_t pid = getpid();
@@ -802,7 +802,7 @@ cleanup:
 const TestCase TEST_CASES[] = {
     TEST_DECL("Unicode and JSON parsing", parsing),
     TEST_DECL("Bad Operator", bad_operator),
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(JSONLOGIC_WINDOWS)
     TEST_DECL("Logging", logging),
 #endif
     TEST_DECL("Edge Cases", edge_cases),

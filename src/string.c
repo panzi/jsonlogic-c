@@ -339,9 +339,30 @@ JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double val
         }
     }
 
+#if defined(JSONLOGIC_WINDOWS)
+    if (JsonLogic_C_Locale == NULL) {
+        JsonLogic_C_Locale = JSONLOGIC_CREATE_C_LOCALE();
+    }
+    int count = _snwprintf_l(NULL, 0, u"%.*g", JsonLogic_C_Locale, DBL_DIG, value);
+    if (count < 0) {
+        JSONLOGIC_DEBUG("_snwprintf_l(NULL, 0, u\"%%.%ug\", JsonLogic_C_Locale, %.*g) error: %s",
+            DBL_DIG, DBL_DIG, value, strerror(errno));
+        return JSONLOGIC_ERROR_INTERNAL_ERROR;
+    } else if (count > 0) {
+        // _snwprintf_l() does not write the terminating NULL character if maxlen <= len
+        size_t need_free = (size_t)count;
+        TRY(jsonlogic_strbuf_ensure(buf, need_free));
+        _snwprintf_l(buf->string->str + buf->string->size, need_free, u"%.*g", JsonLogic_C_Locale, DBL_DIG, value);
+        buf->string->size += (size_t)count;
+    }
+
+    return JSONLOGIC_ERROR_SUCCESS;
+#else
     char latin1[128];
     int count = snprintf(latin1, sizeof(buf), "%.*g", DBL_DIG, value);
     if (count < 0) {
+        JSONLOGIC_DEBUG("snprintf(buf, %" PRIuPTR ", \"%%.%ug\", %.*g) error: %s",
+            sizeof(buf), DBL_DIG, DBL_DIG, value, strerror(errno));
         return JSONLOGIC_ERROR_INTERNAL_ERROR;
     } else if (count >= sizeof(latin1)) {
         size_t size = (size_t)count + 1;
@@ -356,6 +377,7 @@ JsonLogic_Error jsonlogic_strbuf_append_double(JsonLogic_StrBuf *buf, double val
         return result;
     }
     return jsonlogic_strbuf_append_latin1(buf, latin1);
+#endif
 }
 
 JsonLogic_Error jsonlogic_strbuf_append(JsonLogic_StrBuf *buf, JsonLogic_Handle handle) {

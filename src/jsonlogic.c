@@ -13,11 +13,7 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_DATA,        u"data")
 
 const JsonLogic_Handle JsonLogic_Null = { .intptr = JsonLogic_Type_Null };
 
-#if defined(_WIN32) || defined(_WIN64)
-_locale_t JsonLogic_C_Locale = NULL;
-#else
-locale_t JsonLogic_C_Locale = NULL;
-#endif
+JSONLOGIC_LOCALE_T JsonLogic_C_Locale = NULL;
 
 JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle) {
     static_assert(sizeof(void*) <= 8, "This library only works on platforms where pointers use <= 48 bits (e.g. x86_64).");

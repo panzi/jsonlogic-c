@@ -15,9 +15,7 @@
 #include <stdarg.h>
 #include <float.h>
 
-#if defined(_WIN32) || defined(_WIN64)
-    // #include <windows.h>
-#else
+#if !defined(JSONLOGIC_WINDOWS)
     #include <sys/time.h>
 #endif
 
@@ -146,7 +144,7 @@ JsonLogic_Error jsonlogic_parse_date_time_handle(JsonLogic_Handle handle, JsonLo
             msec = 1000 + msec;
         }
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
         errno_t errnum = gmtime_s(&time_info, &tv);
         if (errnum != 0) {
             JSONLOGIC_DEBUG("failed to convert timestamp %.*g to date-time string: %s", DBL_DIG, timestamp, strerror(errnum));
@@ -192,7 +190,7 @@ double jsonlogic_combine_date_time(const JsonLogic_DateTime *date_time) {
     time_info.tm_sec   = date_time->second;
     time_info.tm_isdst = 0;
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
     time_t time = _mkgmtime(&time_info);
 #else
     time_t time = timegm(&time_info);
@@ -335,7 +333,7 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
         msec = 1000 + msec;
     }
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
     errno_t errnum = gmtime_s(&time_info, &tv);
     if (errnum != 0) {
         JSONLOGIC_DEBUG("failed to convert timestamp %.*g to date-time string: %s", DBL_DIG, timestamp, strerror(errnum));
@@ -542,7 +540,7 @@ JsonLogic_Handle jsonlogic_extra_HOURS(void *context, JsonLogic_Handle data, Jso
 }
 
 double jsonlogic_now() {
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(JSONLOGIC_WINDOWS)
     // TODO: find out how to get milliseconds precision time on Windows
     time_t tv = time(NULL);
 

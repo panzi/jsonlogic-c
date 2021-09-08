@@ -50,6 +50,10 @@ typedef uint64_t JsonLogic_Type;
 #define JSONLOGIC_ERROR_SYNTAX_ERROR       (JsonLogic_Type_Error | 7)
 #define JSONLOGIC_ERROR_UNICODE_ERROR      (JsonLogic_Type_Error | 8)
 
+#if defined(_WIN32) || defined(_WIN64)
+    #define JSONLOGIC_WINDOWS
+#endif
+
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
     #ifdef JSONLOGIC_STATIC
         #define JSONLOGIC_EXPORT
