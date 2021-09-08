@@ -2,11 +2,15 @@
 #define JSONLOGIC_INTERN_H
 #pragma once
 
+// for strtod_l and locale_t
+#define _GNU_SOURCE 1
+
 #include "jsonlogic_defs.h"
 
 #include <stdio.h>
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 
 #define JsonLogic_PtrMask  (~(uint64_t)0xffff000000000000)
 #define JsonLogic_TypeMask  ((uint64_t)0xffff000000000000)
@@ -195,6 +199,17 @@ typedef struct JsonLogic_Object {
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#if defined(_WIN32) || defined(_WIN64)
+    #define JSONLOGIC_LOCALE_T _locale_t
+    #define JSONLOGIC_STRTOD_L _strtod_l
+    #define JSONLOGIC_CREATE_C_LOCALE() _create_locale(LC_ALL, "C")
+#else
+    #define JSONLOGIC_LOCALE_T locale_t
+    #define JSONLOGIC_STRTOD_L strtod_l
+    #define JSONLOGIC_CREATE_C_LOCALE() newlocale(LC_ALL_MASK, "C", NULL)
+#endif
+JSONLOGIC_PRIVATE extern JSONLOGIC_LOCALE_T JsonLogic_C_Locale;
 
 JSONLOGIC_PRIVATE JsonLogic_Array *jsonlogic_array_with_capacity(size_t size);
 

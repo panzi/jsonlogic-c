@@ -81,6 +81,9 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 if (jsonlogic_utf16_equals(str, size, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE)) {
                     return (JsonLogic_Handle){ .number = -INFINITY };
                 }
+                if (JsonLogic_C_Locale == NULL) {
+                    JsonLogic_C_Locale = JSONLOGIC_CREATE_C_LOCALE();
+                }
 
                 char *endptr = NULL;
                 char buf[128];
@@ -93,7 +96,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                         buf[index] = ch;
                     }
                     buf[size] = 0;
-                    double value = strtod(buf, &endptr);
+                    double value = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
                     if (*endptr) {
                         return JsonLogic_NaN;
                     }
@@ -113,7 +116,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                         buf[index] = ch;
                     }
                     buf[size] = 0;
-                    double value = strtod(buf, &endptr);
+                    double value = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
                     free(buf);
                     if (*endptr) {
                         return JsonLogic_NaN;

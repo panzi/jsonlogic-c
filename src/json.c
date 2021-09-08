@@ -820,6 +820,9 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     error = JSONLOGIC_ERROR_SYNTAX_ERROR;
                     goto loop_end;
                 }
+                if (JsonLogic_C_Locale == NULL) {
+                    JsonLogic_C_Locale = JSONLOGIC_CREATE_C_LOCALE();
+                }
 
                 char *endptr = NULL;
                 char buf[128];
@@ -836,13 +839,13 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     }
                     memcpy(buf, str + start_index, num_size);
                     buf[num_size] = 0;
-                    number = strtod(buf, &endptr);
+                    number = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
                     clib_index += endptr - buf;
                     free(buf);
                 } else {
                     memcpy(buf, str + start_index, num_size);
                     buf[num_size] = 0;
-                    number = strtod(buf, &endptr);
+                    number = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
                     clib_index += endptr - buf;
                 }
                 if (clib_index != index) {
