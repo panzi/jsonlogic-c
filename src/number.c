@@ -139,7 +139,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 return (JsonLogic_Handle){ .number = 0.0 };
 
             case JsonLogic_Type_Boolean:
-                return (JsonLogic_Handle){ .number = JSONLOGIC_IS_TRUE(handle) ? 1.0 : 0.0 };
+                return (JsonLogic_Handle){ .number = handle.intptr & 1 };
 
             case JsonLogic_Type_Error:
                 return handle;
