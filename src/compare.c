@@ -200,7 +200,7 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
                 case JsonLogic_Type_Object:
                 {
                     JsonLogic_Handle bstr   = jsonlogic_to_string(b);
-                    JsonLogic_Handle result = jsonlogic_equal(a, bstr);
+                    JsonLogic_Handle result = jsonlogic_strict_equal(a, bstr);
                     jsonlogic_decref(bstr);
                     return result;
                 }
@@ -232,7 +232,7 @@ JsonLogic_Handle jsonlogic_equal(JsonLogic_Handle a, JsonLogic_Handle b) {
                 case JsonLogic_Type_String:
                 {
                     JsonLogic_Handle astr   = jsonlogic_to_string(a);
-                    JsonLogic_Handle result = jsonlogic_equal(astr, b);
+                    JsonLogic_Handle result = jsonlogic_strict_equal(astr, b);
                     jsonlogic_decref(astr);
                     return result;
                 }
