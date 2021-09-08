@@ -54,6 +54,10 @@ typedef uint64_t JsonLogic_Type;
     #define JSONLOGIC_WINDOWS
 #endif
 
+#if defined(__APPLE__) && defined(__MACH__)
+    #define JSONLOGIC_MAC_OSX
+#endif
+
 #if defined(_WIN32) || defined(_WIN64) || defined(__CYGWIN__)
     #ifdef JSONLOGIC_STATIC
         #define JSONLOGIC_EXPORT

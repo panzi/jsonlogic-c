@@ -1086,7 +1086,7 @@ char *jsonlogic_stringify_utf8(JsonLogic_Handle value) {
 
     char *result = jsonlogic_utf8buf_take(&buf);
 
-    // in error case the buffer is not freed
+    // in error case the buffer is not freed by jsonlogic_utf8buf_take()
     jsonlogic_utf8buf_free(&buf);
 
     return result;
@@ -1095,7 +1095,8 @@ char *jsonlogic_stringify_utf8(JsonLogic_Handle value) {
 // This function is only called by jsonlogic_stringify_file_intern() and that
 // checks isfinite() already before, so we don't need it here:
 static inline JsonLogic_Error jsonlogic_print_double(FILE *file, double value) {
-#if defined(JSONLOGIC_WINDOWS)
+#if defined(JSONLOGIC_WINDOWS) && 0
+    // XXX: Disabled because this crashes (at least under WINE)!?
     if (JsonLogic_C_Locale == NULL) {
         JsonLogic_C_Locale = JSONLOGIC_CREATE_C_LOCALE();
     }
