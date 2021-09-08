@@ -728,6 +728,25 @@ JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double v
         }
     }
 
+#if defined(JSONLOGIC_WINDOWS)
+    if (JsonLogic_C_Locale == NULL) {
+        JsonLogic_C_Locale = JSONLOGIC_CREATE_C_LOCALE();
+    }
+    int count = _snprintf_l(NULL, 0, "%.*g", JsonLogic_C_Locale, DBL_DIG, value);
+    if (count < 0) {
+        JSONLOGIC_DEBUG("_snprintf_l(NULL, 0, \"%%.%ug\", JsonLogic_C_Locale, %.*g) error: %s",
+            DBL_DIG, DBL_DIG, value, strerror(errno));
+        return JSONLOGIC_ERROR_INTERNAL_ERROR;
+    } else if (count > 0) {
+        // _snwprintf_l() does not write the terminating NULL character if maxlen <= len
+        size_t need_free = (size_t)count;
+        TRY(jsonlogic_utf8buf_ensure(buf, need_free));
+        _snprintf_l(buf->string + buf->used, need_free, "%.*g", JsonLogic_C_Locale, DBL_DIG, value);
+        buf->used += (size_t)count;
+    }
+
+    return JSONLOGIC_ERROR_SUCCESS;
+#else
     size_t has_free = buf->capacity - buf->used;
     int count = snprintf(buf->string + buf->used, has_free, "%.*g", DBL_DIG, value);
     if (count < 0) {
@@ -743,6 +762,7 @@ JsonLogic_Error jsonlogic_utf8buf_append_double(JsonLogic_Utf8Buf *buf, double v
     buf->used += (size_t)count;
 
     return JSONLOGIC_ERROR_SUCCESS;
+#endif
 }
 
 char *jsonlogic_utf8buf_take(JsonLogic_Utf8Buf *buf) {
