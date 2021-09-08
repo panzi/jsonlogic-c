@@ -22,6 +22,15 @@ test suit (included in the tests of this library).
 Limitations
 -----------
 
+Under some configurations locale dependant functions are used for printing
+numbers, and as such there might be a `,` or anything else instead of the
+expected `.` in decimal numbers if you set `LC_NUMERIC` to an acording
+locale. To ensure valid JSON output `LC_NUMERIC` needs to best be `C`. If
+you don't use `setlocale()` in your program this shouldn't be a problem.
+
+(For parsing there are enough locale independant functions available on the
+various operating systems for that not to be a problem, though.)
+
 This library's tagged pointer implementation uses the payload bits of 64 bit
 floating-point NaNs, i.e. only strings, arrays, and objects are heap allocated,
 numbers, booleans, null, and error codes are directly in the tagged pointer.
