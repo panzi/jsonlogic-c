@@ -12,7 +12,7 @@ curl -L https://jsonlogic.com/tests.json -o tests.json
 if [[ -e certlogic ]]; then
     rm certlogic/*.json || true
 else
-    mkdir certlogic
+    mkdir -p certlogic
 fi
 
 curl -L https://github.com/ehn-dcc-development/dgc-business-rules/archive/refs/heads/main.zip -o dgc-business-rules.zip
