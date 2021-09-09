@@ -193,8 +193,8 @@ void test_edge_cases(TestContext *test_context) {
     TEST_ASSERT(jsonlogic_is_string(fallback));
 
     TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(JsonLogic_Null, JsonLogic_Null), JsonLogic_Null), "Called with null");
-    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, jsonlogic_number_from(0)), jsonlogic_number_from(0)), "Var when date is 'falsy'");
-    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, JsonLogic_Null), JsonLogic_Null), "Var when date is null");
+    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, jsonlogic_number_from(0)), jsonlogic_number_from(0)), "Var when data is 'falsy'");
+    TEST_ASSERT_MSG(jsonlogic_deep_strict_equal(jsonlogic_apply(logic, JsonLogic_Null), JsonLogic_Null), "Var when data is null");
 
     jsonlogic_decref(logic);
     logic = jsonlogic_parse("{\"var\":[\"a\",\"fallback\"]}", NULL);
