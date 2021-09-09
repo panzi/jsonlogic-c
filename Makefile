@@ -66,7 +66,8 @@ BUILD_DIR := $(BUILD_DIR)/$(TARGET)
 
 LIB_DIRS=-L$(BUILD_DIR)/lib
 INC_DIRS=-Isrc
-EXAMPLES=$(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
+EXAMPLES=$(BUILD_DIR)/examples/benchmark$(BIN_EXT) \
+         $(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
          $(BUILD_DIR)/examples/jsonlogic$(BIN_EXT) \
          $(BUILD_DIR)/examples/jsonlogic_extras$(BIN_EXT) \
          $(BUILD_DIR)/examples/certlogic$(BIN_EXT) \
