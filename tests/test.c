@@ -1052,7 +1052,7 @@ int main(int argc, char *argv[]) {
     iter = jsonlogic_iter(valid_examples);
 
     putchar('\n');
-    puts("Test European Health Certificate rules with valid data");
+    puts("Test health data rules with valid data");
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
         JsonLogic_Error error = jsonlogic_get_error(test);
@@ -1117,7 +1117,7 @@ int main(int argc, char *argv[]) {
     iter = jsonlogic_iter(invalid_examples);
 
     putchar('\n');
-    puts("Test European Health Certificate rules with invalid data");
+    puts("Test health data rules with invalid data");
     for (;;) {
         JsonLogic_Handle test = jsonlogic_iter_next(&iter);
         JsonLogic_Error error = jsonlogic_get_error(test);
