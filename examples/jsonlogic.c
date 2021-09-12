@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "usage: %s <logic> <data>\n", progname);
         return 1;
     }
-    JsonLogic_LineInfo info  = JSONLOGIC_LINEINFO_INIT;
+    JsonLogic_LineInfo info = JSONLOGIC_LINEINFO_INIT;
     JsonLogic_Handle logic = jsonlogic_parse(argv[1], &info);
     JsonLogic_Error  error = jsonlogic_get_error(logic);
     if (error != JSONLOGIC_ERROR_SUCCESS) {
