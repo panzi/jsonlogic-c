@@ -23,6 +23,10 @@ with that anyway.
 I've also written a JsonLogic+CertLogic implementation in Python:
 [panzi-json-logic](https://github.com/panzi/panzi-json-logic)
 
+* [Usage Example](#usage-example)
+* [Extras](#extras)
+* [Remarks](#remarks)
+
 Usage Example
 -------------
 
