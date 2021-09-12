@@ -75,7 +75,9 @@ EXAMPLES=$(BUILD_DIR)/examples/benchmark$(BIN_EXT) \
 EXAMPLES_SHARED=$(patsubst $(BUILD_DIR)/examples/%,$(BUILD_DIR)/examples-shared/%,$(EXAMPLES))
 LIB=$(BUILD_DIR)/lib/libjsonlogic.a
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
-INC=$(BUILD_DIR)/include/jsonlogic.h
+INC=$(BUILD_DIR)/include/jsonlogic.h \
+    $(BUILD_DIR)/include/jsonlogic_defs.h \
+    $(BUILD_DIR)/include/jsonlogic_extras.h
 
 ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
     PSEUDO_STATIC=ON
@@ -136,7 +138,7 @@ examples_shared: $(EXAMPLES_SHARED)
 
 so: $(SO)
 
-inc: $(inc)
+inc: $(INC)
 
 install: $(LIB) $(SO) $(INC) $(BIN)
 	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
@@ -236,14 +238,12 @@ $(SO): $(SO_OBJS)
 	@mkdir -p $(BUILD_DIR)/lib
 	$(CC) $(CFLAGS) -shared $^ $(LIB_DIRS) $(LIBS) -o $@
 
-$(INC): src/jsonlogic.h src/jsonlogic_defs.h src/jsonlogic_extras.h
+$(BUILD_DIR)/include/%.h: src/%.h
 	@mkdir -p $(BUILD_DIR)/include
-	cp src/jsonlogic.h $(BUILD_DIR)/include/jsonlogic.h
-	cp src/jsonlogic_defs.h $(BUILD_DIR)/include/jsonlogic_defs.h
-	cp src/jsonlogic_extras.h $(BUILD_DIR)/include/jsonlogic_extras.h
+	cp $< $@
 
 clean:
-	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) \
+	rm -vf $(LIB_OBJS) $(SO_OBJS) $(LIB) $(EXAMPLES) $(EXAMPLES_SHARED) $(INC) \
 	       $(BUILD_DIR)/bin/test$(BIN_EXT) $(BUILD_DIR)/bin/test_shared$(BIN_EXT) \
 	       $(BUILD_DIR)/obj/test.o $(BUILD_DIR)/shared-obj/test.o \
 	       $(BUILD_DIR)/obj/compile_operations.o $(BUILD_DIR)/bin/compile_operations$(BIN_EXT) \
