@@ -24,6 +24,9 @@ I've also written a JsonLogic+CertLogic implementation in Python:
 [panzi-json-logic](https://github.com/panzi/panzi-json-logic)
 
 * [Usage Example](#usage-example)
+* [Build](#build)
+  * [Build Release](#build-release)
+  * [Cross Compilation](#cross-compilation)
 * [Extras](#extras)
 * [Remarks](#remarks)
 
@@ -104,6 +107,89 @@ result = jsonlogic_apply_custom(logic, data, &ops);
 
 For CertLogic it is `certlogic_apply(logic, extras)` and
 `certlogic_apply_custom(logic, extras, &CertLogic_Extras)`.
+
+Build
+-----
+
+This library has zero external dependencies (hence slow JSON parsing).
+
+Make static library:
+
+```bash
+make static
+```
+
+This generates these assets:
+
+* `build/$target/$release/include/jsonlogic.h`
+* `build/$target/$release/include/jsonlogic_extras.h`
+* `build/$target/$release/include/jsonlogic_defs.h`
+* `build/$target/$release/lib/libjsonlogic.a`
+
+`$target` may be a string like `linux64` or `darwin32` or similar. Per default
+it is:
+
+```bash
+echo $(uname|tr '[:upper:]' '[:lower:]')$(getconf LONG_BIT)
+```
+
+For more see [Cross Compilation](#cross-compilation) below.
+
+`$release` may be `debug` or `release`. (default: `debug`) For more see
+[Build Release](#build-release) below.
+
+Make shared library:
+
+```bash
+make shared
+```
+
+This generates these assets:
+
+* `build/$target/$release/include/jsonlogic.h`
+* `build/$target/$release/include/jsonlogic_extras.h`
+* `build/$target/$release/include/jsonlogic_defs.h`
+* `build/$target/$release/lib/libjsonlogic.so`
+
+Make examples:
+
+```bash
+make examples
+make examples_shared
+```
+
+Run tests:
+
+```bash
+make test
+make test_shared
+make valgrind
+```
+
+### Build Release
+
+To build any of the targets from above in release mode pass `RELEASE=ON`:
+
+```bash
+make static RELEASE=ON
+```
+
+Per default it will build in debug mode using no optimizations and producing
+binaries that include debug symbols.
+
+### Cross Compilation
+
+You can cross-compile for 32 bit/64 bit under 64 bit/32 bit and you can cross
+compile for Windows under Linux using mingw:
+
+```bash
+make TARGET=linux32
+make TARGET=linux64
+make TARGET=win32
+make TARGET=win64
+make TARGET=darwin32
+make TARGET=darwin64
+```
 
 Extras
 ------
