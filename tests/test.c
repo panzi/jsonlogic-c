@@ -793,6 +793,23 @@ void test_extras(TestContext *test_context) {
         fputc('\n', stderr);
     });
 
+    jsonlogic_decref(logic);
+    jsonlogic_decref(expected);
+    jsonlogic_decref(actual);
+
+    logic    = jsonlogic_parse("{\"combinations\": [[1,2,3],[\"a\",\"b\",\"c\"],[\"x\",\"y\",\"z\"]]}", NULL);
+    expected = jsonlogic_parse("[[1, \"a\", \"x\"], [1, \"a\", \"y\"], [1, \"a\", \"z\"], [1, \"b\", \"x\"], [1, \"b\", \"y\"], [1, \"b\", \"z\"], [1, \"c\", \"x\"], [1, \"c\", \"y\"], [1, \"c\", \"z\"], [2, \"a\", \"x\"], [2, \"a\", \"y\"], [2, \"a\", \"z\"], [2, \"b\", \"x\"], [2, \"b\", \"y\"], [2, \"b\", \"z\"], [2, \"c\", \"x\"], [2, \"c\", \"y\"], [2, \"c\", \"z\"], [3, \"a\", \"x\"], [3, \"a\", \"y\"], [3, \"a\", \"z\"], [3, \"b\", \"x\"], [3, \"b\", \"y\"], [3, \"b\", \"z\"], [3, \"c\", \"x\"], [3, \"c\", \"y\"], [3, \"c\", \"z\"]]", NULL);
+    actual   = jsonlogic_apply_custom(logic, JsonLogic_Null, &JsonLogic_Extras);
+
+    TEST_ASSERT_X(jsonlogic_deep_strict_equal(expected, actual), {
+        fprintf(stderr, "     error: Wrong result\n");
+        fprintf(stderr, "     logic: "); jsonlogic_println(stderr, logic);
+        fprintf(stderr, "      data: "); jsonlogic_println(stderr, JsonLogic_Null);
+        fprintf(stderr, "  expected: "); jsonlogic_println(stderr, expected);
+        fprintf(stderr, "    actual: "); jsonlogic_println(stderr, actual);
+        fputc('\n', stderr);
+    });
+
 cleanup:
     jsonlogic_decref(logic);
     jsonlogic_decref(expected);

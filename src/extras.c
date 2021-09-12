@@ -488,17 +488,17 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
 
     for (;;) {
         if (stack_ptr == argc) {
-            combinations->items[combinations_index ++] = jsonlogic_array_into_handle(item);
-            assert(stack_ptr > 0);
-            -- stack_ptr;
-
-            item = jsonlogic_array_with_capacity(argc);
-            if (item == NULL) {
+            JsonLogic_Handle handle = jsonlogic_array_from(item->items, item->size);
+            if (JSONLOGIC_IS_ERROR(handle)) {
                 jsonlogic_array_free(combinations);
                 free(stack);
                 jsonlogic_array_free(item);
-                return JsonLogic_Error_OutOfMemory;
+                return handle;
             }
+
+            combinations->items[combinations_index ++] = handle;
+            assert(stack_ptr > 0);
+            -- stack_ptr;
         } else {
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(args[stack_ptr]);
             const size_t index = stack[stack_ptr];
@@ -509,7 +509,10 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
                 }
                 -- stack_ptr;
             } else {
-                item->items[stack_ptr] = jsonlogic_incref(array->items[index]);
+                JsonLogic_Handle *cell = &item->items[stack_ptr];
+                JsonLogic_Handle handle = jsonlogic_incref(array->items[index]);
+                jsonlogic_decref(*cell);
+                *cell = handle;
                 stack[stack_ptr] = index + 1;
                 ++ stack_ptr;
                 stack[stack_ptr] = 0;
