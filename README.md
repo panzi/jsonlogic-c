@@ -13,7 +13,7 @@ mainly removes a lot of operations, adds others, and makes empty objects falsy
 (which are truthy under JsonLogic).
 
 In addition to that this library provides some optional [extra operations](#extras)
-in `jsonlogic_extras.h`. **TODO:** Document those operations.
+in `jsonlogic_extras.h`.
 
 This library uses tagged pointers and ref counted garbage collecting, so if
 you have any ref-loops you need to break them manually. Though the public API
@@ -58,11 +58,13 @@ if (error != JSONLOGIC_ERROR_SUCCESS) {
     exit(1);
 }
 
+// Run JsonLogic expression:
 JsonLogic_Handle result = jsonlogic_apply(logic, data);
 
+// Prints: "true\n"
 jsonlogic_println(stdout, result);
-// prints: "true\n"
 
+// Free memory:
 jsonlogic_decref(logic);
 jsonlogic_decref(data);
 jsonlogic_decref(result);
@@ -113,6 +115,14 @@ includes `JsonLogic_Builtins`. The same extras but combined with
 include all the operations from JsonLogic that are otherwise missing from
 CertLogic, but with CertLogic semantics for `!` and `!!` (i.e. empty objects are
 falsy in CertLogic, but truthy in JsonLogic).
+
+```C
+#include <jsonlogic_extras.h>
+
+// ...
+
+result = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
+```
 
 ### `now`
 
