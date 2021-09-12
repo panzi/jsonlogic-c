@@ -8,6 +8,13 @@ just for fun. No claims for correctness or speed are made.
 It includes a hand crafted JSON parser that is probably also quite slow compared
 to other JSON parsers.
 
+This library also implements CertLogic, which is a JsonLogic dialect. CertLogic
+mainly removes a lot of operations, adds others, and makes empty objects falsy
+(which are truthy under JsonLogic).
+
+In addition to that this library provides some optional [extra operations](#extras)
+in `jsonlogic_extras.h`. **TODO:** Document those operations.
+
 This library uses tagged pointers and ref counted garbage collecting, so if
 you have any ref-loops you need to break them manually. Though the public API
 only allows immutable use of JSON data and as such you can't craft ref-loops
@@ -15,16 +22,6 @@ with that anyway.
 
 I've also written a JsonLogic+CertLogic implementation in Python:
 [panzi-json-logic](https://github.com/panzi/panzi-json-logic)
-
-CertLogic and Extras
---------------------
-
-This library also implements CertLogic, which is a JsonLogic dialect. It mainly
-removes a lot of operations, adds others, and makes empty objects falsy (which
-are truthy under JsonLogic).
-
-In addition to that this library provides some optional extra operations in
-`jsonlogic_extras.h`. **TODO:** Document those operations.
 
 Usage Example
 -------------
@@ -101,6 +98,196 @@ result = jsonlogic_apply_custom(logic, data, &ops);
 
 For CertLogic it is `certlogic_apply(logic, extras)` and
 `certlogic_apply_custom(logic, extras, &CertLogic_Extras)`.
+
+Extras
+------
+
+This library also includes some extra operators that are not part of JsonLogic.
+These are defined in the `JsonLogic_Extras` hash-table. This hash-table already
+includes `JsonLogic_Builtins`. The same extras but combined with
+`CertLogic_Builtins` is defined as `CertLogic_Extras`. The CertLogic extras also
+include all the operations from JsonLogic that are otherwise missing from
+CertLogic, but with CertLogic semantics for `!` and `!!` (i.e. empty objects are
+falsy in CertLogic, but truthy in JsonLogic).
+
+### `now`
+
+Retrieve current time as milliseconds since the Unic epoch (1970-01-01 UTC).
+
+```
+{
+    "now": []
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"now":[]}' null
+1631412713602
+```
+
+### `parseTime`
+
+Parse RFC 3339 date and date-time strings. Date-time strings without an explicit
+time zone offset are assumed to be in UTC. Note that RFC 3339 is a subset of
+ISO 8601, but it is actually what most people think of when they think of ISO
+date-time strings.
+
+Numbers will be passed through.
+
+```
+{
+    "parseTime": [
+        <string-or-number>
+    ]
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"parseTime":"2022-01-02"}' null
+1641081600000
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"parseTime":"2022-01-02T15:00:00+02:00"}' null
+1641128400000
+```
+
+**NOTE:**
+
+You need to use `parseTime` before comparing timestamps with date-times
+provided as a string or you'll get wrong results. Assume the current time is
+somewhen in 2021:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"<": [{"now":[]}, "2022-01-02"]}' null
+false
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"<": [{"now":[]}, {"parseTime":"2022-01-02"}]}' null
+true
+```
+
+However CertLogic has operators that are doing that for you:
+
+```bash
+$ ./build/linux64/debug/examples/certlogic_extras '{"before": [{"now":[]}, "2022-01-02"]}' null
+true
+```
+
+### `formatTime`
+
+Format a timestamp (or date-time encoded as a string) as a RFC 3339 string.
+
+```
+{
+    "formatTime": [
+        <string-or-number>
+    ]
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"formatTime":{"now":[]}}' null
+"2021-09-12T02:21:26.732+00:00"
+```
+
+### `timeSince`
+
+Milliseconds since given date-time.
+
+```
+{
+    "timeSince": [
+        <string-or-number>
+    ]
+}
+```
+
+Exmaple:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"timeSince":"2021-01-02T15:00:00+02:00"}' null
+21820927164
+```
+
+### `hours`
+
+Convert hours to milliseconds. Useful in combination with `timeSince`.
+
+```
+{
+    "hours": [
+        <number>
+    ]
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"hours": 2}' null
+7200000
+```
+
+### `days`
+
+Convert days to milliseconds. Useful in combination with `timeSince`.
+
+```
+{
+    "hours": [
+        <number>
+    ]
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"days": 2}' null
+172800000
+```
+
+### `combinations`
+
+Return array of arrays that represent all combinations of the elements of all
+the lists.
+
+```
+{
+    "combinations": [
+        <array>...
+    ]
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"combinations": [[1, 2],["a", "b"]]}' null
+[[1,"a"],[1,"b"],[2,"a"],[2,"b"]]
+```
+
+### `zip`
+
+Turns an array of array representing columns into an array of array representing
+rows. The resulting array will be as long as the shortest column-array.
+
+```
+{
+    "zip": [
+        <array>...
+    ]
+}
+```
+
+Example:
+
+```bash
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"zip": [[1, 2],["a", "b"]]}' null
+[[1,"a"],[2,"b"]]
+```
 
 Remarks
 -------
