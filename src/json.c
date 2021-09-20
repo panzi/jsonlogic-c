@@ -48,11 +48,13 @@ typedef enum JsonLogic_RootParser {
     JsonLogic_ParserState_False,
     JsonLogic_ParserState_ArrayStart,
     JsonLogic_ParserState_ArrayAfterStart,
-    JsonLogic_ParserState_ArrayNext,
+    JsonLogic_ParserState_ArrayValueOrEnd,
+    JsonLogic_ParserState_ArrayValue,
     JsonLogic_ParserState_ArrayEnd,
     JsonLogic_ParserState_ObjectStart,
     JsonLogic_ParserState_ObjectAfterStart,
     JsonLogic_ParserState_ObjectKey,
+    JsonLogic_ParserState_ObjectAfterKey,
     JsonLogic_ParserState_ObjectValue,
     JsonLogic_ParserState_ObjectNext,
     JsonLogic_ParserState_ObjectEnd,
@@ -144,13 +146,37 @@ static const JsonLogic_RootParser JsonLogic_Parser_Root[JsonLogic_ParserState_Ma
         ['8']  = JsonLogic_ParserState_Number,
         ['9']  = JsonLogic_ParserState_Number,
     },
-    [JsonLogic_ParserState_ArrayNext] = {
-        [' ']  = JsonLogic_ParserState_ArrayNext,
-        ['\n'] = JsonLogic_ParserState_ArrayNext,
-        ['\r'] = JsonLogic_ParserState_ArrayNext,
-        ['\t'] = JsonLogic_ParserState_ArrayNext,
-        ['\v'] = JsonLogic_ParserState_ArrayNext,
-        [',']  = JsonLogic_ParserState_ArrayAfterStart,
+    [JsonLogic_ParserState_ArrayValue] = {
+        [' ']  = JsonLogic_ParserState_ArrayValue,
+        ['\n'] = JsonLogic_ParserState_ArrayValue,
+        ['\r'] = JsonLogic_ParserState_ArrayValue,
+        ['\t'] = JsonLogic_ParserState_ArrayValue,
+        ['\v'] = JsonLogic_ParserState_ArrayValue,
+        ['"']  = JsonLogic_ParserState_String,
+        ['n']  = JsonLogic_ParserState_Null,
+        ['t']  = JsonLogic_ParserState_True,
+        ['f']  = JsonLogic_ParserState_False,
+        ['[']  = JsonLogic_ParserState_ArrayStart,
+        ['{']  = JsonLogic_ParserState_ObjectStart,
+        ['-']  = JsonLogic_ParserState_Number,
+        ['0']  = JsonLogic_ParserState_Number,
+        ['1']  = JsonLogic_ParserState_Number,
+        ['2']  = JsonLogic_ParserState_Number,
+        ['3']  = JsonLogic_ParserState_Number,
+        ['4']  = JsonLogic_ParserState_Number,
+        ['5']  = JsonLogic_ParserState_Number,
+        ['6']  = JsonLogic_ParserState_Number,
+        ['7']  = JsonLogic_ParserState_Number,
+        ['8']  = JsonLogic_ParserState_Number,
+        ['9']  = JsonLogic_ParserState_Number,
+    },
+    [JsonLogic_ParserState_ArrayValueOrEnd] = {
+        [' ']  = JsonLogic_ParserState_ArrayValueOrEnd,
+        ['\n'] = JsonLogic_ParserState_ArrayValueOrEnd,
+        ['\r'] = JsonLogic_ParserState_ArrayValueOrEnd,
+        ['\t'] = JsonLogic_ParserState_ArrayValueOrEnd,
+        ['\v'] = JsonLogic_ParserState_ArrayValueOrEnd,
+        [',']  = JsonLogic_ParserState_ArrayValue,
         [']']  = JsonLogic_ParserState_ArrayEnd,
     },
     [JsonLogic_ParserState_ObjectStart] = {
@@ -177,6 +203,14 @@ static const JsonLogic_RootParser JsonLogic_Parser_Root[JsonLogic_ParserState_Ma
         ['\r'] = JsonLogic_ParserState_ObjectKey,
         ['\t'] = JsonLogic_ParserState_ObjectKey,
         ['\v'] = JsonLogic_ParserState_ObjectKey,
+        ['"']  = JsonLogic_ParserState_String,
+    },
+    [JsonLogic_ParserState_ObjectAfterKey] = {
+        [' ']  = JsonLogic_ParserState_ObjectAfterKey,
+        ['\n'] = JsonLogic_ParserState_ObjectAfterKey,
+        ['\r'] = JsonLogic_ParserState_ObjectAfterKey,
+        ['\t'] = JsonLogic_ParserState_ObjectAfterKey,
+        ['\v'] = JsonLogic_ParserState_ObjectAfterKey,
         [':']  = JsonLogic_ParserState_ObjectValue,
     },
     [JsonLogic_ParserState_ObjectValue] = {
@@ -209,7 +243,7 @@ static const JsonLogic_RootParser JsonLogic_Parser_Root[JsonLogic_ParserState_Ma
         ['\r'] = JsonLogic_ParserState_ObjectNext,
         ['\t'] = JsonLogic_ParserState_ObjectNext,
         ['\v'] = JsonLogic_ParserState_ObjectNext,
-        [',']  = JsonLogic_ParserState_ObjectAfterStart,
+        [',']  = JsonLogic_ParserState_ObjectKey,
         ['}']  = JsonLogic_ParserState_ObjectEnd,
     },
 };
@@ -617,12 +651,12 @@ static inline JsonLogic_Error jsonlogic_parsestack_handle_value(JsonLogic_ParseS
             return JSONLOGIC_ERROR_INTERNAL_ERROR;
 
         case JsonLogic_ParseType_Array:
-            *stateptr = JsonLogic_ParserState_ArrayNext;
+            *stateptr = JsonLogic_ParserState_ArrayValueOrEnd;
             return jsonlogic_arraybuf_append(&item->data.arraybuf, value);
 
         case JsonLogic_ParseType_Object:
             if (JSONLOGIC_IS_NULL(item->data.object.key)) {
-                *stateptr = JsonLogic_ParserState_ObjectKey;
+                *stateptr = JsonLogic_ParserState_ObjectAfterKey;
                 if (!JSONLOGIC_IS_STRING(value)) {
                     if (JSONLOGIC_IS_ERROR(value)) {
                         return value.intptr;
@@ -930,10 +964,8 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 break;
 
             case JsonLogic_ParserState_ArrayAfterStart:
-                index ++;
-                break;
-
-            case JsonLogic_ParserState_ArrayNext:
+            case JsonLogic_ParserState_ArrayValueOrEnd:
+            case JsonLogic_ParserState_ArrayValue:
                 index ++;
                 break;
 
@@ -965,10 +997,8 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 break;
 
             case JsonLogic_ParserState_ObjectAfterStart:
-                index ++;
-                break;
-
             case JsonLogic_ParserState_ObjectKey:
+            case JsonLogic_ParserState_ObjectAfterKey:
             case JsonLogic_ParserState_ObjectValue:
             case JsonLogic_ParserState_ObjectNext:
                 index ++;
