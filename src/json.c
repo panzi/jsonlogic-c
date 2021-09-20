@@ -63,7 +63,7 @@ typedef enum JsonLogic_RootParser {
 
 #define JSONLOGIC_PARSE_EOF 256
 
-static const JsonLogic_RootParser JsonLogic_Parser_Root[JsonLogic_ParserState_Max][JSONLOGIC_PARSE_EOF + 1] = {
+static const uint8_t JsonLogic_Parser_Root[JsonLogic_ParserState_Max][JSONLOGIC_PARSE_EOF + 1] = {
     [JsonLogic_ParserState_Start] = {
         [' ']  = JsonLogic_ParserState_Start,
         ['\n'] = JsonLogic_ParserState_Start,
@@ -263,7 +263,7 @@ typedef enum JsonLogic_NumberParser {
     JsonLogic_NumberParser_Max,
 } JsonLogic_NumberParser;
 
-static const JsonLogic_NumberParser JsonLogic_Parser_Number[JsonLogic_NumberParser_Max][JSONLOGIC_PARSE_EOF + 1] = {
+static const uint8_t JsonLogic_Parser_Number[JsonLogic_NumberParser_Max][JSONLOGIC_PARSE_EOF + 1] = {
     [JsonLogic_NumberParser_Start] = {
         ['-'] = JsonLogic_NumberParser_Negative,
         ['0'] = JsonLogic_NumberParser_LeadingZero,
