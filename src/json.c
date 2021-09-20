@@ -1042,6 +1042,7 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 DISPATCH;
                 break;
 
+            // redundancy for better branch prediction:
             case JsonLogic_ParserState_ArrayAfterStart: ParserState_ArrayAfterStart:
                 index ++;
                 DISPATCH;
@@ -1086,22 +1087,27 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 DISPATCH;
                 break;
 
+            // redundancy for better branch prediction:
             case JsonLogic_ParserState_ObjectAfterStart: ParserState_ObjectAfterStart:
                 index ++;
                 DISPATCH;
                 break;
+
             case JsonLogic_ParserState_ObjectKey: ParserState_ObjectKey:
                 index ++;
                 DISPATCH;
                 break;
+
             case JsonLogic_ParserState_ObjectAfterKey: ParserState_ObjectAfterKey:
                 index ++;
                 DISPATCH;
                 break;
+
             case JsonLogic_ParserState_ObjectValue: ParserState_ObjectValue:
                 index ++;
                 DISPATCH;
                 break;
+
             case JsonLogic_ParserState_ObjectNext: ParserState_ObjectNext:
                 index ++;
                 DISPATCH;
