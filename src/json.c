@@ -734,6 +734,56 @@ static void jsonlogic_parsestack_free(JsonLogic_ParseStack *stack) {
     stack->items    = NULL;
 }
 
+// this speeds up JSON parsing (535 ms to 471 ms in some micro benchmarks):
+#define DISPATCH \
+    if (index >= size) goto loop_end; \
+    state = JsonLogic_Parser_Root[state][(unsigned char)str[index]]; \
+    switch (state) { \
+        case JsonLogic_ParserState_Error: goto ParserState_Error; \
+        case JsonLogic_ParserState_Start: goto ParserState_Start; \
+        case JsonLogic_ParserState_End: goto ParserState_End; \
+        case JsonLogic_ParserState_String: goto ParserState_String; \
+        case JsonLogic_ParserState_Number: goto ParserState_Number; \
+        case JsonLogic_ParserState_Null: goto ParserState_Null; \
+        case JsonLogic_ParserState_True: goto ParserState_True; \
+        case JsonLogic_ParserState_False: goto ParserState_False; \
+        case JsonLogic_ParserState_ArrayStart: goto ParserState_ArrayStart; \
+        case JsonLogic_ParserState_ArrayAfterStart: goto ParserState_ArrayAfterStart; \
+        case JsonLogic_ParserState_ArrayValueOrEnd: goto ParserState_ArrayValueOrEnd; \
+        case JsonLogic_ParserState_ArrayValue: goto ParserState_ArrayValue; \
+        case JsonLogic_ParserState_ArrayEnd: goto ParserState_ArrayEnd; \
+        case JsonLogic_ParserState_ObjectStart: goto ParserState_ObjectStart; \
+        case JsonLogic_ParserState_ObjectAfterStart: goto ParserState_ObjectAfterStart; \
+        case JsonLogic_ParserState_ObjectKey: goto ParserState_ObjectKey; \
+        case JsonLogic_ParserState_ObjectAfterKey: goto ParserState_ObjectAfterKey; \
+        case JsonLogic_ParserState_ObjectValue: goto ParserState_ObjectValue; \
+        case JsonLogic_ParserState_ObjectNext: goto ParserState_ObjectNext; \
+        case JsonLogic_ParserState_ObjectEnd: goto ParserState_ObjectEnd; \
+        case JsonLogic_ParserState_Max: goto ParserState_Max; \
+    }
+
+// but this slows it down again?? (471 ms to 480 ms)
+#pragma GCC diagnostic ignored "-Wunused-label"
+#define NUM_DISPATCH
+#define NUM_DISPATCH_ \
+    if (index >= size) goto num_loop_end; \
+    prev_num_state = num_state; \
+    num_state = JsonLogic_Parser_Number[num_state][(unsigned char)str[index ++]]; \
+    switch (num_state) { \
+        case JsonLogic_NumberParser_Error: goto NumberParser_Error; \
+        case JsonLogic_NumberParser_Start: goto NumberParser_Start; \
+        case JsonLogic_NumberParser_Negative: goto NumberParser_Negative; \
+        case JsonLogic_NumberParser_LeadingZero: goto NumberParser_LeadingZero; \
+        case JsonLogic_NumberParser_Digit: goto NumberParser_Digit; \
+        case JsonLogic_NumberParser_Decimal: goto NumberParser_Decimal; \
+        case JsonLogic_NumberParser_DecimalDigit: goto NumberParser_DecimalDigit; \
+        case JsonLogic_NumberParser_Exp: goto NumberParser_Exp; \
+        case JsonLogic_NumberParser_ExpSign: goto NumberParser_ExpSign; \
+        case JsonLogic_NumberParser_ExpDigit: goto NumberParser_ExpDigit; \
+        case JsonLogic_NumberParser_End: goto NumberParser_End; \
+        case JsonLogic_NumberParser_Max: goto NumberParser_Max; \
+    }
+
 JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_LineInfo *infoptr) {
     JsonLogic_ParseStack stack = JSONLOGIC_PARSESTACK_INIT;
     JsonLogic_RootParser state = JsonLogic_ParserState_Start;
@@ -741,21 +791,22 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
 
     size_t index = 0;
     while (index < size) {
-        const size_t ch = (unsigned char)str[index];
-        state = JsonLogic_Parser_Root[state][ch];
+        state = JsonLogic_Parser_Root[state][(unsigned char)str[index]];
         switch (state) {
-            case JsonLogic_ParserState_Start:
+            case JsonLogic_ParserState_Start: ParserState_Start:
                 index ++;
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_End:
+            case JsonLogic_ParserState_End: ParserState_End:
                 index ++;
                 if (index == size) {
                     goto loop_end;
                 }
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_String:
+            case JsonLogic_ParserState_String: ParserState_String:
             {
                 size_t start_index = ++ index;
                 size_t utf16_size = 0;
@@ -804,42 +855,65 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
+                DISPATCH;
                 break;
             }
-            case JsonLogic_ParserState_Number:
+            case JsonLogic_ParserState_Number: ParserState_Number:
             {
                 size_t start_index = index;
                 JsonLogic_NumberParser num_state = JsonLogic_NumberParser_Start;
                 while (index < size) {
-                    const size_t num_ch = (unsigned char)str[index ++];
                     JsonLogic_NumberParser prev_num_state = num_state;
-                    num_state = JsonLogic_Parser_Number[num_state][num_ch];
+                    num_state = JsonLogic_Parser_Number[num_state][(unsigned char)str[index ++]];
                     switch (num_state) {
-                        case JsonLogic_NumberParser_Start:
+                        case JsonLogic_NumberParser_Start: NumberParser_Start:
                             assert(false);
+                            NUM_DISPATCH;
                             break;
 
-                        case JsonLogic_NumberParser_Negative:
-                        case JsonLogic_NumberParser_LeadingZero:
-                        case JsonLogic_NumberParser_Digit:
-                        case JsonLogic_NumberParser_Decimal:
-                        case JsonLogic_NumberParser_DecimalDigit:
-                        case JsonLogic_NumberParser_Exp:
-                        case JsonLogic_NumberParser_ExpSign:
-                        case JsonLogic_NumberParser_ExpDigit:
+                        case JsonLogic_NumberParser_Negative: NumberParser_Negative:
+                            NUM_DISPATCH;
                             break;
 
-                        case JsonLogic_NumberParser_End:
+                        case JsonLogic_NumberParser_LeadingZero: NumberParser_LeadingZero:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_Digit: NumberParser_Digit:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_Decimal: NumberParser_Decimal:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_DecimalDigit: NumberParser_DecimalDigit:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_Exp: NumberParser_Exp:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_ExpSign: NumberParser_ExpSign:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_ExpDigit: NumberParser_ExpDigit:
+                            NUM_DISPATCH;
+                            break;
+
+                        case JsonLogic_NumberParser_End: NumberParser_End:
                             goto num_loop_end;
                             break;
 
-                        case JsonLogic_NumberParser_Error:
+                        case JsonLogic_NumberParser_Error: NumberParser_Error:
                             -- index;
                             num_state = JsonLogic_Parser_Number[prev_num_state][JSONLOGIC_PARSE_EOF];
                             goto num_loop_end;
                             break;
 
-                        case JsonLogic_NumberParser_Max:
+                        case JsonLogic_NumberParser_Max: NumberParser_Max:
                             assert(false);
                             goto num_loop_end;
                             break;
@@ -895,9 +969,10 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
+                DISPATCH;
                 break;
             }
-            case JsonLogic_ParserState_Null:
+            case JsonLogic_ParserState_Null: ParserState_Null:
                 if (size < index + 4) {
                     error = JSONLOGIC_ERROR_SYNTAX_ERROR;
                     state = JsonLogic_ParserState_Error;
@@ -914,9 +989,10 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_True:
+            case JsonLogic_ParserState_True: ParserState_True:
                 if (size < index + 4) {
                     error = JSONLOGIC_ERROR_SYNTAX_ERROR;
                     state = JsonLogic_ParserState_Error;
@@ -933,9 +1009,10 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_False:
+            case JsonLogic_ParserState_False: ParserState_False:
                 if (size < index + 5) {
                     error = JSONLOGIC_ERROR_SYNTAX_ERROR;
                     state = JsonLogic_ParserState_Error;
@@ -952,24 +1029,35 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_ArrayStart:
+            case JsonLogic_ParserState_ArrayStart: ParserState_ArrayStart:
                 error = jsonlogic_parsestack_push_array(&stack);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
                 index ++;
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_ArrayAfterStart:
-            case JsonLogic_ParserState_ArrayValueOrEnd:
-            case JsonLogic_ParserState_ArrayValue:
+            case JsonLogic_ParserState_ArrayAfterStart: ParserState_ArrayAfterStart:
                 index ++;
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_ArrayEnd:
+            case JsonLogic_ParserState_ArrayValueOrEnd: ParserState_ArrayValueOrEnd:
+                index ++;
+                DISPATCH;
+                break;
+
+            case JsonLogic_ParserState_ArrayValue: ParserState_ArrayValue:
+                index ++;
+                DISPATCH;
+                break;
+
+            case JsonLogic_ParserState_ArrayEnd: ParserState_ArrayEnd:
             {
                 JsonLogic_Handle handle = jsonlogic_parsestack_pop(&stack);
                 if (!JSONLOGIC_IS_ARRAY(handle)) {
@@ -985,26 +1073,41 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     goto loop_end;
                 }
                 index ++;
+                DISPATCH;
                 break;
             }
-            case JsonLogic_ParserState_ObjectStart:
+            case JsonLogic_ParserState_ObjectStart: ParserState_ObjectStart:
                 error = jsonlogic_parsestack_push_object(&stack);
                 if (error != JSONLOGIC_ERROR_SUCCESS) {
                     state = JsonLogic_ParserState_Error;
                     goto loop_end;
                 }
                 index ++;
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_ObjectAfterStart:
-            case JsonLogic_ParserState_ObjectKey:
-            case JsonLogic_ParserState_ObjectAfterKey:
-            case JsonLogic_ParserState_ObjectValue:
-            case JsonLogic_ParserState_ObjectNext:
+            case JsonLogic_ParserState_ObjectAfterStart: ParserState_ObjectAfterStart:
                 index ++;
+                DISPATCH;
+                break;
+            case JsonLogic_ParserState_ObjectKey: ParserState_ObjectKey:
+                index ++;
+                DISPATCH;
+                break;
+            case JsonLogic_ParserState_ObjectAfterKey: ParserState_ObjectAfterKey:
+                index ++;
+                DISPATCH;
+                break;
+            case JsonLogic_ParserState_ObjectValue: ParserState_ObjectValue:
+                index ++;
+                DISPATCH;
+                break;
+            case JsonLogic_ParserState_ObjectNext: ParserState_ObjectNext:
+                index ++;
+                DISPATCH;
                 break;
 
-            case JsonLogic_ParserState_ObjectEnd:
+            case JsonLogic_ParserState_ObjectEnd: ParserState_ObjectEnd:
             {
                 JsonLogic_Handle handle = jsonlogic_parsestack_pop(&stack);
                 if (!JSONLOGIC_IS_OBJECT(handle)) {
@@ -1020,14 +1123,15 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                     goto loop_end;
                 }
                 index ++;
+                DISPATCH;
                 break;
             }
-            case JsonLogic_ParserState_Error:
+            case JsonLogic_ParserState_Error: ParserState_Error:
                 error = JSONLOGIC_ERROR_SYNTAX_ERROR;
                 goto loop_end;
                 break;
 
-            case JsonLogic_ParserState_Max:
+            case JsonLogic_ParserState_Max: ParserState_Max:
                 assert(false);
                 state = JsonLogic_ParserState_Error;
                 error = JSONLOGIC_ERROR_INTERNAL_ERROR;
