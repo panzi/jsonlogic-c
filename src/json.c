@@ -763,7 +763,9 @@ static void jsonlogic_parsestack_free(JsonLogic_ParseStack *stack) {
     }
 
 // but this slows it down again?? (471 ms to 480 ms)
-#pragma GCC diagnostic ignored "-Wunused-label"
+#if defined(__GNUC__)
+    #pragma GCC diagnostic ignored "-Wunused-label"
+#endif
 #define NUM_DISPATCH
 #define NUM_DISPATCH_ \
     if (index >= size) goto num_loop_end; \

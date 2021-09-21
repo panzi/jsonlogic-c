@@ -346,7 +346,7 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
     }
 #endif
 
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
@@ -359,7 +359,7 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
         time_info.tm_sec,
         msec
     );
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
     assert(count < sizeof(buf));
@@ -395,7 +395,7 @@ JsonLogic_Handle jsonlogic_extra_FORMAT_TIME(void *context, JsonLogic_Handle dat
     tzminute = tzoff % 60;
 
     char buf[32];
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
@@ -411,7 +411,7 @@ JsonLogic_Handle jsonlogic_extra_FORMAT_TIME(void *context, JsonLogic_Handle dat
         tzhour,
         tzminute
     );
-#ifdef __GNUC__
+#if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
     assert(count < sizeof(buf));
