@@ -105,8 +105,8 @@ if (error != JSONLOGIC_ERROR_SUCCESS) {
 result = jsonlogic_apply_custom(logic, data, &ops);
 ```
 
-For CertLogic it is `certlogic_apply(logic, extras)` and
-`certlogic_apply_custom(logic, extras, &CertLogic_Extras)`.
+For CertLogic it is `certlogic_apply(logic, data)` and
+`certlogic_apply_custom(logic, data, &CertLogic_Extras)`.
 
 Build
 -----
