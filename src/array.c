@@ -92,6 +92,16 @@ JsonLogic_Handle jsonlogic_array_from(const JsonLogic_Handle items[], size_t siz
     return jsonlogic_array_into_handle(array);
 }
 
+JsonLogic_Handle jsonlogic_array_from_and_decref(const JsonLogic_Handle items[], size_t size) {
+    JsonLogic_Handle array = jsonlogic_array_from(items, size);
+
+    for (size_t index = 0; index < size; ++ index) {
+        jsonlogic_decref(items[index]);
+    }
+
+    return array;
+}
+
 void jsonlogic_array_free(JsonLogic_Array *array) {
     if (array != NULL) {
         for (size_t index = 0; index < array->size; ++ index) {

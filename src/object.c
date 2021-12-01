@@ -96,6 +96,18 @@ JsonLogic_Handle jsonlogic_object_from(const JsonLogic_Object_Entry entries[], s
     return jsonlogic_object_into_handle(jsonlogic_objbuf_take(&buf));
 }
 
+JsonLogic_Handle jsonlogic_object_from_and_decref(const JsonLogic_Object_Entry entries[], size_t size) {
+    JsonLogic_Handle object = jsonlogic_object_from(entries, size);
+
+    for (size_t index = 0; index < size; ++ index) {
+        JsonLogic_Object_Entry entry = entries[index];
+        jsonlogic_decref(entry.key);
+        jsonlogic_decref(entry.value);
+    }
+
+    return object;
+}
+
 JsonLogic_Handle jsonlogic_object_from_utf16(const JsonLogic_Object_Utf16Entry entries[], size_t size) {
     JsonLogic_ObjBuf buf = JSONLOGIC_OBJBUF_INIT;
 
@@ -111,6 +123,16 @@ JsonLogic_Handle jsonlogic_object_from_utf16(const JsonLogic_Object_Utf16Entry e
     }
 
     return jsonlogic_object_into_handle(jsonlogic_objbuf_take(&buf));
+}
+
+JsonLogic_Handle jsonlogic_object_from_utf16_and_decref(const JsonLogic_Object_Utf16Entry entries[], size_t size) {
+    JsonLogic_Handle object = jsonlogic_object_from_utf16(entries, size);
+
+    for (size_t index = 0; index < size; ++ index) {
+        jsonlogic_decref(entries[index].value);
+    }
+
+    return object;
 }
 
 JSONLOGIC_DEF_UTF16(JSONLOGIC_LENGTH, u"length")
