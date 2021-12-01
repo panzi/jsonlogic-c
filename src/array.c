@@ -102,6 +102,10 @@ void jsonlogic_array_free(JsonLogic_Array *array) {
 }
 
 JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item) {
+    if (JSONLOGIC_IS_ERROR(item)) {
+        return item;
+    }
+
     switch (list.intptr & JsonLogic_TypeMask) {
         case JsonLogic_Type_Array:
         {
@@ -162,6 +166,10 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
 }
 
 JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Handle handle) {
+    if (JSONLOGIC_IS_ERROR(handle)) {
+        return handle.intptr;
+    }
+
     if (buf->capacity == 0 || buf->capacity == buf->array->size) {
         size_t new_capacity = buf->capacity + 1024;
         JsonLogic_Array *new_array = JSONLOGIC_REALLOC_ARRAY(buf->array, new_capacity);

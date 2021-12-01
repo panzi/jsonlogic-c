@@ -322,6 +322,10 @@ size_t jsonlogic_object_get_index(const JsonLogic_Object *object, JsonLogic_Hand
 }
 
 JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key, JsonLogic_Handle value) {
+    if (JSONLOGIC_IS_ERROR(value)) {
+        return value.intptr;
+    }
+
     JsonLogic_Handle stringkey = jsonlogic_to_string(key);
     if (JSONLOGIC_IS_ERROR(stringkey)) {
         return stringkey.intptr;
