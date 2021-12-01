@@ -227,7 +227,7 @@ $ ./build/linux64/debug/examples/jsonlogic_extras '{"now":[]}' null
 1631412713602
 ```
 
-### `parseTime`
+### `timestamp`
 
 Parse RFC 3339 date and date-time strings. Date-time strings without an explicit
 time zone offset are assumed to be in UTC. Note that RFC 3339 is a subset of
@@ -238,7 +238,7 @@ Numbers will be passed through.
 
 ```
 {
-    "parseTime": [
+    "timestamp": [
         <string-or-number>
     ]
 }
@@ -247,22 +247,22 @@ Numbers will be passed through.
 Example:
 
 ```bash
-$ ./build/linux64/debug/examples/jsonlogic_extras '{"parseTime":"2022-01-02"}' null
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"timestamp":"2022-01-02"}' null
 1641081600000
-$ ./build/linux64/debug/examples/jsonlogic_extras '{"parseTime":"2022-01-02T15:00:00+02:00"}' null
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"timestamp":"2022-01-02T15:00:00+02:00"}' null
 1641128400000
 ```
 
 **NOTE:**
 
-You need to use `parseTime` before comparing timestamps with date-times
+You need to use `timestamp` before comparing timestamps with date-times
 provided as a string or you'll get wrong results. Assume the current time is
 somewhen in 2021:
 
 ```bash
 $ ./build/linux64/debug/examples/jsonlogic_extras '{"<": [{"now":[]}, "2022-01-02"]}' null
 false
-$ ./build/linux64/debug/examples/jsonlogic_extras '{"<": [{"now":[]}, {"parseTime":"2022-01-02"}]}' null
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"<": [{"now":[]}, {"timestamp":"2022-01-02"}]}' null
 true
 ```
 
@@ -273,13 +273,13 @@ $ ./build/linux64/debug/examples/certlogic_extras '{"before": [{"now":[]}, "2022
 true
 ```
 
-### `formatTime`
+### `format-time`
 
 Format a timestamp (or date-time encoded as a string) as a RFC 3339 string.
 
 ```
 {
-    "formatTime": [
+    "format-time": [
         <string-or-number>
     ]
 }
@@ -288,17 +288,17 @@ Format a timestamp (or date-time encoded as a string) as a RFC 3339 string.
 Example:
 
 ```bash
-$ ./build/linux64/debug/examples/jsonlogic_extras '{"formatTime":{"now":[]}}' null
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"format-time":{"now":[]}}' null
 "2021-09-12T02:21:26.732+00:00"
 ```
 
-### `timeSince`
+### `time-since`
 
 Milliseconds since given date-time.
 
 ```
 {
-    "timeSince": [
+    "time-since": [
         <string-or-number>
     ]
 }
@@ -307,13 +307,13 @@ Milliseconds since given date-time.
 Exmaple:
 
 ```bash
-$ ./build/linux64/debug/examples/jsonlogic_extras '{"timeSince":"2021-01-02T15:00:00+02:00"}' null
+$ ./build/linux64/debug/examples/jsonlogic_extras '{"time-since":"2021-01-02T15:00:00+02:00"}' null
 21820927164
 ```
 
 ### `hours`
 
-Convert hours to milliseconds. Useful in combination with `timeSince`.
+Convert hours to milliseconds. Useful in combination with `time-since`.
 
 ```
 {
@@ -332,7 +332,7 @@ $ ./build/linux64/debug/examples/jsonlogic_extras '{"hours": 2}' null
 
 ### `days`
 
-Convert days to milliseconds. Useful in combination with `timeSince`.
+Convert days to milliseconds. Useful in combination with `time-since`.
 
 ```
 {
@@ -367,6 +367,24 @@ Example:
 ```bash
 $ ./build/linux64/debug/examples/jsonlogic_extras '{"combinations": [[1, 2],["a", "b"]]}' null
 [[1,"a"],[1,"b"],[2,"a"],[2,"b"]]
+```
+
+### `to-array`
+
+Converts the argument into an array, if possible.
+
+If the argument is already an array it is return as-is. If the argument is a
+string then an array of strings returned, where the elements represent the
+UTF-16 code units of the string. If the argument is an object then an array of
+it's keys is returned. For any other argument an illegal argument error is
+returned.
+
+```
+{
+    "to-array": [
+        <array-or-string-or-object>
+    ]
+}
 ```
 
 ### `zip`

@@ -8,7 +8,7 @@
                 {"===": [{"var": "selfTest"}, false]},
                 {"<=": [
                     0,
-                    {"timeSince": [{"var": "testedAt"}]},
+                    {"time-since": [{"var": "testedAt"}]},
                     {"hours": 72}
                 ]}
             ]},
@@ -18,7 +18,7 @@
                 {"===": [{"var": "selfTest"}, false]},
                 {"<=": [
                     0,
-                    {"timeSince": [{"var": "testedAt"}]},
+                    {"time-since": [{"var": "testedAt"}]},
                     {"hours": 48}
                 ]}
             ]},
@@ -27,7 +27,7 @@
                 {"===": [{"var": "selfTest"}, true]},
                 {"<=": [
                     0,
-                    {"timeSince": [{"var": "testedAt"}]},
+                    {"time-since": [{"var": "testedAt"}]},
                     {"hours": 24}
                 ]}
             ]},
@@ -40,7 +40,7 @@
                 ]]},
                 {"<=": [
                     0,
-                    {"timeSince": [{"var": "vaccinatedAt"}]},
+                    {"time-since": [{"var": "vaccinatedAt"}]},
                     {"days": 270}
                 ]},
                 {"===": [{"var": "doseNumber"}, 2]}
@@ -52,7 +52,7 @@
                 ]]},
                 {"<=": [
                     {"days": 21},
-                    {"timeSince": {"var": "vaccinatedAt"}},
+                    {"time-since": {"var": "vaccinatedAt"}},
                     {"days": 270}
                 ]},
                 {"===": [{"var": "doseNumber"}, 1]}
@@ -60,12 +60,12 @@
             {"and": [
                 {"===": [{"var": "type"}, "Recovery"]},
                 {"<": [
-                    {"parseTime": {"var": "infectedAt"}},
-                    {"parseTime": {"var": "recoveredAt"}}
+                    {"timestamp": {"var": "infectedAt"}},
+                    {"timestamp": {"var": "recoveredAt"}}
                 ]},
                 {"<=": [
                     0,
-                    {"timeSince": {"var": "recoveredAt"}},
+                    {"time-since": {"var": "recoveredAt"}},
                     {"days": 180}
                 ]}
             ]}
@@ -86,13 +86,13 @@
                         ]]},
                         {"<=": [
                             0,
-                            {"timeSince": [{"var": "vaccinatedAt"}]},
+                            {"time-since": [{"var": "vaccinatedAt"}]},
                             {"days": 270}
                         ]},
                         {">=": [{"var": "doseNumber"}, 1]}
                     ]}
                 ]},
-                {"parseTime": {"var": "vaccinatedAt"}}
+                {"timestamp": {"var": "vaccinatedAt"}}
             ]},
             {"map": [
                 {"filter": [
@@ -101,15 +101,15 @@
                         {"===": [{"var": "type"}, "Recovery"]},
                         {"<=": [
                             0,
-                            {"timeSince": [{"var": "recoveredAt"}]}
+                            {"time-since": [{"var": "recoveredAt"}]}
                         ]},
                         {"<": [
-                            {"parseTime": {"var": "infectedAt"}},
-                            {"parseTime": {"var": "recoveredAt"}}
+                            {"timestamp": {"var": "infectedAt"}},
+                            {"timestamp": {"var": "recoveredAt"}}
                         ]}
                     ]}
                 ]},
-                {"parseTime": {"var": "infectedAt"}}
+                {"timestamp": {"var": "infectedAt"}}
             ]}
         ]},
         {">=": [

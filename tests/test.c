@@ -902,9 +902,9 @@ int main(int argc, char *argv[]) {
     }
 
     error = jsonlogic_operations_build(&ops, (JsonLogic_Operations_BuildEntry[]) {
-        { u"now",       { NULL, mock_now        } },
-        { u"timeSince", { NULL, mock_time_since } },
-        { NULL,         { NULL, NULL            } },
+        { u"now",        { NULL, mock_now        } },
+        { u"time-since", { NULL, mock_time_since } },
+        { NULL,          { NULL, NULL            } },
     });
     if (error != JSONLOGIC_ERROR_SUCCESS) {
         fprintf(stderr, "*** error: building operations table: %s\n", jsonlogic_get_error_message(error));
