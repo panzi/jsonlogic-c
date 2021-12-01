@@ -45,7 +45,6 @@ ifeq ($(patsubst win%,win,$(TARGET)),win)
     CFLAGS   += -Wno-pedantic-ms-format -DJSONLOGIC_WIN_EXPORT
     BIN_EXT   = .exe
     SO_EXT    = .dll
-    SO_PREFIX =
 else
 ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
     CC      = clang
