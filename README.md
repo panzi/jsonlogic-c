@@ -225,7 +225,7 @@ result = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
 
 ### `now`
 
-Retrieve current time as milliseconds since the Unic epoch (1970-01-01 UTC).
+Retrieve current time as milliseconds since the Unix epoch (1970-01-01 UTC).
 
 ```
 {
