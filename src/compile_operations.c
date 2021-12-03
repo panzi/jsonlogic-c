@@ -226,7 +226,7 @@ bool table_set(Table *tbl, const char16_t *key, const char *ident) {
 
             if (entry->key != NULL) {
                 size_t new_index = entry->hash % new_capacity;
-                JSONLOGIC_DEBUG_CODE(size_t start_index = new_index;)
+                JSONLOGIC_DEBUG_CODE(const size_t dbg_start_index = new_index;)
 
                 for (;;) {
                     Entry *new_entry = &new_entries[new_index];
@@ -236,7 +236,7 @@ bool table_set(Table *tbl, const char16_t *key, const char *ident) {
                     }
 
                     new_index = (new_index + 1) % new_capacity;
-                    assert(new_index != start_index);
+                    assert(new_index != dbg_start_index);
                 }
             }
         }

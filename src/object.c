@@ -454,7 +454,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             if (!JSONLOGIC_IS_NULL(entry->key)) {
                 const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);
                 size_t new_index = otherkey->hash % new_size;
-                JSONLOGIC_DEBUG_CODE(size_t start_index = new_index;)
+                JSONLOGIC_DEBUG_CODE(const size_t dbg_start_index = new_index;)
 
                 for (;;) {
                     JsonLogic_Object_Entry *new_entry = &new_object->entries[new_index];
@@ -467,14 +467,14 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
                     }
 
                     new_index = (new_index + 1) % new_size;
-                    assert(new_index != start_index);
+                    assert(new_index != dbg_start_index);
                 }
             }
         }
 
         // add new entry
         index = strkey->hash % new_size;
-        JSONLOGIC_DEBUG_CODE(start_index = index;)
+        JSONLOGIC_DEBUG_CODE(const size_t dbg_start_index = index;)
         for (;;) {
             JsonLogic_Object_Entry *entry = &new_object->entries[index];
             if (JSONLOGIC_IS_NULL(entry->key)) {
@@ -499,7 +499,7 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
             }
 
             index = (index + 1) % new_size;
-            assert(index != start_index);
+            assert(index != dbg_start_index);
         }
         if (index < new_object->first_index) {
             new_object->first_index = index;

@@ -350,7 +350,7 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-    JSONLOGIC_DEBUG_CODE(int count = )snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
+    JSONLOGIC_DEBUG_CODE(const int dbg_count = )snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d.%03dZ",
         time_info.tm_year + 1900,
         time_info.tm_mon + 1,
         time_info.tm_mday,
@@ -362,7 +362,7 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
 #if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
-    assert(count < sizeof(buf));
+    assert(dbg_count < sizeof(buf));
 
     return jsonlogic_string_from_latin1(buf);
 }
@@ -399,7 +399,7 @@ JsonLogic_Handle jsonlogic_extra_FORMAT_TIME(void *context, JsonLogic_Handle dat
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
-    JSONLOGIC_DEBUG_CODE(int count = )snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d.%03d%c%02d:%02d",
+    JSONLOGIC_DEBUG_CODE(const int dbg_count = )snprintf(buf, sizeof(buf), "%04d-%02d-%02dT%02d:%02d:%02d.%03d%c%02d:%02d",
         date_time.year,
         date_time.month,
         date_time.day,
@@ -414,7 +414,7 @@ JsonLogic_Handle jsonlogic_extra_FORMAT_TIME(void *context, JsonLogic_Handle dat
 #if defined(__GNUC__) && !defined(__clang__)
     #pragma GCC diagnostic pop
 #endif
-    assert(count < sizeof(buf));
+    assert(dbg_count < sizeof(buf));
 
     return jsonlogic_string_from_latin1(buf);
 }

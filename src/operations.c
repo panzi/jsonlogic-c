@@ -130,7 +130,7 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
 
             if (entry->key != NULL) {
                 size_t new_index = entry->hash % new_capacity;
-                JSONLOGIC_DEBUG_CODE(size_t start_index = new_index;)
+                JSONLOGIC_DEBUG_CODE(const size_t dbg_start_index = new_index;)
 
                 for (;;) {
                     JsonLogic_Operation_Entry *new_entry = &new_entries[new_index];
@@ -140,7 +140,7 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
                     }
 
                     new_index = (new_index + 1) % new_capacity;
-                    assert(new_index != start_index);
+                    assert(new_index != dbg_start_index);
                 }
             }
         }
