@@ -7,3 +7,4 @@ vgcore.*
 !.gitignore
 perf.data
 perf.data.*
+/msvc

@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -130,7 +129,7 @@ void test_logging(TestContext *test_context) {
     TEST_ASSERT_ERRNO(count >= 0);
     TEST_ASSERT(count < sizeof(path));
 
-    fp = fopen(path, "w");
+    fp = fopen(path, "wb");
     TEST_ASSERT_ERRNO(fp != NULL);
     stdout = fp;
     need_unlink = true;
@@ -145,7 +144,7 @@ void test_logging(TestContext *test_context) {
 
     TEST_ASSERT(jsonlogic_get_error(result) == JSONLOGIC_ERROR_SUCCESS);
 
-    fp = fopen(path, "r");
+    fp = fopen(path, "rb");
     TEST_ASSERT(fp != NULL);
 
     TEST_ASSERT_ERRNO(fstat(fileno(fp), &stbuf) == 0);
@@ -826,7 +825,7 @@ const TestCase TEST_CASES[] = {
 };
 
 JsonLogic_Handle parse_file(const char *filename) {
-    FILE *fp = fopen(filename, "r");
+    FILE *fp = fopen(filename, "rb");
     if (fp == NULL) {
         perror(filename);
         return JsonLogic_Error_IOError;

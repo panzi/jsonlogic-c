@@ -19,11 +19,15 @@ void usage(int argc, char *argv[]) {
 }
 
 #ifdef JSONLOGIC_WINDOWS
+    #include <windows.h>
     #define DEVNULL "NUL"
+    #define JSONLOGIC_CLOCK ULONGLONG
 #else
     #define DEVNULL "/dev/null"
+    #define JSONLOGIC_CLOCK struct timespec
 #endif
 
+#ifndef JSONLOGIC_WINDOWS
 int64_t timedelta(const struct timespec *t1, const struct timespec *t2) {
     assert((uint64_t)t1->tv_sec <= INT64_MAX / 1000000);
     assert((uint64_t)t2->tv_sec <= INT64_MAX / 1000000);
@@ -36,6 +40,7 @@ int64_t timedelta(const struct timespec *t1, const struct timespec *t2) {
 
     return nsec2 - nsec1;
 }
+#endif
 
 int compare(const void *ptr1, const void *ptr2) {
     int64_t t1 = *(int64_t*)ptr1;
@@ -150,7 +155,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    devnull = fopen(DEVNULL, "w");
+    devnull = fopen(DEVNULL, "wb");
     if (devnull == NULL) {
         perror("*** error: opening " DEVNULL);
         goto error;
@@ -189,47 +194,44 @@ int main(int argc, char *argv[]) {
     result = JsonLogic_Null;
 
     for (size_t index = 0; index < (size_t)count; ++ index) {
-        struct timespec start;
-        struct timespec parse_done;
-        struct timespec apply_done;
-        struct timespec print_done;
-        struct timespec free_done;
+        JSONLOGIC_CLOCK start;
+        JSONLOGIC_CLOCK parse_done;
+        JSONLOGIC_CLOCK apply_done;
+        JSONLOGIC_CLOCK print_done;
+        JSONLOGIC_CLOCK free_done;
 
-        if (clock_gettime(CLOCK_MONOTONIC, &start) != 0) {
-            perror("*** error: getting monotonic time");
-            goto error;
+#ifdef JSONLOGIC_WINDOWS
+    #define GET_CLOCK(CLOCK) CLOCK = GetTickCount64();
+    #define CLOCK_DELTA(C1, C2) (((C2) - (C1)) * 1000)
+#else
+    #define GET_CLOCK(CLOCK)                                   \
+        if (clock_gettime(CLOCK_MONOTONIC, &(CLOCK)) != 0) {   \
+            perror("*** error: getting monotonic time");       \
+            goto error;                                        \
         }
+    #define CLOCK_DELTA(C1, C2) timedelta(&(C1), &(C2))
+#endif
+
+        GET_CLOCK(start);
 
         logic = jsonlogic_parse(str_logic, NULL);
         data  = jsonlogic_parse(str_data, NULL);
 
-        if (clock_gettime(CLOCK_MONOTONIC, &parse_done) != 0) {
-            perror("*** error: getting monotonic time");
-            goto error;
-        }
+        GET_CLOCK(parse_done);
 
         result = jsonlogic_apply_custom(logic, data, &JsonLogic_Extras);
 
-        if (clock_gettime(CLOCK_MONOTONIC, &apply_done) != 0) {
-            perror("*** error: getting monotonic time");
-            goto error;
-        }
+        GET_CLOCK(apply_done);
 
         jsonlogic_println(devnull, result);
 
-        if (clock_gettime(CLOCK_MONOTONIC, &print_done) != 0) {
-            perror("*** error: getting monotonic time");
-            goto error;
-        }
+        GET_CLOCK(print_done);
 
         jsonlogic_decref(logic);
         jsonlogic_decref(data);
         jsonlogic_decref(result);
 
-        if (clock_gettime(CLOCK_MONOTONIC, &free_done) != 0) {
-            perror("*** error: getting monotonic time");
-            goto error;
-        }
+        GET_CLOCK(free_done);
 
         logic = JsonLogic_Null;
         data  = JsonLogic_Null;

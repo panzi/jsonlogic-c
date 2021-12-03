@@ -359,7 +359,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "*** error: allocating memory for path\n");
         goto error;
     }
-    fp = fopen(path, "w");
+    fp = fopen(path, "wb");
     if (fp == NULL) {
         perror(path);
         goto error;
@@ -387,7 +387,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "*** error: allocating memory for path\n");
         goto error;
     }
-    fp = fopen(path, "w");
+    fp = fopen(path, "wb");
     if (fp == NULL) {
         perror(path);
         goto error;
@@ -416,7 +416,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "*** error: allocating memory for path\n");
         goto error;
     }
-    fp = fopen(path, "w");
+    fp = fopen(path, "wb");
     if (fp == NULL) {
         perror(path);
         goto error;
@@ -445,7 +445,7 @@ int main(int argc, char *argv[]) {
         fprintf(stderr, "*** error: allocating memory for path\n");
         goto error;
     }
-    fp = fopen(path, "w");
+    fp = fopen(path, "wb");
     if (fp == NULL) {
         perror(path);
         goto error;
