@@ -41,7 +41,7 @@ ifeq ($(patsubst %64,64,$(TARGET)),64)
 endif
 endif
 
-ifeq ($(patsubst win%,win,$(TARGET)),win)
+ifeq ($(patsubst mingw%,mingw,$(TARGET)),mingw)
     CFLAGS   += -Wno-pedantic-ms-format -DJSONLOGIC_WIN_EXPORT
     BIN_EXT   = .exe
     SO_EXT    = .dll
@@ -53,10 +53,10 @@ ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
 endif
 endif
 
-ifeq ($(TARGET),win32)
+ifeq ($(TARGET),mingw32)
     CC=i686-w64-mingw32-gcc
 else
-ifeq ($(TARGET),win64)
+ifeq ($(TARGET),mingw64)
     CC=x86_64-w64-mingw32-gcc
 endif
 endif

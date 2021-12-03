@@ -31,8 +31,8 @@ SO_PREFIX=lib
 BIN_EXT=.exe
 RELEASE=OFF
 
-#CFLAGS=/Wall /std:c11 /utf-8 /DJSONLOGIC_WIN_EXPORT
-CFLAGS=/std:c11 /utf-8 /DJSONLOGIC_WIN_EXPORT
+#CFLAGS=/Wall /std:c11 /utf-8 /nologo /DJSONLOGIC_WIN_EXPORT
+CFLAGS=/std:c11 /utf-8 /nologo /DJSONLOGIC_WIN_EXPORT
 INC_DIRS=/Isrc
 EXAMPLES=$(BUILD_DIR)/examples/benchmark$(BIN_EXT) \
          $(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
@@ -170,7 +170,7 @@ $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.obj
 
 $(LIB): $(LIB_OBJS)
 	@mkdir -p $(BUILD_DIR)/lib
-	$(AR) /OUT:$@ $^
+	$(AR) /nologo /OUT:$@ $^
 
 $(SO): $(SO_OBJS)
 	@mkdir -p $(BUILD_DIR)/lib

@@ -185,10 +185,23 @@ compile for Windows under Linux using mingw:
 ```bash
 make TARGET=linux32
 make TARGET=linux64
-make TARGET=win32
-make TARGET=win64
+make TARGET=mingw32
+make TARGET=mingw64
 make TARGET=darwin32
 make TARGET=darwin64
+```
+
+Or if you use `msvc_setup.sh` you can actuall use MSVC to compile Windows
+binaries under Linux using WINE:
+
+```bash
+./msvc_setup.sh
+# say yes to the license agreement
+# wait
+make -f Makefile.msvc ARCH=x86
+make -f Makefile.msvc ARCH=x64
+make -f Makefile.msvc ARCH=arm
+make -f Makefile.msvc ARCH=arm64
 ```
 
 Extras
