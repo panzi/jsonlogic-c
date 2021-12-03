@@ -52,7 +52,7 @@ ifeq ($(RELEASE),ON)
     BUILD_DIR := $(BUILD_DIR)/release
 else
 ifeq ($(RELEASE),OFF)
-    CFLAGS    += /Od
+    CFLAGS    += /Od /Z7
     BUILD_DIR := $(BUILD_DIR)/debug
 else
     $(error illegal value for RELEASE=$(RELEASE))
