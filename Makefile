@@ -27,24 +27,24 @@ AR=ar
 SO_EXT=.so
 SO_PREFIX=lib
 BIN_EXT=
-TARGET=$(shell uname|tr '[:upper:]' '[:lower:]')$(shell getconf LONG_BIT)
+TARGET=$(shell uname -s|tr '[:upper:]' '[:lower:]')-$(shell uname -m)
 RELEASE=OFF
 PREFIX=/usr/local
 SO_FLAGS=-fPIC
 SHARED_BIN_OBJS=
 
-ifeq ($(patsubst %32,32,$(TARGET)),32)
-    CFLAGS += -m32
+ifeq ($(patsubst %-i686,i686,$(TARGET)),i686)
+    CFLAGS += -m32 -march=i686
 else
-ifeq ($(patsubst %64,64,$(TARGET)),64)
-    CFLAGS += -m64
+ifeq ($(patsubst %-x86_64,x86_64,$(TARGET)),x86_64)
+    CFLAGS += -m64 -march=x86-64
 endif
 endif
 
-ifeq ($(patsubst mingw%,mingw,$(TARGET)),mingw)
-    CFLAGS   += -Wno-pedantic-ms-format -DJSONLOGIC_WIN_EXPORT
-    BIN_EXT   = .exe
-    SO_EXT    = .dll
+ifeq ($(patsubst mingw-%,mingw,$(TARGET)),mingw)
+    CFLAGS  += -Wno-pedantic-ms-format -DJSONLOGIC_WIN_EXPORT
+    BIN_EXT  = .exe
+    SO_EXT   = .dll
 else
 ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
     CC      = clang
@@ -53,10 +53,10 @@ ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
 endif
 endif
 
-ifeq ($(TARGET),mingw32)
+ifeq ($(TARGET),mingw-i686)
     CC=i686-w64-mingw32-gcc
 else
-ifeq ($(TARGET),mingw64)
+ifeq ($(TARGET),mingw-x86_64)
     CC=x86_64-w64-mingw32-gcc
 endif
 endif

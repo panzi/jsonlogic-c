@@ -183,12 +183,12 @@ You can cross-compile for 32 bit/64 bit under 64 bit/32 bit and you can cross
 compile for Windows under Linux using mingw:
 
 ```bash
-make TARGET=linux32
-make TARGET=linux64
-make TARGET=mingw32
-make TARGET=mingw64
-make TARGET=darwin32
-make TARGET=darwin64
+make TARGET=linux-i686
+make TARGET=linux-x86_64
+make TARGET=mingw-i686
+make TARGET=mingw-x86_64
+make TARGET=darwin-i686
+make TARGET=darwin-x86_64
 ```
 
 Or if you use `msvc_setup.sh` you can actuall use MSVC to compile Windows

@@ -22,7 +22,7 @@ nproc=$(nproc)
 for release in OFF ON; do
     for linkage in shared static; do
         for platform in linux mingw; do
-            for bits in 32 64; do
+            for bits in i686 x86_64; do
                 echo make RELEASE=$release TARGET=$platform$bits $linkage
                 make -j"$nproc" TARGET=$platform$bits RELEASE=$release $linkage >/dev/null
             done
