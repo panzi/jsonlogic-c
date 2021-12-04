@@ -44,7 +44,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
     assert(entry != NULL);
 
     JsonLogic_Handle op    = entry->key;
-    JsonLogic_Handle value = entry->value;
+    JsonLogic_Handle oparg = entry->value;
 
     if (!JSONLOGIC_IS_STRING(op)) {
         jsonlogic_incref(logic);
@@ -54,13 +54,13 @@ JsonLogic_Handle jsonlogic_apply_custom(
     size_t value_count;
     JsonLogic_Handle *values;
 
-    if (JSONLOGIC_IS_ARRAY(value)) {
-        JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(value);
+    if (JSONLOGIC_IS_ARRAY(oparg)) {
+        JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(oparg);
         value_count = array->size;
         values      = array->items;
     } else {
         value_count = 1;
-        values      = &value;
+        values      = &oparg;
     }
 
     JsonLogic_String *opstr = JSONLOGIC_CAST_STRING(op);
@@ -185,13 +185,13 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return JsonLogic_Error_OutOfMemory;
         }
 
-        JsonLogic_Handle logic = values[1];
+        JsonLogic_Handle lambda = values[1];
 
         size_t filtered_index = 0;
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                logic,
+                lambda,
                 item,
                 operations);
             if (jsonlogic_to_bool(condition)) {
@@ -227,12 +227,12 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return JsonLogic_Error_OutOfMemory;
         }
 
-        JsonLogic_Handle logic = value_count < 2 ? JsonLogic_Null : values[1];
+        JsonLogic_Handle lambda = value_count < 2 ? JsonLogic_Null : values[1];
 
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle value = jsonlogic_apply_custom(
-                logic,
+                lambda,
                 item,
                 operations);
             mapped->items[index] = value;
@@ -245,10 +245,10 @@ JsonLogic_Handle jsonlogic_apply_custom(
         if (value_count == 0) {
             return JsonLogic_Null;
         }
-        JsonLogic_Handle logic = JsonLogic_Null;
-        JsonLogic_Handle init  = JsonLogic_Null;
+        JsonLogic_Handle lambda = JsonLogic_Null;
+        JsonLogic_Handle init   = JsonLogic_Null;
         if (value_count > 1) {
-            logic = values[1];
+            lambda = values[1];
             if (value_count > 2) {
                 init = values[2];
             }
@@ -314,7 +314,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
             object->entries[current_index].value     = array->items[index];
 
             JsonLogic_Handle new_accumulator = jsonlogic_apply_custom(
-                logic,
+                lambda,
                 reduce_context,
                 operations);
 
@@ -352,7 +352,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return JsonLogic_False;
         }
 
-        JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
+        JsonLogic_Handle lambda = value_count > 1 ? values[1] : JsonLogic_Null;
 
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         if (array->size == 0) {
@@ -363,7 +363,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                logic,
+                lambda,
                 item,
                 operations);
             if (!jsonlogic_to_bool(condition)) {
@@ -394,7 +394,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return JsonLogic_False;
         }
 
-        JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
+        JsonLogic_Handle lambda = value_count > 1 ? values[1] : JsonLogic_Null;
 
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         if (array->size == 0) {
@@ -405,7 +405,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                logic,
+                lambda,
                 item,
                 operations);
             if (jsonlogic_to_bool(condition)) {
@@ -436,7 +436,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
             return JsonLogic_True;
         }
 
-        JsonLogic_Handle logic = value_count > 1 ? values[1] : JsonLogic_Null;
+        JsonLogic_Handle lambda = value_count > 1 ? values[1] : JsonLogic_Null;
 
         const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(items);
         if (array->size == 0) {
@@ -447,7 +447,7 @@ JsonLogic_Handle jsonlogic_apply_custom(
         for (size_t index = 0; index < array->size; ++ index) {
             JsonLogic_Handle item = array->items[index];
             JsonLogic_Handle condition = jsonlogic_apply_custom(
-                logic,
+                lambda,
                 item,
                 operations);
             if (jsonlogic_to_bool(condition)) {

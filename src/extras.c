@@ -131,14 +131,14 @@ JsonLogic_Error jsonlogic_parse_date_time_handle(JsonLogic_Handle handle, JsonLo
         assert(date_time_ptr != NULL);
 
         struct tm time_info;
-        uint32_t msec = 0;
+        int32_t msec  = 0;
         int32_t tzoff = 0;
         double timestamp = handle.number;
 
         memset(&time_info, 0, sizeof(time_info));
 
         time_t tv = (int64_t)timestamp / 1000;
-        msec = (int64_t)timestamp % 1000;
+        msec = (int32_t) ((int64_t)timestamp % 1000);
         if (msec < 0) {
             tv  -= 1;
             msec = 1000 + msec;
@@ -326,8 +326,8 @@ JsonLogic_Handle jsonlogic_format_date_time(double timestamp) {
     // YYYY-MM-DDTHH:mm:ss.sssZ
     char buf[32];
     struct tm time_info;
-    time_t tv = (int64_t)timestamp / 1000;
-    int msec  = (int64_t)timestamp % 1000;
+    time_t tv = (time_t) ((int64_t)timestamp / 1000);
+    int msec  = (int) ((int64_t)timestamp % 1000);
     if (msec < 0) {
         tv  -= 1;
         msec = 1000 + msec;
@@ -445,19 +445,18 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
         return jsonlogic_empty_array();
     }
 
-    JsonLogic_Handle handle = args[0];
-    if (!JSONLOGIC_IS_ARRAY(handle)) {
+    JsonLogic_Handle arg0 = args[0];
+    if (!JSONLOGIC_IS_ARRAY(arg0)) {
         return jsonlogic_empty_array();
     }
-    const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
-    size_t prod_len = array->size;
+    size_t prod_len = JSONLOGIC_CAST_ARRAY(arg0)->size;
 
     for (size_t index = 1; index < argc; ++ index) {
-        JsonLogic_Handle handle = args[index];
-        if (!JSONLOGIC_IS_ARRAY(handle)) {
+        JsonLogic_Handle arg = args[index];
+        if (!JSONLOGIC_IS_ARRAY(arg)) {
             return jsonlogic_empty_array();
         }
-        prod_len *= JSONLOGIC_CAST_ARRAY(handle)->size;
+        prod_len *= JSONLOGIC_CAST_ARRAY(arg)->size;
     }
 
     if (prod_len == 0) {
@@ -488,15 +487,15 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
 
     for (;;) {
         if (stack_ptr == argc) {
-            JsonLogic_Handle handle = jsonlogic_array_from(item->items, item->size);
-            if (JSONLOGIC_IS_ERROR(handle)) {
+            JsonLogic_Handle result = jsonlogic_array_from(item->items, item->size);
+            if (JSONLOGIC_IS_ERROR(result)) {
                 jsonlogic_array_free(combinations);
                 free(stack);
                 jsonlogic_array_free(item);
-                return handle;
+                return result;
             }
 
-            combinations->items[combinations_index ++] = handle;
+            combinations->items[combinations_index ++] = result;
             assert(stack_ptr > 0);
             -- stack_ptr;
         } else {
@@ -509,10 +508,10 @@ JsonLogic_Handle jsonlogic_extra_COMBINATIONS(void *context, JsonLogic_Handle da
                 }
                 -- stack_ptr;
             } else {
-                JsonLogic_Handle *cell = &item->items[stack_ptr];
-                JsonLogic_Handle handle = jsonlogic_incref(array->items[index]);
-                jsonlogic_decref(*cell);
-                *cell = handle;
+                JsonLogic_Handle *cell_ptr = &item->items[stack_ptr];
+                JsonLogic_Handle cell = jsonlogic_incref(array->items[index]);
+                jsonlogic_decref(*cell_ptr);
+                *cell_ptr = cell;
                 stack[stack_ptr] = index + 1;
                 ++ stack_ptr;
                 stack[stack_ptr] = 0;
@@ -735,13 +734,13 @@ JsonLogic_Handle jsonlogic_extra_PLUS_TIME(void *context, JsonLogic_Handle data,
     }
 
     if (jsonlogic_utf16_equals(JSONLOGIC_YEAR, JSONLOGIC_YEAR_SIZE, unit->str, unit->size)) {
-        date_time.year  += value;
+        date_time.year  += (int32_t) value;
     } else if (jsonlogic_utf16_equals(JSONLOGIC_MONTH, JSONLOGIC_MONTH_SIZE, unit->str, unit->size)) {
-        date_time.month += value;
+        date_time.month += (int32_t) value;
     } else if (jsonlogic_utf16_equals(JSONLOGIC_DAY, JSONLOGIC_DAY_SIZE, unit->str, unit->size)) {
-        date_time.day   += value;
+        date_time.day   += (int32_t) value;
     } else if (jsonlogic_utf16_equals(JSONLOGIC_HOUR, JSONLOGIC_HOUR_SIZE, unit->str, unit->size)) {
-        date_time.hour  += value;
+        date_time.hour  += (int32_t) value;
     } else {
         return JsonLogic_Error_IllegalArgument;
     }

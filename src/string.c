@@ -138,10 +138,10 @@ JsonLogic_Handle jsonlogic_string_from_utf8_sized(const char *str, size_t size) 
     size_t utf16_index = 0;
     JSONLOGIC_DECODE_UTF8(str, size, {
         if (codepoint < 0x10000) {
-            string->str[utf16_index ++] = codepoint;
+            string->str[utf16_index ++] = (char16_t) codepoint;
         } else {
-            string->str[utf16_index ++] = 0xD800 | (codepoint >> 10);
-            string->str[utf16_index ++] = 0xDC00 | (codepoint & 0x3FF);
+            string->str[utf16_index ++] = (char16_t) (0xD800 | (codepoint >> 10));
+            string->str[utf16_index ++] = (char16_t) (0xDC00 | (codepoint & 0x3FF));
         }
     });
     assert(utf16_index == utf16_size);
@@ -576,19 +576,19 @@ size_t jsonlogic_utf16_to_index(const char16_t *str, size_t size) {
 
 #define JSONLOGIC_ENCODE_UTF8(CODEPOINT, BUF, INDEX) \
     if ((CODEPOINT) > 0x10000) { \
-        (BUF)[(INDEX) ++] =  ((CODEPOINT) >> 18)         | 0xF0; \
-        (BUF)[(INDEX) ++] = (((CODEPOINT) >> 12) & 0x3F) | 0x80; \
-        (BUF)[(INDEX) ++] = (((CODEPOINT) >>  6) & 0x3F) | 0x80; \
-        (BUF)[(INDEX) ++] =  ((CODEPOINT)        & 0x3F) | 0x80; \
+        (BUF)[(INDEX) ++] = (char) ( ((CODEPOINT) >> 18)         | 0xF0); \
+        (BUF)[(INDEX) ++] = (char) ((((CODEPOINT) >> 12) & 0x3F) | 0x80); \
+        (BUF)[(INDEX) ++] = (char) ((((CODEPOINT) >>  6) & 0x3F) | 0x80); \
+        (BUF)[(INDEX) ++] = (char) ( ((CODEPOINT)        & 0x3F) | 0x80); \
     } else if ((CODEPOINT) >= 0x800) { \
-        (BUF)[(INDEX) ++] =  ((CODEPOINT) >> 12)         | 0xE0; \
-        (BUF)[(INDEX) ++] = (((CODEPOINT) >>  6) & 0x3F) | 0x80; \
-        (BUF)[(INDEX) ++] =  ((CODEPOINT)        & 0x3F) | 0x80; \
+        (BUF)[(INDEX) ++] = (char) ( ((CODEPOINT) >> 12)         | 0xE0); \
+        (BUF)[(INDEX) ++] = (char) ((((CODEPOINT) >>  6) & 0x3F) | 0x80); \
+        (BUF)[(INDEX) ++] = (char) ( ((CODEPOINT)        & 0x3F) | 0x80); \
     } else if ((CODEPOINT) >= 0x80) { \
-        (BUF)[(INDEX) ++] = ((CODEPOINT) >> 6)   | 0xC0; \
-        (BUF)[(INDEX) ++] = ((CODEPOINT) & 0x3F) | 0x80; \
+        (BUF)[(INDEX) ++] = (char) (((CODEPOINT) >> 6)   | 0xC0); \
+        (BUF)[(INDEX) ++] = (char) (((CODEPOINT) & 0x3F) | 0x80); \
     } else { \
-        (BUF)[(INDEX) ++] = (CODEPOINT); \
+        (BUF)[(INDEX) ++] = (char) (CODEPOINT); \
     }
 
 static inline size_t jsonlogic_utf16_to_utf8_size(const char16_t *str, size_t size) {

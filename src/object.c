@@ -146,7 +146,7 @@ JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16
         case JsonLogic_Type_String:
         {
             if (jsonlogic_utf16_equals(key, size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
-                return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
+                return jsonlogic_number_from((double) JSONLOGIC_CAST_STRING(handle)->size);
             }
             size_t index = jsonlogic_utf16_to_index(key, size);
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
@@ -158,7 +158,7 @@ JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16
         case JsonLogic_Type_Array:
         {
             if (jsonlogic_utf16_equals(key, size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
-                return jsonlogic_number_from(JSONLOGIC_CAST_STRING(handle)->size);
+                return jsonlogic_number_from((double) JSONLOGIC_CAST_STRING(handle)->size);
             }
             size_t index = jsonlogic_utf16_to_index(key, size);
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
@@ -217,7 +217,7 @@ JsonLogic_Handle jsonlogic_get_index(JsonLogic_Handle handle, size_t index) {
         }
         case JsonLogic_Type_Object:
         {
-            JsonLogic_Handle strkey = jsonlogic_to_string(jsonlogic_number_from(index));
+            JsonLogic_Handle strkey = jsonlogic_to_string(jsonlogic_number_from((double) index));
             if (JSONLOGIC_IS_ERROR(strkey)) {
                 return strkey;
             }
@@ -247,7 +247,7 @@ JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
                     return JsonLogic_Null;
                 }
 
-                size_t index = key.number;
+                size_t index = (size_t) key.number;
                 const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
                 if (index >= string->size) {
                     return JsonLogic_Null;
@@ -261,7 +261,7 @@ JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
                     return JsonLogic_Null;
                 }
 
-                size_t index = key.number;
+                size_t index = (size_t) key.number;
                 const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
                 if (index >= array->size) {
                     return JsonLogic_Null;

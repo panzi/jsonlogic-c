@@ -840,10 +840,10 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 size_t utf16_index = 0;
                 JSONLOGIC_PARSE_STRING(str, size, index, error, {
                     if (codepoint < 0x10000) {
-                        string->str[utf16_index ++] = codepoint;
+                        string->str[utf16_index ++] = (char16_t) codepoint;
                     } else {
-                        string->str[utf16_index ++] = 0xD800 | (codepoint >> 10);
-                        string->str[utf16_index ++] = 0xDC00 | (codepoint & 0x3FF);
+                        string->str[utf16_index ++] = (char16_t) (0xD800 | (codepoint >> 10));
+                        string->str[utf16_index ++] = (char16_t) (0xDC00 | (codepoint & 0x3FF));
                     }
                 });
 
@@ -940,18 +940,18 @@ JsonLogic_Handle jsonlogic_parse_sized(const char *str, size_t size, JsonLogic_L
                 size_t clib_index = start_index;
                 double number;
                 if (num_size + 1 > sizeof(buf)) {
-                    char *buf = malloc(num_size + 1);
-                    if (buf == NULL) {
+                    char *heap_buf = malloc(num_size + 1);
+                    if (heap_buf == NULL) {
                         JSONLOGIC_ERROR_MEMORY();
                         state = JsonLogic_ParserState_Error;
                         error = JSONLOGIC_ERROR_OUT_OF_MEMORY;
                         goto loop_end;
                     }
-                    memcpy(buf, str + start_index, num_size);
-                    buf[num_size] = 0;
-                    number = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
-                    clib_index += endptr - buf;
-                    free(buf);
+                    memcpy(heap_buf, str + start_index, num_size);
+                    heap_buf[num_size] = 0;
+                    number = JSONLOGIC_STRTOD_L(heap_buf, &endptr, JsonLogic_C_Locale);
+                    clib_index += endptr - heap_buf;
+                    free(heap_buf);
                 } else {
                     memcpy(buf, str + start_index, num_size);
                     buf[num_size] = 0;

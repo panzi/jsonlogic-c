@@ -93,7 +93,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                         if (!JSONLOGIC_IS_NUM(ch)) {
                             return JsonLogic_NaN;
                         }
-                        buf[index] = ch;
+                        buf[index] = (char) ch;
                     }
                     buf[size] = 0;
                     double value = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
@@ -113,7 +113,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                             free(buf);
                             return JsonLogic_NaN;
                         }
-                        buf[index] = ch;
+                        buf[index] = (char) ch;
                     }
                     buf[size] = 0;
                     double value = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
