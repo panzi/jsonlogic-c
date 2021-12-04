@@ -1,7 +1,7 @@
 #include "jsonlogic_intern.h"
 
-#include <string.h>
 #include <inttypes.h>
+#include <string.h>
 #include <assert.h>
 
 const JsonLogic_Handle JsonLogic_Error_Success          = { .intptr = JSONLOGIC_ERROR_SUCCESS           };

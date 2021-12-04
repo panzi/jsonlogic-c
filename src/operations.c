@@ -7,7 +7,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <inttypes.h>
 
 #ifndef NDEBUG
 void jsonlogic_operations_debug(const JsonLogic_Operations *operations) {
@@ -125,8 +124,8 @@ JsonLogic_Error jsonlogic_operations_set_with_hash(JsonLogic_Operations *operati
             return JSONLOGIC_ERROR_OUT_OF_MEMORY;
         }
 
-        for (size_t index = 0; index < capacity; ++ index) {
-            JsonLogic_Operation_Entry *entry = &entries[index];
+        for (size_t entry_index = 0; entry_index < capacity; ++ entry_index) {
+            JsonLogic_Operation_Entry *entry = &entries[entry_index];
 
             if (entry->key != NULL) {
                 size_t new_index = entry->hash % new_capacity;

@@ -118,12 +118,13 @@ int main(int argc, char *argv[]) {
     const char *str_data         = argv[3];
 
     char *endptr = NULL;
-    unsigned long long count = strtoull(str_repeat_count, &endptr, 10);
-    if (!*str_repeat_count || *endptr || (sizeof(unsigned long long) > sizeof(size_t) && count > (unsigned long long)SIZE_MAX) || count == 0) {
+    const unsigned long long ull_count = strtoull(str_repeat_count, &endptr, 10);
+    if (!*str_repeat_count || *endptr || (sizeof(unsigned long long) > sizeof(size_t) && ull_count > (unsigned long long)SIZE_MAX) || ull_count == 0) {
         fprintf(stderr, "*** error: parsing repeat-count '%s': %s", str_repeat_count, strerror(errno));
         usage(argc, argv);
         return 1;
     }
+    const size_t count = (size_t) ull_count;
 
     parse_times = calloc(count, sizeof(int64_t));
     if (parse_times == NULL) {
@@ -236,11 +237,11 @@ int main(int argc, char *argv[]) {
         logic = JsonLogic_Null;
         data  = JsonLogic_Null;
 
-        int64_t parse_time = timedelta(&start,      &parse_done);
-        int64_t apply_time = timedelta(&parse_done, &apply_done);
-        int64_t print_time = timedelta(&apply_done, &print_done);
-        int64_t free_time  = timedelta(&print_done, &free_done);
-        int64_t sum_time   = timedelta(&start,      &free_done);
+        int64_t parse_time = CLOCK_DELTA(start,      parse_done);
+        int64_t apply_time = CLOCK_DELTA(parse_done, apply_done);
+        int64_t print_time = CLOCK_DELTA(apply_done, print_done);
+        int64_t free_time  = CLOCK_DELTA(print_done, free_done);
+        int64_t sum_time   = CLOCK_DELTA(start,      free_done);
 
         parse_times[index] = parse_time;
         apply_times[index] = apply_time;

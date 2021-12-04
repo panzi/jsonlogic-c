@@ -420,7 +420,7 @@ JsonLogic_Handle jsonlogic_op_LOG(void *context, JsonLogic_Handle data, JsonLogi
     JsonLogic_Error error = jsonlogic_stringify_file(stdout, value);
     if (error == JSONLOGIC_ERROR_IO_ERROR) {
         int errnum = errno;
-        puts(errnum != 0 ? strerror(errno) : jsonlogic_get_error_message(error));
+        puts(errnum != 0 ? strerror(errnum) : jsonlogic_get_error_message(error));
     } else if (error != JSONLOGIC_ERROR_SUCCESS) {
         puts(jsonlogic_get_error_message(error));
     } else {

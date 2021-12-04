@@ -440,16 +440,16 @@ JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key
         new_object->size        = new_size;
         new_object->first_index = new_size;
 
-        for (size_t index = 0; index < new_size; ++ index) {
-            new_object->entries[index] = (JsonLogic_Object_Entry) {
+        for (size_t entry_index = 0; entry_index < new_size; ++ entry_index) {
+            new_object->entries[entry_index] = (JsonLogic_Object_Entry) {
                 .key   = JsonLogic_Null,
                 .value = JsonLogic_Null,
             };
         }
 
         // move old entries to new hash-table
-        for (size_t index = object->first_index; index < size; ++ index) {
-            JsonLogic_Object_Entry *entry = &object->entries[index];
+        for (size_t entry_index = object->first_index; entry_index < size; ++ entry_index) {
+            JsonLogic_Object_Entry *entry = &object->entries[entry_index];
 
             if (!JSONLOGIC_IS_NULL(entry->key)) {
                 const JsonLogic_String *otherkey = JSONLOGIC_CAST_STRING(entry->key);

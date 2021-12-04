@@ -102,22 +102,22 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     }
                     return (JsonLogic_Handle){ .number = value };
                 } else {
-                    char *buf = malloc(size + 1);
-                    if (buf == NULL) {
+                    char *heap_buf = malloc(size + 1);
+                    if (heap_buf == NULL) {
                         JSONLOGIC_ERROR_MEMORY();
                         return JsonLogic_Error_OutOfMemory;
                     }
                     for (size_t index = 0; index < size; ++ index) {
                         char16_t ch = str[index];
                         if (!JSONLOGIC_IS_NUM(ch)) {
-                            free(buf);
+                            free(heap_buf);
                             return JsonLogic_NaN;
                         }
-                        buf[index] = (char) ch;
+                        heap_buf[index] = (char) ch;
                     }
-                    buf[size] = 0;
-                    double value = JSONLOGIC_STRTOD_L(buf, &endptr, JsonLogic_C_Locale);
-                    free(buf);
+                    heap_buf[size] = 0;
+                    double value = JSONLOGIC_STRTOD_L(heap_buf, &endptr, JsonLogic_C_Locale);
+                    free(heap_buf);
                     if (*endptr) {
                         return JsonLogic_NaN;
                     }
@@ -139,7 +139,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 return (JsonLogic_Handle){ .number = 0.0 };
 
             case JsonLogic_Type_Boolean:
-                return (JsonLogic_Handle){ .number = handle.intptr & 1 };
+                return (JsonLogic_Handle){ .number = (double) (handle.intptr & 1) };
 
             case JsonLogic_Type_Error:
                 return handle;

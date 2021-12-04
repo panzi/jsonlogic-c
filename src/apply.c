@@ -292,26 +292,26 @@ JsonLogic_Handle jsonlogic_apply_custom(
             jsonlogic_decref(items);
             return reduce_context;
         }
-        JsonLogic_Object *object = JSONLOGIC_CAST_OBJECT(reduce_context);
+        JsonLogic_Object *reduce_context_object = JSONLOGIC_CAST_OBJECT(reduce_context);
         JsonLogic_Handle accumulator = jsonlogic_incref(init);
 
         size_t accumulator_index = jsonlogic_object_get_index_utf16_with_hash(
-            object,
+            reduce_context_object,
             JSONLOGIC_ACCUMULATOR_HASH,
             JSONLOGIC_ACCUMULATOR,
             JSONLOGIC_ACCUMULATOR_SIZE);
-        assert(accumulator_index < object->size);
+        assert(accumulator_index < reduce_context_object->size);
 
         size_t current_index = jsonlogic_object_get_index_utf16_with_hash(
-            object,
+            reduce_context_object,
             JSONLOGIC_CURRENT_HASH,
             JSONLOGIC_CURRENT,
             JSONLOGIC_CURRENT_SIZE);
-        assert(current_index < object->size);
+        assert(current_index < reduce_context_object->size);
 
         for (size_t index = 0; index < array->size; ++ index) {
-            object->entries[accumulator_index].value = accumulator;
-            object->entries[current_index].value     = array->items[index];
+            reduce_context_object->entries[accumulator_index].value = accumulator;
+            reduce_context_object->entries[current_index].value     = array->items[index];
 
             JsonLogic_Handle new_accumulator = jsonlogic_apply_custom(
                 lambda,
@@ -321,8 +321,8 @@ JsonLogic_Handle jsonlogic_apply_custom(
             jsonlogic_decref(accumulator);
             accumulator = new_accumulator;
 
-            object->entries[accumulator_index].value = JsonLogic_Null;
-            object->entries[current_index].value     = JsonLogic_Null;
+            reduce_context_object->entries[accumulator_index].value = JsonLogic_Null;
+            reduce_context_object->entries[current_index].value     = JsonLogic_Null;
         }
 
         jsonlogic_decref(reduce_context);

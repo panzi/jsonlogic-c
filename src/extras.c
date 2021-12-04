@@ -614,8 +614,7 @@ JsonLogic_Handle jsonlogic_extra_ZIP(void *context, JsonLogic_Handle data, JsonL
         return JsonLogic_Error_IllegalArgument;
     }
 
-    const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(args[0]);
-    size_t min_len = array->size;
+    size_t min_len = JSONLOGIC_CAST_ARRAY(args[0])->size;
 
     for (size_t index = 1; index < argc; ++ index) {
         JsonLogic_Handle handle = args[index];
@@ -754,7 +753,7 @@ JsonLogic_Handle jsonlogic_extra_EXTRACT_FROM_UVCI(void *context, JsonLogic_Hand
     }
 
     double dbl_index = jsonlogic_to_double(args[1]);
-    size_t sz_index = dbl_index;
+    size_t sz_index = (size_t) dbl_index;
     if (!isfinite(dbl_index) || sz_index != dbl_index) {
         return JsonLogic_Null;
     }
