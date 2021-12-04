@@ -432,6 +432,8 @@ JsonLogic_Handle push_list(void *context, JsonLogic_Handle data, JsonLogic_Handl
 }
 
 void test_short_circuit(TestContext *test_context) {
+    JsonLogic_Handle logic = JsonLogic_Null;
+    JsonLogic_Handle data  = JsonLogic_Null;
     JsonLogic_Operations ops = JSONLOGIC_OPERATIONS_INIT;
     TestShortCircuit context = {
         .conditions   = JSONLOGIC_ARRAYBUF_INIT,
@@ -448,7 +450,7 @@ void test_short_circuit(TestContext *test_context) {
         { NULL,         { NULL,     NULL      } },
     }) == JSONLOGIC_ERROR_SUCCESS);
 
-    JsonLogic_Handle logic = jsonlogic_parse("{\"if\":["
+    logic = jsonlogic_parse("{\"if\":["
         "{\"push.if\":[true]},"
         "{\"push.then\":[\"first\"]},"
         "{\"push.if\":[false]},"
@@ -460,7 +462,7 @@ void test_short_circuit(TestContext *test_context) {
         logic, JsonLogic_Null,
         &ops));
 
-    JsonLogic_Handle data = jsonlogic_parse("[true]", NULL);
+    data = jsonlogic_parse("[true]", NULL);
     JsonLogic_Handle actual = context.conditions.array == NULL ? JsonLogic_Null : jsonlogic_array_into_handle(context.conditions.array);
     TEST_ASSERT_X(jsonlogic_deep_strict_equal(actual, data), {
         fprintf(stderr, "     error: Wrong result\n");
