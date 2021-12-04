@@ -25,6 +25,8 @@ I've also written a JsonLogic+CertLogic implementation in Python:
 
 * [Usage Example](#usage-example)
 * [Build](#build)
+  * [Static Library](#static-library)
+  * [Shared Library](#shared-library)
   * [Build Release](#build-release)
   * [Cross Compilation](#cross-compilation)
 * [Extras](#extras)
@@ -113,7 +115,7 @@ Build
 
 This library has zero external dependencies (hence slow JSON parsing).
 
-Make static library:
+### Static Library
 
 ```bash
 make static
@@ -126,11 +128,11 @@ This generates these assets:
 * `build/$target/$release/include/jsonlogic_defs.h`
 * `build/$target/$release/lib/libjsonlogic.a`
 
-`$target` may be a string like `linux64` or `darwin32` or similar. Per default
-it is:
+`$target` may be a string like `linux-x86_64`, `darwin-i686`, `mingw-x86_64`
+`msvc-x64` or similar. Per default it is:
 
 ```bash
-echo $(uname|tr '[:upper:]' '[:lower:]')$(getconf LONG_BIT)
+echo $(uname -s|tr '[:upper:]' '[:lower:]')-$(uname -m)
 ```
 
 For more see [Cross Compilation](#cross-compilation) below.
@@ -138,7 +140,27 @@ For more see [Cross Compilation](#cross-compilation) below.
 `$release` may be `debug` or `release`. (default: `debug`) For more see
 [Build Release](#build-release) below.
 
-Make shared library:
+**NOTE:** When you want to use the static library on Windows you need to define
+`JSONLOGIC_STATIC` before including `jsonlogic.h` (or `jsonlogic_defs.h`). E.g.
+do:
+
+```C
+#define JSONLOGIC_STATIC
+#include <jsonlogic.h>
+```
+
+Or call MSVC like this:
+
+```bat
+cl /DJSONLOGIC_STATIC /c foo.c
+cl foo.obj libjsonlogic.lib
+```
+
+This is because of different symbol visibility rules that require different
+declarations between static and shared libraries on Windows. On other platforms
+you don't need to declare that macro, it will just be ignored if you do.
+
+### Shared Library
 
 ```bash
 make shared
