@@ -18,18 +18,19 @@ if [[ -e "$zip_file" ]]; then
     rm -r "$zip_file"
 fi
 
+export WINEDEBUG=-all
 nproc=$(nproc)
 for release in OFF ON; do
     for linkage in shared static; do
         for platform in linux mingw; do
-            for bits in i686 x86_64; do
-                echo make RELEASE=$release TARGET=$platform$bits $linkage
-                make -j"$nproc" TARGET=$platform$bits RELEASE=$release $linkage >/dev/null
+            for arch in i686 x86_64; do
+                echo make RELEASE=$release TARGET=$platform-$arch $linkage
+                make -j"$nproc" TARGET=$platform-$arch RELEASE=$release $linkage >/dev/null
             done
         done
         for arch in x86 x64 arm arm64; do
             echo make -f Makefile.msvc RELEASE=$release ARCH=$arch $linkage
-            WINEDEBUG=-all make -j"$nproc" -f Makefile.msvc ARCH=$arch RELEASE=$release $linkage >/dev/null
+            make -j"$nproc" -f Makefile.msvc ARCH=$arch RELEASE=$release $linkage >/dev/null
         done
     done
 done

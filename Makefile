@@ -38,6 +38,8 @@ ifeq ($(patsubst %-i686,i686,$(TARGET)),i686)
 else
 ifeq ($(patsubst %-x86_64,x86_64,$(TARGET)),x86_64)
     CFLAGS += -m64 -march=x86-64
+else
+    CFLAGS += -march=$(shell echo $(TARGET)|sed 's/.*-//')
 endif
 endif
 
@@ -46,6 +48,9 @@ ifeq ($(patsubst mingw-%,mingw,$(TARGET)),mingw)
     BIN_EXT  = .exe
     SO_EXT   = .dll
 else
+ifneq ($(shell echo $(TARGET)|sed 's/-.*//'),$(shell uname -s|tr '[:upper:]' '[:lower:]'))
+    $(error platform of target $(TARGET) is not supported)
+endif
 ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
     CC      = clang
     CFLAGS += -Qunused-arguments
