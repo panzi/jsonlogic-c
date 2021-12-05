@@ -11,7 +11,7 @@ JSONLOGIC_DEF_UTF16(JSONLOGIC_ACCUMULATOR, u"accumulator")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_CURRENT,     u"current")
 JSONLOGIC_DEF_UTF16(JSONLOGIC_DATA,        u"data")
 
-const JsonLogic_Handle JsonLogic_Null = { .intptr = JsonLogic_Type_Null };
+const JsonLogic_Handle JsonLogic_Null = JsonLogic_Type_Null;
 
 JSONLOGIC_LOCALE_T JsonLogic_C_Locale = NULL;
 
@@ -22,7 +22,7 @@ JsonLogic_Type jsonlogic_get_type(JsonLogic_Handle handle) {
         return JsonLogic_Type_Number;
     }
 
-    return handle.intptr & JsonLogic_TypeMask;
+    return handle & JsonLogic_TypeMask;
 }
 
 const char *jsonlogic_get_type_name(JsonLogic_Type type) {
@@ -82,15 +82,15 @@ bool jsonlogic_is_string(JsonLogic_Handle handle) {
 }
 
 bool jsonlogic_is_true(JsonLogic_Handle handle) {
-    return handle.intptr == JSONLOGIC_TURE;
+    return handle == JSONLOGIC_TURE;
 }
 
 bool jsonlogic_is_false(JsonLogic_Handle handle) {
-    return handle.intptr == JSONLOGIC_FALSE;
+    return handle == JSONLOGIC_FALSE;
 }
 
 JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle) {
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
             assert(JSONLOGIC_CAST_STRING(handle)->refcount < SIZE_MAX);
             JSONLOGIC_CAST_STRING(handle)->refcount ++;
@@ -110,7 +110,7 @@ JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle) {
 }
 
 JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle) {
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         {
             JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
@@ -149,7 +149,7 @@ JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle) {
 }
 
 JsonLogic_Handle jsonlogic_dissolve(JsonLogic_Handle handle) {
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_Array:
         {
             JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
@@ -181,7 +181,7 @@ JsonLogic_Handle jsonlogic_dissolve(JsonLogic_Handle handle) {
 }
 
 size_t jsonlogic_get_refcount(JsonLogic_Handle handle) {
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
             return JSONLOGIC_CAST_STRING(handle)->refcount;
 
@@ -253,7 +253,7 @@ JsonLogic_Handle jsonlogic_op_MUL(void *context, JsonLogic_Handle data, JsonLogi
     for (size_t index = 0; index < argc; ++ index) {
         value *= jsonlogic_to_double(args[index]);
     }
-    return (JsonLogic_Handle){ .number = value };
+    return JSONLOGIC_NUM_TO_HNDL(value);
 }
 
 JsonLogic_Handle jsonlogic_op_ADD(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -261,12 +261,12 @@ JsonLogic_Handle jsonlogic_op_ADD(void *context, JsonLogic_Handle data, JsonLogi
     for (size_t index = 0; index < argc; ++ index) {
         value += jsonlogic_to_double(args[index]);
     }
-    return (JsonLogic_Handle){ .number = value };
+    return JSONLOGIC_NUM_TO_HNDL(value);
 }
 
 JsonLogic_Handle jsonlogic_op_SUB(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     switch (argc) {
-        case 0:  return (JsonLogic_Handle){ .number = 0.0 };
+        case 0:  return JSONLOGIC_NUM_TO_HNDL(0.0);
         case 1:  return jsonlogic_negative(args[0]);
         default: return jsonlogic_sub(args[0], args[1]);
     }
@@ -432,16 +432,16 @@ JsonLogic_Handle jsonlogic_op_LOG(void *context, JsonLogic_Handle data, JsonLogi
 
 JsonLogic_Handle jsonlogic_op_MAX(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
-        return (JsonLogic_Handle){ .number = -INFINITY };
+        return JSONLOGIC_NUM_TO_HNDL(-INFINITY);
     }
-    JsonLogic_Handle value = jsonlogic_to_number(args[0]);
+    double number = JSONLOGIC_HNDL_TO_NUM(jsonlogic_to_number(args[0]));
     for (size_t index = 1; index < argc; ++ index) {
-        JsonLogic_Handle other = jsonlogic_to_number(args[index]);
-        if (other.number > value.number) {
-            value.number = other.number;
+        JsonLogic_Handle other = JSONLOGIC_HNDL_TO_NUM(jsonlogic_to_number(args[index]));
+        if (other > number) {
+            number = other;
         }
     }
-    return value;
+    return JSONLOGIC_NUM_TO_HNDL(number);
 }
 
 JsonLogic_Handle jsonlogic_op_MERGE(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -478,16 +478,16 @@ JsonLogic_Handle jsonlogic_op_MERGE(void *context, JsonLogic_Handle data, JsonLo
 
 JsonLogic_Handle jsonlogic_op_MIN(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc == 0) {
-        return (JsonLogic_Handle){ .number = INFINITY };
+        return JSONLOGIC_NUM_TO_HNDL(INFINITY);
     }
-    JsonLogic_Handle value = jsonlogic_to_number(args[0]);
+    double number = JSONLOGIC_HNDL_TO_NUM(jsonlogic_to_number(args[0]));
     for (size_t index = 1; index < argc; ++ index) {
-        JsonLogic_Handle other = jsonlogic_to_number(args[index]);
-        if (other.number < value.number) {
-            value.number = other.number;
+        double other = JSONLOGIC_HNDL_TO_NUM(jsonlogic_to_number(args[index]));
+        if (other < number) {
+            number = other;
         }
     }
-    return value;
+    return JSONLOGIC_NUM_TO_HNDL(number);
 }
 
 JsonLogic_Handle jsonlogic_op_MISSING(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
@@ -567,8 +567,11 @@ JsonLogic_Handle jsonlogic_op_VAR(void *context, JsonLogic_Handle data, JsonLogi
 
     JsonLogic_Handle arg0 = args[0];
 
-    if (JSONLOGIC_IS_NUMBER(arg0) && isfinite(arg0.number) && (double)(size_t)arg0.number == arg0.number) {
-        return jsonlogic_get_index(data, (size_t)arg0.number);
+    if (JSONLOGIC_IS_NUMBER(arg0)) {
+        double number = JSONLOGIC_HNDL_TO_NUM(arg0);
+        if (isfinite(number) && (double)(size_t)number == number) {
+            return jsonlogic_get_index(data, (size_t)number);
+        }
     }
 
     JsonLogic_Handle key = jsonlogic_to_string(arg0);

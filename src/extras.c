@@ -100,7 +100,7 @@ size_t jsonlogic_scan_uint32(const char16_t **str, const char16_t *endptr, const
     return count;
 }
 
-#define DOUBLE_ILLEGAL_ARGUMENT ((JsonLogic_Handle){ .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT }.number)
+#define DOUBLE_ILLEGAL_ARGUMENT JSONLOGIC_HNDL_TO_NUM(JSONLOGIC_ERROR_ILLEGAL_ARGUMENT)
 
 typedef struct JsonLogic_DateTime {
     int32_t year;
@@ -133,7 +133,7 @@ JsonLogic_Error jsonlogic_parse_date_time_handle(JsonLogic_Handle handle, JsonLo
         struct tm time_info;
         int32_t msec  = 0;
         int32_t tzoff = 0;
-        double timestamp = handle.number;
+        double timestamp = JSONLOGIC_HNDL_TO_NUM(handle);
 
         memset(&time_info, 0, sizeof(time_info));
 
@@ -311,7 +311,7 @@ double jsonlogic_parse_date_time_utf16(const char16_t *str, size_t size) {
 
     JsonLogic_Error error = jsonlogic_parse_date_time_utf16_intern(str, size, &date_time);
     if (error != JSONLOGIC_ERROR_SUCCESS) {
-        return (JsonLogic_Handle){ .intptr = error }.number;
+        return JSONLOGIC_HNDL_TO_NUM(error);
     }
 
     return jsonlogic_combine_date_time(&date_time);
@@ -547,14 +547,14 @@ double jsonlogic_now() {
     time_t tv = time(NULL);
 
     if (tv == (time_t)-1) {
-        return JsonLogic_Error_InternalError.number;
+        return JSONLOGIC_HNDL_TO_NUM(JsonLogic_Error_InternalError);
     }
 
     return (double)tv * 1000;
 #else
     struct timeval tv;
     if (gettimeofday(&tv, NULL) != 0) {
-        return JsonLogic_Error_InternalError.number;
+        return JSONLOGIC_HNDL_TO_NUM(JsonLogic_Error_InternalError);
     }
 
     return (double)tv.tv_sec * 1000 + (double)(tv.tv_usec / 1000);
@@ -563,11 +563,11 @@ double jsonlogic_now() {
 
 double jsonlogic_parse_date_time(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
-        return handle.number;
+        return JSONLOGIC_HNDL_TO_NUM(handle);
     }
 
     if (!JSONLOGIC_IS_STRING(handle)) {
-        return JsonLogic_Error_IllegalArgument.number;
+        return JSONLOGIC_HNDL_TO_NUM(JsonLogic_Error_IllegalArgument);
     }
 
     const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);

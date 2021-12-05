@@ -10,7 +10,7 @@ JsonLogic_Handle jsonlogic_iter_next(JsonLogic_Iterator *iter) {
         return JsonLogic_Error_IllegalArgument;
     }
 
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_Array:
         {
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);

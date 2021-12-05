@@ -104,27 +104,35 @@ struct JsonLogic_Array;
 struct JsonLogic_String;
 struct JsonLogic_Object;
 
-#define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)(uintptr_t)((handle).intptr & JsonLogic_PtrMask))
-#define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) (uintptr_t)((handle).intptr & JsonLogic_PtrMask))
-#define JSONLOGIC_CAST_OBJECT(handle) ((JsonLogic_Object*)(uintptr_t)((handle).intptr & JsonLogic_PtrMask))
+typedef union {
+    uint64_t intptr;
+    double   number;
+} JsonLogic_Handle_Union;
 
-#define JSONLOGIC_IS_STRING(handle)  (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_String)
-#define JSONLOGIC_IS_OBJECT(handle)  (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Object)
-#define JSONLOGIC_IS_ARRAY(handle)   (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Array)
-#define JSONLOGIC_IS_BOOLEAN(handle) (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Boolean)
-#define JSONLOGIC_IS_NULL(handle)    ((handle).intptr == JsonLogic_Type_Null)
-#define JSONLOGIC_IS_NUMBER(handle)  ((handle).intptr < JsonLogic_MaxNumber)
-#define JSONLOGIC_IS_TRUE(handle)    ((handle).intptr == (JsonLogic_Type_Boolean | 1))
-#define JSONLOGIC_IS_FALSE(handle)   ((handle).intptr == (JsonLogic_Type_Boolean | 0))
+#define JSONLOGIC_NUM_TO_HNDL(NUM)    (JsonLogic_Handle_Union){ .number = NUM }.intptr
+#define JSONLOGIC_HNDL_TO_NUM(HANDLE) (JsonLogic_Handle_Union){ .intptr = HANDLE }.number
 
-#define JSONLOGIC_IS_ERROR_(handle)  (((handle).intptr & JsonLogic_TypeMask) == JsonLogic_Type_Error)
+#define JSONLOGIC_CAST_STRING(handle) ((JsonLogic_String*)(uintptr_t)((handle) & JsonLogic_PtrMask))
+#define JSONLOGIC_CAST_ARRAY( handle) ((JsonLogic_Array*) (uintptr_t)((handle) & JsonLogic_PtrMask))
+#define JSONLOGIC_CAST_OBJECT(handle) ((JsonLogic_Object*)(uintptr_t)((handle) & JsonLogic_PtrMask))
+
+#define JSONLOGIC_IS_STRING(handle)  (((handle) & JsonLogic_TypeMask) == JsonLogic_Type_String)
+#define JSONLOGIC_IS_OBJECT(handle)  (((handle) & JsonLogic_TypeMask) == JsonLogic_Type_Object)
+#define JSONLOGIC_IS_ARRAY(handle)   (((handle) & JsonLogic_TypeMask) == JsonLogic_Type_Array)
+#define JSONLOGIC_IS_BOOLEAN(handle) (((handle) & JsonLogic_TypeMask) == JsonLogic_Type_Boolean)
+#define JSONLOGIC_IS_NULL(handle)    ((handle) == JsonLogic_Type_Null)
+#define JSONLOGIC_IS_NUMBER(handle)  ((handle) < JsonLogic_MaxNumber)
+#define JSONLOGIC_IS_TRUE(handle)    ((handle) == (JsonLogic_Type_Boolean | 1))
+#define JSONLOGIC_IS_FALSE(handle)   ((handle) == (JsonLogic_Type_Boolean | 0))
+
+#define JSONLOGIC_IS_ERROR_(handle)  (((handle) & JsonLogic_TypeMask) == JsonLogic_Type_Error)
 
 #if defined(NDEBUG) || 1
     #define JSONLOGIC_IS_ERROR(handle) JSONLOGIC_IS_ERROR_(handle)
 #else
     // extra debug stuf prints error trace wherever JSONLOGIC_IS_ERROR() is used:
     #define JSONLOGIC_IS_ERROR(handle) \
-        (JSONLOGIC_IS_ERROR_(handle) ? (JSONLOGIC_DEBUG("trace: %s", jsonlogic_get_error_message((handle).intptr)), true) : false)
+        (JSONLOGIC_IS_ERROR_(handle) ? (JSONLOGIC_DEBUG("trace: %s", jsonlogic_get_error_message((handle))), true) : false)
 #endif
 
 #define JSONLOGIC_DECL_UTF16(NAME) \
@@ -226,7 +234,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_string_into_handle(JsonLogic
         return JsonLogic_Error_OutOfMemory;
     }
     assert(string->refcount == 1);
-    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String };
+    return ((uint64_t)(uintptr_t)string) | JsonLogic_Type_String;
 }
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array) {
@@ -234,7 +242,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_
         return JsonLogic_Error_OutOfMemory;
     }
     assert(array->refcount == 1);
-    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)array) | JsonLogic_Type_Array };
+    return ((uint64_t)(uintptr_t)array) | JsonLogic_Type_Array;
 }
 
 JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic_Object *object) {
@@ -242,7 +250,7 @@ JSONLOGIC_PRIVATE inline JsonLogic_Handle jsonlogic_object_into_handle(JsonLogic
         return JsonLogic_Error_OutOfMemory;
     }
     assert(object->refcount == 1);
-    return (JsonLogic_Handle){ .intptr = ((uint64_t)(uintptr_t)object) | JsonLogic_Type_Object };
+    return ((uint64_t)(uintptr_t)object) | JsonLogic_Type_Object;
 }
 
 #ifndef NDEBUG

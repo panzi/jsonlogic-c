@@ -116,7 +116,7 @@ JsonLogic_Handle jsonlogic_includes(JsonLogic_Handle list, JsonLogic_Handle item
         return item;
     }
 
-    switch (list.intptr & JsonLogic_TypeMask) {
+    switch (list & JsonLogic_TypeMask) {
         case JsonLogic_Type_Array:
         {
             const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(list);
@@ -177,7 +177,7 @@ JsonLogic_Array *jsonlogic_array_truncate(JsonLogic_Array *array, size_t size) {
 
 JsonLogic_Error jsonlogic_arraybuf_append(JsonLogic_ArrayBuf *buf, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
-        return handle.intptr;
+        return handle;
     }
 
     if (buf->capacity == 0 || buf->capacity == buf->array->size) {
@@ -245,7 +245,7 @@ JsonLogic_Handle jsonlogic_to_array(JsonLogic_Handle handle) {
         return JsonLogic_Error_IllegalArgument;
     }
 
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_Array:
             return jsonlogic_incref(handle);
 

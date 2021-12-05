@@ -10,26 +10,7 @@
 extern "C" {
 #endif
 
-// This hack breas under Linux i686 for some reason!
-// If it breaks for that then probably also for other configurations?
-// TODO: Use `typedef uint64_t JsonLogic_Handle;` and do casting.
-// #if defined(JSONLOGIC_INTERN_H)
-typedef union {
-    uint64_t intptr;
-    double   number;
-} JsonLogic_Handle;
-// #else
-// typedef uint64_t JsonLogic_Handle;
-// #endif
-
-// TODO:
-typedef union {
-    uint64_t intptr;
-    double   number;
-} JsonLogic_Handle_Union;
-
-#define JSONLOGIC_NUMBER(NUM) (JsonLogic_Handle_Union){ .number = NUM }.intptr
-#define JSONLOGIC_GET_NUMBER(HANDLE) (JsonLogic_Handle_Union){ .intptr = HANDLE }.number
+typedef uint64_t JsonLogic_Handle;
 
 typedef uint64_t JsonLogic_Error;
 

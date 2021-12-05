@@ -4,19 +4,19 @@
 #include <string.h>
 #include <assert.h>
 
-const JsonLogic_Handle JsonLogic_Error_Success          = { .intptr = JSONLOGIC_ERROR_SUCCESS           };
-const JsonLogic_Handle JsonLogic_Error_OutOfMemory      = { .intptr = JSONLOGIC_ERROR_OUT_OF_MEMORY     };
-const JsonLogic_Handle JsonLogic_Error_IllegalOperation = { .intptr = JSONLOGIC_ERROR_ILLEGAL_OPERATION };
-const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = { .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT  };
-const JsonLogic_Handle JsonLogic_Error_InternalError    = { .intptr = JSONLOGIC_ERROR_INTERNAL_ERROR    };
-const JsonLogic_Handle JsonLogic_Error_StopIteration    = { .intptr = JSONLOGIC_ERROR_STOP_ITERATION    };
-const JsonLogic_Handle JsonLogic_Error_IOError          = { .intptr = JSONLOGIC_ERROR_IO_ERROR          };
-const JsonLogic_Handle JsonLogic_Error_SyntaxError      = { .intptr = JSONLOGIC_ERROR_SYNTAX_ERROR      };
-const JsonLogic_Handle JsonLogic_Error_UnicodeError     = { .intptr = JSONLOGIC_ERROR_UNICODE_ERROR     };
+const JsonLogic_Handle JsonLogic_Error_Success          = JSONLOGIC_ERROR_SUCCESS          ;
+const JsonLogic_Handle JsonLogic_Error_OutOfMemory      = JSONLOGIC_ERROR_OUT_OF_MEMORY    ;
+const JsonLogic_Handle JsonLogic_Error_IllegalOperation = JSONLOGIC_ERROR_ILLEGAL_OPERATION;
+const JsonLogic_Handle JsonLogic_Error_IllegalArgument  = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT ;
+const JsonLogic_Handle JsonLogic_Error_InternalError    = JSONLOGIC_ERROR_INTERNAL_ERROR   ;
+const JsonLogic_Handle JsonLogic_Error_StopIteration    = JSONLOGIC_ERROR_STOP_ITERATION   ;
+const JsonLogic_Handle JsonLogic_Error_IOError          = JSONLOGIC_ERROR_IO_ERROR         ;
+const JsonLogic_Handle JsonLogic_Error_SyntaxError      = JSONLOGIC_ERROR_SYNTAX_ERROR     ;
+const JsonLogic_Handle JsonLogic_Error_UnicodeError     = JSONLOGIC_ERROR_UNICODE_ERROR    ;
 
 JsonLogic_Error jsonlogic_get_error(JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_ERROR(handle)) {
-        return (JsonLogic_Error) handle.intptr;
+        return (JsonLogic_Error) handle;
     }
     return JSONLOGIC_ERROR_SUCCESS;
 }
@@ -67,10 +67,10 @@ JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error) {
         case JSONLOGIC_ERROR_IO_ERROR:
         case JSONLOGIC_ERROR_SYNTAX_ERROR:
         case JSONLOGIC_ERROR_UNICODE_ERROR:
-            return (JsonLogic_Handle){ .intptr = error };
+            return error;
 
         default:
-            return (JsonLogic_Handle){ .intptr = JSONLOGIC_ERROR_ILLEGAL_ARGUMENT };
+            return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
     }
 }
 

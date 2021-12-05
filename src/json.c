@@ -659,7 +659,7 @@ static inline JsonLogic_Error jsonlogic_parsestack_handle_value(JsonLogic_ParseS
                 *stateptr = JsonLogic_ParserState_ObjectAfterKey;
                 if (!JSONLOGIC_IS_STRING(value)) {
                     if (JSONLOGIC_IS_ERROR(value)) {
-                        return value.intptr;
+                        return value;
                     }
                     return JSONLOGIC_ERROR_ILLEGAL_ARGUMENT;
                 }
@@ -1155,7 +1155,7 @@ loop_end:
             *infoptr = info;
         }
         jsonlogic_parsestack_free(&stack);
-        return (JsonLogic_Handle){ .intptr = error };
+        return error;
     }
 
     state = JsonLogic_Parser_Root[state][JSONLOGIC_PARSE_EOF];
@@ -1193,7 +1193,7 @@ JsonLogic_Handle jsonlogic_stringify(JsonLogic_Handle value) {
     JsonLogic_Error error = jsonlogic_stringify_intern(&buf, value);
     if (error != JSONLOGIC_ERROR_SUCCESS) {
         jsonlogic_strbuf_free(&buf);
-        return (JsonLogic_Handle){ .intptr = error };
+        return error;
     }
 
     return jsonlogic_string_into_handle(jsonlogic_strbuf_take(&buf));
@@ -1273,7 +1273,7 @@ static inline JsonLogic_Error jsonlogic_print_ascii(FILE *file, const char *str)
 
 JsonLogic_Error jsonlogic_stringify_file(FILE *file, JsonLogic_Handle value) {
     if (JSONLOGIC_IS_ERROR(value)) {
-        return value.intptr;
+        return value;
     }
 
     return jsonlogic_stringify_file_intern(file, value);

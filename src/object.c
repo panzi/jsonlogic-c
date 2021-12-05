@@ -72,7 +72,7 @@ JsonLogic_Handle jsonlogic_object_from_vararg(size_t count, ...) {
         JsonLogic_Error error = jsonlogic_objbuf_set(&buf, entry.key, entry.value);
         if (error != JSONLOGIC_ERROR_SUCCESS) {
             jsonlogic_objbuf_free(&buf);
-            return (JsonLogic_Handle){ .intptr = error };
+            return error;
         }
     }
 
@@ -89,7 +89,7 @@ JsonLogic_Handle jsonlogic_object_from(const JsonLogic_Object_Entry entries[], s
         JsonLogic_Error error = jsonlogic_objbuf_set(&buf, entry.key, entry.value);
         if (error != JSONLOGIC_ERROR_SUCCESS) {
             jsonlogic_objbuf_free(&buf);
-            return (JsonLogic_Handle){ .intptr = error };
+            return error;
         }
     }
 
@@ -118,7 +118,7 @@ JsonLogic_Handle jsonlogic_object_from_utf16(const JsonLogic_Object_Utf16Entry e
         jsonlogic_decref(key);
         if (error != JSONLOGIC_ERROR_SUCCESS) {
             jsonlogic_objbuf_free(&buf);
-            return (JsonLogic_Handle){ .intptr = error };
+            return error;
         }
     }
 
@@ -142,7 +142,7 @@ JsonLogic_Handle jsonlogic_get_utf16_sized(JsonLogic_Handle handle, const char16
         return JsonLogic_Null;
     }
 
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         {
             if (jsonlogic_utf16_equals(key, size, JSONLOGIC_LENGTH, JSONLOGIC_LENGTH_SIZE)) {
@@ -196,7 +196,7 @@ JsonLogic_Handle jsonlogic_get_index(JsonLogic_Handle handle, size_t index) {
         return JsonLogic_Null;
     }
 
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         {
             const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
@@ -240,14 +240,15 @@ JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
     }
 
     if (JSONLOGIC_IS_NUMBER(key)) {
-        switch (handle.intptr & JsonLogic_TypeMask) {
+        switch (handle & JsonLogic_TypeMask) {
             case JsonLogic_Type_String:
             {
-                if (!isfinite(key.number) || key.number < 0) {
+                const double number = JSONLOGIC_HNDL_TO_NUM(key);
+                if (!isfinite(number) || number < 0) {
                     return JsonLogic_Null;
                 }
 
-                size_t index = (size_t) key.number;
+                size_t index = (size_t) number;
                 const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
                 if (index >= string->size) {
                     return JsonLogic_Null;
@@ -257,11 +258,12 @@ JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
             }
             case JsonLogic_Type_Array:
             {
-                if (!isfinite(key.number) || key.number < 0) {
+                const double number = JSONLOGIC_HNDL_TO_NUM(key);
+                if (!isfinite(number) || number < 0) {
                     return JsonLogic_Null;
                 }
 
-                size_t index = (size_t) key.number;
+                size_t index = (size_t) number;
                 const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
                 if (index >= array->size) {
                     return JsonLogic_Null;
@@ -272,7 +274,7 @@ JsonLogic_Handle jsonlogic_get(JsonLogic_Handle handle, JsonLogic_Handle key) {
         }
     }
 
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
         case JsonLogic_Type_Array:
         case JsonLogic_Type_Object:
@@ -345,12 +347,12 @@ size_t jsonlogic_object_get_index(const JsonLogic_Object *object, JsonLogic_Hand
 
 JsonLogic_Error jsonlogic_objbuf_set(JsonLogic_ObjBuf *buf, JsonLogic_Handle key, JsonLogic_Handle value) {
     if (JSONLOGIC_IS_ERROR(value)) {
-        return value.intptr;
+        return value;
     }
 
     JsonLogic_Handle stringkey = jsonlogic_to_string(key);
     if (JSONLOGIC_IS_ERROR(stringkey)) {
-        return stringkey.intptr;
+        return stringkey;
     }
 
     JsonLogic_String *strkey = JSONLOGIC_CAST_STRING(stringkey);

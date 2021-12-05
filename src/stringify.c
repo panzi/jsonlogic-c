@@ -3,14 +3,15 @@
 // this file is included multiple times in json.c with function and type names #defined to make it generic
 static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLogic_Handle handle) {
     if (JSONLOGIC_IS_NUMBER(handle)) {
-        if (isfinite(handle.number)) {
-            return jsonlogic_strbuf_append_double(buf, handle.number);
+        const double number = JSONLOGIC_HNDL_TO_NUM(handle);
+        if (isfinite(number)) {
+            return jsonlogic_strbuf_append_double(buf, number);
         } else {
             return jsonlogic_strbuf_append_ascii(buf, "null");
         }
     }
 
-    switch (handle.intptr & JsonLogic_TypeMask) {
+    switch (handle & JsonLogic_TypeMask) {
         case JsonLogic_Type_String:
             TRY(jsonlogic_strbuf_append_ascii(buf, "\""));
 
@@ -70,7 +71,7 @@ static JsonLogic_Error jsonlogic_stringify_intern(JsonLogic_StrBuf *buf, JsonLog
             return jsonlogic_strbuf_append_ascii(buf, "\"");
 
         case JsonLogic_Type_Boolean:
-            if (handle.intptr == JSONLOGIC_FALSE) {
+            if (handle == JSONLOGIC_FALSE) {
                 return jsonlogic_strbuf_append_ascii(buf, "false");
             } else {
                 return jsonlogic_strbuf_append_ascii(buf, "true");

@@ -37,10 +37,10 @@ static bool JsonLogic_IsSpaceMap[256] = {
 #define JSONLOGIC_IS_SPACE(ch) \
     ((ch) <= 0xFF && JsonLogic_IsSpaceMap[(ch)])
 
-const JsonLogic_Handle JsonLogic_NaN = { .number = NAN };
+const JsonLogic_Handle JsonLogic_NaN = 0x7ff8000000000000;
 
 JsonLogic_Handle jsonlogic_number_from(double value) {
-    return (JsonLogic_Handle){ .number = value };
+    return JSONLOGIC_NUM_TO_HNDL(value);
 }
 
 JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
@@ -49,13 +49,13 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
             return handle;
         }
 
-        switch (handle.intptr & JsonLogic_TypeMask) {
+        switch (handle & JsonLogic_TypeMask) {
             case JsonLogic_Type_String:
             {
                 // TODO: more efficient method! Directly parse UTF-16?
                 const JsonLogic_String *string = JSONLOGIC_CAST_STRING(handle);
                 if (string->size == 0) {
-                    return (JsonLogic_Handle){ .number = 0.0 };
+                    return JSONLOGIC_NUM_TO_HNDL(0.0);
                 }
 
                 const char16_t *str = string->str;
@@ -71,15 +71,15 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 }
 
                 if (jsonlogic_utf16_equals(str, size, JSONLOGIC_INFINITY_STRING, JSONLOGIC_INFINITY_STRING_SIZE)) {
-                    return (JsonLogic_Handle){ .number = INFINITY };
+                    return JSONLOGIC_NUM_TO_HNDL(INFINITY);
                 }
 
                 if (jsonlogic_utf16_equals(str, size, JSONLOGIC_POS_INFINITY_STRING, JSONLOGIC_POS_INFINITY_STRING_SIZE)) {
-                    return (JsonLogic_Handle){ .number = INFINITY };
+                    return JSONLOGIC_NUM_TO_HNDL(INFINITY);
                 }
 
                 if (jsonlogic_utf16_equals(str, size, JSONLOGIC_NEG_INFINITY_STRING, JSONLOGIC_NEG_INFINITY_STRING_SIZE)) {
-                    return (JsonLogic_Handle){ .number = -INFINITY };
+                    return JSONLOGIC_NUM_TO_HNDL(-INFINITY);
                 }
                 if (JsonLogic_C_Locale == NULL) {
                     JsonLogic_C_Locale = JSONLOGIC_CREATE_C_LOCALE();
@@ -100,7 +100,7 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     if (*endptr) {
                         return JsonLogic_NaN;
                     }
-                    return (JsonLogic_Handle){ .number = value };
+                    return JSONLOGIC_NUM_TO_HNDL(value);
                 } else {
                     char *heap_buf = malloc(size + 1);
                     if (heap_buf == NULL) {
@@ -121,14 +121,14 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                     if (*endptr) {
                         return JsonLogic_NaN;
                     }
-                    return (JsonLogic_Handle){ .number = value };
+                    return JSONLOGIC_NUM_TO_HNDL(value);
                 }
             }
             case JsonLogic_Type_Array:
             {
                 const JsonLogic_Array *array = JSONLOGIC_CAST_ARRAY(handle);
                 if (array->size == 0) {
-                    return (JsonLogic_Handle){ .number = 0.0 };
+                    return JSONLOGIC_NUM_TO_HNDL(0.0);
                 } else if (array->size > 1) {
                     return JsonLogic_NaN;
                 }
@@ -136,10 +136,10 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
                 break;
             }
             case JsonLogic_Type_Null:
-                return (JsonLogic_Handle){ .number = 0.0 };
+                return JSONLOGIC_NUM_TO_HNDL(0.0);
 
             case JsonLogic_Type_Boolean:
-                return (JsonLogic_Handle){ .number = (double) (handle.intptr & 1) };
+                return JSONLOGIC_NUM_TO_HNDL((double) (handle & 1));
 
             case JsonLogic_Type_Error:
                 return handle;
@@ -153,29 +153,29 @@ JsonLogic_Handle jsonlogic_to_number(JsonLogic_Handle handle) {
 
 inline double jsonlogic_to_double(JsonLogic_Handle handle) {
     // since all special values are some sort of NaN we can ignore here that there can be JsonLogic_Error_*
-    return jsonlogic_to_number(handle).number;
+    return JSONLOGIC_HNDL_TO_NUM(jsonlogic_to_number(handle));
 }
 
 JsonLogic_Handle jsonlogic_negative(JsonLogic_Handle value) {
-    return (JsonLogic_Handle){ .number = -jsonlogic_to_number(value).number };
+    return JSONLOGIC_NUM_TO_HNDL(-JSONLOGIC_HNDL_TO_NUM(jsonlogic_to_number(value)));
 }
 
 JsonLogic_Handle jsonlogic_add(JsonLogic_Handle a, JsonLogic_Handle b) {
-    return (JsonLogic_Handle){ .number = jsonlogic_to_double(a) + jsonlogic_to_double(b) };
+    return JSONLOGIC_NUM_TO_HNDL(jsonlogic_to_double(a) + jsonlogic_to_double(b));
 }
 
 JsonLogic_Handle jsonlogic_sub(JsonLogic_Handle a, JsonLogic_Handle b) {
-    return (JsonLogic_Handle){ .number = jsonlogic_to_double(a) - jsonlogic_to_double(b) };
+    return JSONLOGIC_NUM_TO_HNDL(jsonlogic_to_double(a) - jsonlogic_to_double(b));
 }
 
 JsonLogic_Handle jsonlogic_mul(JsonLogic_Handle a, JsonLogic_Handle b) {
-    return (JsonLogic_Handle){ .number = jsonlogic_to_double(a) * jsonlogic_to_double(b) };
+    return JSONLOGIC_NUM_TO_HNDL(jsonlogic_to_double(a) * jsonlogic_to_double(b));
 }
 
 JsonLogic_Handle jsonlogic_div(JsonLogic_Handle a, JsonLogic_Handle b) {
-    return (JsonLogic_Handle){ .number = jsonlogic_to_double(a) / jsonlogic_to_double(b) };
+    return JSONLOGIC_NUM_TO_HNDL(jsonlogic_to_double(a) / jsonlogic_to_double(b));
 }
 
 JsonLogic_Handle jsonlogic_mod(JsonLogic_Handle a, JsonLogic_Handle b) {
-    return (JsonLogic_Handle){ .number = fmod(jsonlogic_to_double(a), jsonlogic_to_double(b)) };
+    return JSONLOGIC_NUM_TO_HNDL(fmod(jsonlogic_to_double(a), jsonlogic_to_double(b)));
 }
