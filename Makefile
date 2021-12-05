@@ -116,7 +116,7 @@ endif
 
 .PHONY: static shared lib so inc examples examples_shared \
         clean install uninstall test test_shared valgrind \
-        ops
+        ops install_static install_shared
 
 static: lib inc
 
@@ -145,9 +145,19 @@ so: $(SO)
 
 inc: $(INC)
 
-install: $(LIB) $(SO) $(INC) $(BIN)
+install: $(LIB) $(SO) $(INC)
 	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
 	cp $(LIB) $(SO) $(PREFIX)/lib
+	cp $(INC) $(PREFIX)/include
+
+install_static: $(LIB) $(INC)
+	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
+	cp $(LIB) $(PREFIX)/lib
+	cp $(INC) $(PREFIX)/include
+
+install_shared: $(SO) $(INC)
+	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
+	cp $(SO) $(PREFIX)/lib
 	cp $(INC) $(PREFIX)/include
 
 uninstall:

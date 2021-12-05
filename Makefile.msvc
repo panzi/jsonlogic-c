@@ -68,7 +68,8 @@ endif
 endif
 
 .PHONY: static shared lib so inc examples examples_shared \
-        clean install uninstall test test_shared ops
+        clean install uninstall test test_shared ops \
+        install_static install_shared
 
 static: lib inc
 
@@ -93,6 +94,35 @@ examples_shared: $(EXAMPLES_SHARED)
 so: $(SO)
 
 inc: $(INC)
+
+STATIC_ASSETS=$(LIB)
+SHARED_ASSETS=$(SO) $(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic.lib $(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic.exp
+ifeq ($(RELEASE),OFF)
+    SHARED_ASSETS += $(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic.pdb $(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic.ilk
+endif
+
+install: $(LIB) $(SO) $(INC)
+	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
+	cp $(STATIC_ASSETS) $(SHARED_ASSETS) $(PREFIX)/lib
+	cp $(INC) $(PREFIX)/include
+
+install_static: $(LIB) $(INC)
+	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
+	cp $(STATIC_ASSETS) $(PREFIX)/lib
+	cp $(INC) $(PREFIX)/include
+
+install_shared: $(SO) $(INC)
+	@mkdir -p $(PREFIX)/lib $(PREFIX)/include
+	cp $(SHARED_ASSETS) $(PREFIX)/lib
+	cp $(INC) $(PREFIX)/include
+
+uninstall:
+	rm $(PREFIX)/lib/libjsonlogic.a \
+	   $(PREFIX)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT) \
+	   $(PREFIX)/include/jsonlogic_defs.h \
+	   $(PREFIX)/include/jsonlogic_extras.h \
+	   $(PREFIX)/include/jsonlogic.h
+
 
 ifneq ($(ARCH),$(HOST_ARCH))
 $(HOST_BUILD_DIR)/bin/compile_operations$(BIN_EXT): src/compile_operations.c src/hash.c src/jsonlogic.h src/jsonlogic_intern.h

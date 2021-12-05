@@ -189,8 +189,8 @@ For Windows it generates these assets:
 * `build/$target/$release/lib/jsonlogic.dll`
 * `build/$target/$release/lib/jsonlogic.lib`
 * `build/$target/$release/lib/jsonlogic.exp`
-* `build/$target/$release/lib/jsonlogic.ilk`
 * `build/$target/$release/lib/jsonlogic.pdb` (debug build only)
+* `build/$target/$release/lib/jsonlogic.ilk` (debug build only)
 
 Make examples:
 
