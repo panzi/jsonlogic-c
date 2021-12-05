@@ -60,27 +60,22 @@ typedef uint64_t JsonLogic_Type;
     #else
         #ifdef JSONLOGIC_WIN_EXPORT
             // Exporting...
-            #ifdef __GNUC__
-                #define JSONLOGIC_EXPORT __attribute__ ((dllexport))
-            #else
-                #define JSONLOGIC_EXPORT __declspec(dllexport) // Note: actually gcc seems to also supports this syntax.
-            #endif
+            #define JSONLOGIC_EXPORT __declspec(dllexport)
         #else
-            #ifdef __GNUC__
-                #define JSONLOGIC_EXPORT __attribute__ ((dllimport))
-            #else
-                #define JSONLOGIC_EXPORT __declspec(dllimport) // Note: actually gcc seems to also supports this syntax.
-            #endif
+            #define JSONLOGIC_EXPORT __declspec(dllimport)
         #endif
     #endif
+    #define JSONLOGIC_EXPORT_CONST JSONLOGIC_EXPORT extern
     #define JSONLOGIC_PRIVATE
 #else
     #if (defined(__GNUC__) && __GNUC__ >= 4) || defined(__clang__)
         #define JSONLOGIC_EXPORT  __attribute__ ((visibility ("default")))
         #define JSONLOGIC_PRIVATE __attribute__ ((visibility ("hidden")))
+        #define JSONLOGIC_EXPORT_CONST JSONLOGIC_EXPORT extern
     #else
         #define JSONLOGIC_EXPORT extern
         #define JSONLOGIC_PRIVATE
+        #define JSONLOGIC_EXPORT_CONST extern
     #endif
 #endif
 

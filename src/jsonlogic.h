@@ -19,19 +19,19 @@ typedef struct JsonLogic_LineInfo {
 
 #define JSONLOGIC_LINEINFO_INIT (JsonLogic_LineInfo){ .index = 0, .lineno = 0, .column = 0 }
 
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_NaN;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Null;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_True;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_False;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_Success;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_OutOfMemory;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalOperation;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IllegalArgument;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_InternalError;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_StopIteration;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_IOError;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_SyntaxError;
-JSONLOGIC_EXPORT extern const JsonLogic_Handle JsonLogic_Error_UnicodeError;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_NaN;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Null;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_True;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_False;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_Success;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_OutOfMemory;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_IllegalOperation;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_IllegalArgument;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_InternalError;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_StopIteration;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_IOError;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_SyntaxError;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Handle JsonLogic_Error_UnicodeError;
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_incref(JsonLogic_Handle handle);
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_decref(JsonLogic_Handle handle);
@@ -192,8 +192,8 @@ typedef struct JsonLogic_Operations {
 JSONLOGIC_EXPORT const JsonLogic_Operation *jsonlogic_operations_get_sized(const JsonLogic_Operations *operations, const char16_t *key, size_t key_size);
 JSONLOGIC_EXPORT JsonLogic_Error jsonlogic_operations_set_sized(JsonLogic_Operations *operations, const char16_t *key, size_t key_size, void *context, JsonLogic_Operation_Funct funct);
 
-JSONLOGIC_EXPORT extern const JsonLogic_Operations JsonLogic_Builtins;
-JSONLOGIC_EXPORT extern const JsonLogic_Operations CertLogic_Builtins;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Operations JsonLogic_Builtins;
+JSONLOGIC_EXPORT_CONST const JsonLogic_Operations CertLogic_Builtins;
 
 typedef struct JsonLogic_Operations_BuildEntry {
     const char16_t *key;

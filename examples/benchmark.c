@@ -19,15 +19,19 @@ void usage(int argc, char *argv[]) {
 }
 
 #ifdef JSONLOGIC_WINDOWS
-    #include <windows.h>
     #define DEVNULL "NUL"
-    #define JSONLOGIC_CLOCK ULONGLONG
 #else
     #define DEVNULL "/dev/null"
+#endif
+
+#ifdef _MSC_VER
+    #include <windows.h>
+    #define JSONLOGIC_CLOCK ULONGLONG
+#else
     #define JSONLOGIC_CLOCK struct timespec
 #endif
 
-#ifndef JSONLOGIC_WINDOWS
+#ifndef _MSC_VER
 int64_t timedelta(const struct timespec *t1, const struct timespec *t2) {
     assert((uint64_t)t1->tv_sec <= INT64_MAX / 1000000);
     assert((uint64_t)t2->tv_sec <= INT64_MAX / 1000000);
@@ -201,7 +205,7 @@ int main(int argc, char *argv[]) {
         JSONLOGIC_CLOCK print_done;
         JSONLOGIC_CLOCK free_done;
 
-#ifdef JSONLOGIC_WINDOWS
+#ifdef _MSC_VER
     #define GET_CLOCK(CLOCK) CLOCK = GetTickCount64();
     #define CLOCK_DELTA(C1, C2) (((C2) - (C1)) * 1000)
 #else

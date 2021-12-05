@@ -308,8 +308,11 @@ void print_ascii_utf16(FILE *fp, const char16_t *str) {
     }
 }
 
-void generate_source(FILE *fp, const char *symname, const Table *tbl) {
+void generate_source(FILE *fp, const char *symname, const char *header, const Table *tbl) {
     fprintf(fp, "#include \"jsonlogic_intern.h\"\n");
+    if (header != NULL) {
+        fprintf(fp, "#include \"%s\"\n", header);
+    }
     fprintf(fp, "\n");
     fprintf(fp, "const JsonLogic_Operations %s = {\n", symname);
     fprintf(fp, "    .capacity = %" PRIuPTR ",\n", tbl->capacity);
@@ -365,7 +368,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    generate_source(fp, "JsonLogic_Builtins", &tbl);
+    generate_source(fp, "JsonLogic_Builtins", "jsonlogic.h", &tbl);
 
     fclose(fp);
     fp = NULL;
@@ -393,7 +396,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    generate_source(fp, "JsonLogic_Extras", &tbl);
+    generate_source(fp, "JsonLogic_Extras", "jsonlogic_extras.h", &tbl);
 
     fclose(fp);
     fp = NULL;
@@ -422,7 +425,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    generate_source(fp, "CertLogic_Builtins", &tbl);
+    generate_source(fp, "CertLogic_Builtins", "jsonlogic.h", &tbl);
 
     fclose(fp);
     fp = NULL;
@@ -451,7 +454,7 @@ int main(int argc, char *argv[]) {
         goto error;
     }
 
-    generate_source(fp, "CertLogic_Extras", &tbl);
+    generate_source(fp, "CertLogic_Extras", "jsonlogic_extras.h", &tbl);
 
     fclose(fp);
     fp = NULL;

@@ -27,11 +27,10 @@ LIB_OBJS=$(BUILD_DIR)/obj/tbl/builtins_tbl.obj \
 SO_OBJS=$(patsubst $(BUILD_DIR)/obj/%,$(BUILD_DIR)/shared-obj/%,$(LIB_OBJS))
 
 SO_EXT=.dll
-SO_PREFIX=lib
+SO_PREFIX=
 BIN_EXT=.exe
 RELEASE=OFF
 
-#CFLAGS=/Wall /std:c11 /utf-8 /nologo /DJSONLOGIC_WIN_EXPORT
 # C4100 ... unreferenced formal parameter
 # C4102 ... unreferenced label
 # C4255 ... no function prototype given
@@ -39,7 +38,7 @@ RELEASE=OFF
 # C4711 ... function selected for inline expansion
 # C4820 ... padding added after data member
 # C5045 ... Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
-CFLAGS=/std:c11 /utf-8 /nologo /DJSONLOGIC_WIN_EXPORT /Wall /wd4100 /wd4102 /wd4255 /wd4710 /wd4711 /wd4820 /wd5045
+CFLAGS=/std:c11 /utf-8 /nologo /Wall /wd4100 /wd4102 /wd4255 /wd4710 /wd4711 /wd4820 /wd5045
 INC_DIRS=/Isrc
 EXAMPLES=$(BUILD_DIR)/examples/benchmark$(BIN_EXT) \
          $(BUILD_DIR)/examples/parse_json$(BIN_EXT) \
@@ -117,7 +116,7 @@ $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.obj $(LIB)
 
 $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.obj $(SO)
 	@mkdir -p $(BUILD_DIR)/examples-shared
-	$(CC) $(CFLAGS) /Fe$@ $< $(BUILD_DIR)/lib/libjsonlogic.exp
+	$(CC) $(CFLAGS) /Fe$@ $< $(BUILD_DIR)/lib/jsonlogic.lib
 
 $(BUILD_DIR)/src/builtins_tbl.c: $(HOST_BUILD_DIR)/bin/compile_operations$(BIN_EXT)
 	@mkdir -p $(BUILD_DIR)/src
@@ -131,35 +130,35 @@ $(BUILD_DIR)/src/certlogic_extras_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
 
 $(BUILD_DIR)/obj/tbl/%.obj: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj/tbl
-	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/%.obj: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
-	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/shared-obj/tbl/%.obj: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj/tbl
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/shared-obj/%.obj: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
-	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/shared-obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/json.obj: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
-	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/shared-obj/json.obj: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/examples/%.obj: examples/%.c
 	@mkdir -p $(BUILD_DIR)/obj/examples
