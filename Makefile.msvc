@@ -47,7 +47,7 @@ EXAMPLES=$(BUILD_DIR)/examples/benchmark$(BIN_EXT) \
          $(BUILD_DIR)/examples/certlogic$(BIN_EXT) \
          $(BUILD_DIR)/examples/certlogic_extras$(BIN_EXT)
 EXAMPLES_SHARED=$(patsubst $(BUILD_DIR)/examples/%,$(BUILD_DIR)/examples-shared/%,$(EXAMPLES))
-LIB=$(BUILD_DIR)/lib/libjsonlogic.lib
+LIB=$(BUILD_DIR)/lib/jsonlogic_static.lib
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
 INC=$(BUILD_DIR)/include/jsonlogic.h \
     $(BUILD_DIR)/include/jsonlogic_defs.h \
@@ -117,7 +117,12 @@ install_shared: $(SO) $(INC)
 	cp $(INC) $(PREFIX)/include
 
 uninstall:
-	rm $(PREFIX)/lib/libjsonlogic.a \
+	rm $(PREFIX)/lib/jsonlogic_static.lib \
+	   $(PREFIX)/lib/jsonlogic.dll \
+	   $(PREFIX)/lib/jsonlogic.lib \
+	   $(PREFIX)/lib/jsonlogic.exp \
+	   $(PREFIX)/lib/jsonlogic.ilk \
+	   $(PREFIX)/lib/jsonlogic.pdb \
 	   $(PREFIX)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT) \
 	   $(PREFIX)/include/jsonlogic_defs.h \
 	   $(PREFIX)/include/jsonlogic_extras.h \

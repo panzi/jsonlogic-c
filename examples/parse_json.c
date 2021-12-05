@@ -6,15 +6,6 @@
 #include <string.h>
 #include <errno.h>
 
-size_t strlen16(const char16_t* strarg) {
-   if (strarg == NULL) {
-       return 0;
-   }
-   const char16_t* str = strarg;
-   while (*str) ++ str;
-   return str - strarg;
-}
-
 int main(int argc, char *argv[]) {
     int status = 0;
 

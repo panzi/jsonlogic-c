@@ -78,7 +78,7 @@ EXAMPLES=$(BUILD_DIR)/examples/benchmark$(BIN_EXT) \
          $(BUILD_DIR)/examples/certlogic$(BIN_EXT) \
          $(BUILD_DIR)/examples/certlogic_extras$(BIN_EXT)
 EXAMPLES_SHARED=$(patsubst $(BUILD_DIR)/examples/%,$(BUILD_DIR)/examples-shared/%,$(EXAMPLES))
-LIB=$(BUILD_DIR)/lib/libjsonlogic.a
+LIB=$(BUILD_DIR)/lib/libjsonlogic_static.a
 SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
 INC=$(BUILD_DIR)/include/jsonlogic.h \
     $(BUILD_DIR)/include/jsonlogic_defs.h \
@@ -95,7 +95,7 @@ ifeq ($(PSEUDO_STATIC),ON)
     STATIC_FLAG =
 else
 ifeq ($(PSEUDO_STATIC),OFF)
-    STATIC_LIBS = $(LIB_DIRS) -ljsonlogic $(LIBS)
+    STATIC_LIBS = $(LIB_DIRS) -ljsonlogic_static $(LIBS)
     STATIC_FLAG = -static
 else
     $(error illegal value for PSEUDO_STATIC=$(PSEUDO_STATIC))

@@ -126,15 +126,14 @@ This generates these assets:
 * `build/$target/$release/include/jsonlogic.h`
 * `build/$target/$release/include/jsonlogic_extras.h`
 * `build/$target/$release/include/jsonlogic_defs.h`
-* `build/$target/$release/lib/libjsonlogic.a`
+* `build/$target/$release/lib/libjsonlogic_static.a`
 
 For Windows it generates these assets:
 
 * `build/$target/$release/include/jsonlogic.h`
 * `build/$target/$release/include/jsonlogic_extras.h`
 * `build/$target/$release/include/jsonlogic_defs.h`
-* `build/$target/$release/lib/libjsonlogic.lib`
-* `build/$target/$release/lib/libjsonlogic.pdb` (debug build only)
+* `build/$target/$release/lib/jsonlogic_static.lib`
 
 `$target` may be a string like `linux-x86_64`, `darwin-i686`, `mingw-x86_64`
 `msvc-x64` or similar. Per default it is:
