@@ -169,11 +169,11 @@ uninstall:
 
 $(BUILD_DIR)/bin/compile_operations$(BIN_EXT): $(BUILD_DIR)/obj/compile_operations.o $(BUILD_DIR)/obj/hash.o src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(BUILD_DIR)/obj/hash.o $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(STATIC_FLAG) $< $(BUILD_DIR)/obj/hash.o $(LIBS) -o $@
 
 $(BUILD_DIR)/bin/test$(BIN_EXT): $(BUILD_DIR)/obj/test.o src/jsonlogic.h src/jsonlogic_intern.h $(LIB)
 	@mkdir -p $(BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(STATIC_FLAG) $(INC_DIRS) $< $(STATIC_LIBS) -o $@
+	$(CC) $(CFLAGS) $(STATIC_FLAG) $< $(STATIC_LIBS) -o $@
 
 # shared binary but statically linked objects, because we're using internal APIs in tests
 $(BUILD_DIR)/bin/test_shared$(BIN_EXT): $(BUILD_DIR)/shared-obj/test.o src/jsonlogic.h src/jsonlogic_intern.h $(SO_OBJS) $(SO)
@@ -186,7 +186,7 @@ $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.o $(LIB)
 
 $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.o $(SO)
 	@mkdir -p $(BUILD_DIR)/examples-shared
-	$(CC) $(CFLAGS) $< $(LIB_DIRS) -ljsonlogic $(LIBS) -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $< $(LIB_DIRS) -ljsonlogic $(LIBS) -o $@
 
 $(BUILD_DIR)/src/builtins_tbl.c: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
 	@mkdir -p $(BUILD_DIR)/src
@@ -242,7 +242,7 @@ $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.o
 	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
 
 $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.o
-	$(CC) $(CFLAGS) $(LIBS) $^ -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(LIBS) $^ -o $@
 
 $(LIB): $(LIB_OBJS)
 	@mkdir -p $(BUILD_DIR)/lib
