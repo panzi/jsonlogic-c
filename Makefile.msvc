@@ -4,7 +4,7 @@ MSVC_PATH=msvc/install/bin
 CC=$(MSVC_PATH)/$(ARCH)/cl
 AR=$(MSVC_PATH)/$(ARCH)/lib
 BUILD_DIR=build/msvc-$(ARCH)
-HOST_BUILD_DIR=build/msvc-$(HOST_ARCH)/debug
+HOST_BUILD_DIR=build/msvc-$(HOST_ARCH)
 LIB_OBJS=$(BUILD_DIR)/obj/tbl/builtins_tbl.obj \
          $(BUILD_DIR)/obj/tbl/extras_tbl.obj \
          $(BUILD_DIR)/obj/tbl/certlogic_tbl.obj \
@@ -56,10 +56,12 @@ INC=$(BUILD_DIR)/include/jsonlogic.h \
 ifeq ($(RELEASE),ON)
     CFLAGS    += /DNDEBUG /O2
     BUILD_DIR := $(BUILD_DIR)/release
+    HOST_BUILD_DIR := $(HOST_BUILD_DIR)/release
 else
 ifeq ($(RELEASE),OFF)
     CFLAGS    += /Od /Z7
     BUILD_DIR := $(BUILD_DIR)/debug
+    HOST_BUILD_DIR := $(HOST_BUILD_DIR)/debug
 else
     $(error illegal value for RELEASE=$(RELEASE))
 endif
@@ -146,7 +148,7 @@ $(BUILD_DIR)/shared-obj/%.obj: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 
 $(BUILD_DIR)/obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
-	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_STATIC /c /Fo:$@ $<
 
 $(BUILD_DIR)/shared-obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj

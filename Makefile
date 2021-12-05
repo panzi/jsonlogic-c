@@ -44,7 +44,7 @@ endif
 endif
 
 ifeq ($(patsubst mingw-%,mingw,$(TARGET)),mingw)
-    CFLAGS   += -Wno-pedantic-ms-format -DJSONLOGIC_WIN_EXPORT
+    CFLAGS   += -Wno-pedantic-ms-format
     BIN_EXT   = .exe
     SO_PREFIX =
     SO_EXT    = .dll
@@ -190,19 +190,19 @@ $(BUILD_DIR)/src/certlogic_extras_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
 
 $(BUILD_DIR)/obj/tbl/%.o: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj/tbl
-	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC $< -c -o $@
+	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/obj/%.o: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
-	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC $< -c -o $@
+	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/shared-obj/tbl/%.o: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj/tbl
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/shared-obj/%.o: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/obj/test.o: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
@@ -210,15 +210,15 @@ $(BUILD_DIR)/obj/test.o: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 
 $(BUILD_DIR)/shared-obj/test.o: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/obj/json.o: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
-	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC $< -c -o $@
+	$(CC) $(CFLAGS) $(INC_DIRS) -DJSONLOGIC_STATIC -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/shared-obj/json.o: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) $< -c -o $@
+	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) -DJSONLOGIC_WIN_EXPORT $< -c -o $@
 
 $(BUILD_DIR)/obj/examples/%.o: examples/%.c
 	@mkdir -p $(BUILD_DIR)/obj/examples
