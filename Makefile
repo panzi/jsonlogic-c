@@ -44,7 +44,7 @@ endif
 endif
 
 ifeq ($(patsubst mingw-%,mingw,$(TARGET)),mingw)
-    CFLAGS   += -Wno-pedantic-ms-format
+    CFLAGS   += -Wno-pedantic-ms-format -static-libgcc
     BIN_EXT   = .exe
     SO_PREFIX =
     SO_EXT    = .dll
