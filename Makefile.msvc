@@ -30,6 +30,7 @@ SO_EXT=.dll
 SO_PREFIX=
 BIN_EXT=.exe
 RELEASE=OFF
+PREFIX=msvc-$(ARCH)
 
 # C4100 ... unreferenced formal parameter
 # C4102 ... unreferenced label
@@ -140,16 +141,16 @@ $(BUILD_DIR)/bin/compile_operations$(BIN_EXT): $(BUILD_DIR)/obj/compile_operatio
 
 $(BUILD_DIR)/bin/test$(BIN_EXT): $(BUILD_DIR)/obj/test.obj src/jsonlogic.h src/jsonlogic_intern.h $(LIB)
 	@mkdir -p $(BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(STATIC_FLAG) /Fe$@ $(INC_DIRS) $< $(LIB)
+	$(CC) $(CFLAGS) /Fe$@ $(INC_DIRS) $< $(LIB)
 
 # shared binary but statically linked objects, because we're using internal APIs in tests
 $(BUILD_DIR)/bin/test_shared$(BIN_EXT): $(BUILD_DIR)/shared-obj/test.obj src/jsonlogic.h src/jsonlogic_intern.h $(SO_OBJS) $(SO)
 	@mkdir -p $(BUILD_DIR)/bin
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /Fe$@ $(SO_OBJS) $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /Fe$@ $(SO_OBJS) $<
 
 $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.obj $(LIB)
 	@mkdir -p $(BUILD_DIR)/examples
-	$(CC) $(CFLAGS) $(STATIC_FLAG) /Fe$@ $< $(LIB)
+	$(CC) $(CFLAGS) /Fe$@ $< $(LIB)
 
 $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.obj $(SO)
 	@mkdir -p $(BUILD_DIR)/examples-shared
@@ -175,11 +176,11 @@ $(BUILD_DIR)/obj/%.obj: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 
 $(BUILD_DIR)/shared-obj/tbl/%.obj: $(BUILD_DIR)/src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj/tbl
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/shared-obj/%.obj: src/%.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
@@ -187,7 +188,7 @@ $(BUILD_DIR)/obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 
 $(BUILD_DIR)/shared-obj/test.obj: tests/test.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/json.obj: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/obj
@@ -195,7 +196,7 @@ $(BUILD_DIR)/obj/json.obj: src/json.c src/stringify.c src/jsonlogic.h src/jsonlo
 
 $(BUILD_DIR)/shared-obj/json.obj: src/json.c src/stringify.c src/jsonlogic.h src/jsonlogic_intern.h
 	@mkdir -p $(BUILD_DIR)/shared-obj
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /DJSONLOGIC_WIN_EXPORT /c /Fo:$@ $<
 
 $(BUILD_DIR)/obj/examples/%.obj: examples/%.c
 	@mkdir -p $(BUILD_DIR)/obj/examples
@@ -203,7 +204,7 @@ $(BUILD_DIR)/obj/examples/%.obj: examples/%.c
 
 $(BUILD_DIR)/shared-obj/examples/%.obj: examples/%.c
 	@mkdir -p $(BUILD_DIR)/shared-obj/examples
-	$(CC) $(CFLAGS) $(SO_FLAGS) $(INC_DIRS) /c /Fo:$@ $<
+	$(CC) $(CFLAGS) $(INC_DIRS) /c /Fo:$@ $<
 
 $(BUILD_DIR)/examples/%$(BIN_EXT): $(BUILD_DIR)/obj/examples/%.obj
 	$(CC) $(CFLAGS) /Fe$@ $^
