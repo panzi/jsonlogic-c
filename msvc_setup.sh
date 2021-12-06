@@ -21,5 +21,6 @@ mkdir "$DIR/msvc"
 cd "$DIR/msvc"
 
 curl https://github.com/mstorsjo/msvc-wine/archive/refs/heads/master.zip -o msvc-wine.zip
+unzip msvc-wine.zip
 msvc-wine-master/vsdownload.py --dest install
 msvc-wine-master/install.sh install
