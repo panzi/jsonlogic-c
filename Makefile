@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-std=c11 -Wall -Werror -pedantic
+CFLAGS=-std=c11 -Wall -Werror -pedantic -D_TIME_BITS=64 -D_FILE_OFFSET_BITS=64
 BUILD_DIR=build
 LIB_OBJS=$(BUILD_DIR)/obj/tbl/builtins_tbl.o \
          $(BUILD_DIR)/obj/tbl/extras_tbl.o \
