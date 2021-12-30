@@ -113,17 +113,6 @@ typedef struct JsonLogic_DateTime {
     int32_t tzoff;
 } JsonLogic_DateTime;
 
-#define JSONLOGIC_DATETIME_INIT { \
-        .year   = 0, \
-        .month  = 0, \
-        .day    = 0, \
-        .hour   = 0, \
-        .minute = 0, \
-        .second = 0, \
-        .msec   = 0, \
-        .tzoff  = 0, \
-    }
-
 static JsonLogic_Error jsonlogic_parse_date_time_utf16_intern(const char16_t *str, size_t size, JsonLogic_DateTime *date_time_ptr);
 
 JsonLogic_Error jsonlogic_parse_date_time_handle(JsonLogic_Handle handle, JsonLogic_DateTime *date_time_ptr) {
