@@ -32,6 +32,9 @@ RELEASE=OFF
 PREFIX=/usr/local
 SO_FLAGS=-fPIC
 SHARED_BIN_OBJS=
+NDK_VERSION=r23b
+ANDROID_VERSION=31
+NDK_PATH=ndk/android-ndk-$(NDK_VERSION)
 
 ifeq ($(patsubst %-i686,i686,$(TARGET)),i686)
     CFLAGS += -m32 -march=i686
@@ -39,7 +42,9 @@ else
 ifeq ($(patsubst %-x86_64,x86_64,$(TARGET)),x86_64)
     CFLAGS += -m64 -march=x86-64
 else
+ifneq ($(patsubst android-%,android,$(TARGET)),android)
     CFLAGS += -march=$(shell echo $(TARGET)|sed 's/.*-//')
+endif
 endif
 endif
 
@@ -49,13 +54,20 @@ ifeq ($(patsubst mingw-%,mingw,$(TARGET)),mingw)
     SO_PREFIX =
     SO_EXT    = .dll
 else
-ifneq ($(shell echo $(TARGET)|sed 's/-.*//'),$(shell uname -s|tr '[:upper:]' '[:lower:]'))
-    $(error platform of target $(TARGET) is not supported)
-endif
 ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
     CC      = clang
     CFLAGS += -Qunused-arguments
     SO_EXT  = .dylib
+else
+ifeq ($(patsubst android-%,android,$(TARGET)),android)
+    ARCH    = $(shell echo $(TARGET)|sed 's/^android-//')
+    CC      = $(NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/bin/$(ARCH)-linux-android$(ANDROID_VERSION)-clang
+    CFLAGS += -Qunused-arguments
+else
+ifneq ($(shell echo $(TARGET)|sed 's/-.*//'),$(shell uname -s|tr '[:upper:]' '[:lower:]'))
+    $(error platform of target $(TARGET) is not supported)
+endif
+endif
 endif
 endif
 
@@ -83,6 +95,7 @@ SO=$(BUILD_DIR)/lib/$(SO_PREFIX)jsonlogic$(SO_EXT)
 INC=$(BUILD_DIR)/include/jsonlogic.h \
     $(BUILD_DIR)/include/jsonlogic_defs.h \
     $(BUILD_DIR)/include/jsonlogic_extras.h
+OPS_SRC_DIR=$(BUILD_DIR)/src
 
 ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
     PSEUDO_STATIC=ON
@@ -132,8 +145,8 @@ valgrind: $(BUILD_DIR)/bin/test_shared$(BIN_EXT)
 	LD_LIBRARY_PATH=$(BUILD_DIR)/lib valgrind --tool=memcheck --leak-check=full --track-origins=yes $<
 
 ops: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
-	@mkdir -p $(BUILD_DIR)/src
-	$< $(BUILD_DIR)/src
+	@mkdir -p $(OPS_SRC_DIR)
+	$< $(OPS_SRC_DIR)
 
 lib: $(LIB)
 
@@ -188,9 +201,12 @@ $(BUILD_DIR)/examples-shared/%$(BIN_EXT): $(BUILD_DIR)/shared-obj/examples/%.o $
 	@mkdir -p $(BUILD_DIR)/examples-shared
 	$(CC) $(CFLAGS) $(SO_FLAGS) $< $(LIB_DIRS) -ljsonlogic $(LIBS) -o $@
 
-$(BUILD_DIR)/src/builtins_tbl.c: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
-	@mkdir -p $(BUILD_DIR)/src
-	$< $(BUILD_DIR)/src
+# compile and run compile_operations natively
+#$(BUILD_DIR)/src/builtins_tbl.c: $(BUILD_DIR)/bin/compile_operations$(BIN_EXT)
+$(BUILD_DIR)/src/builtins_tbl.c: src/jsonlogic_defs.h src/jsonlogic_intern.h src/compile_operations.c
+	$(MAKE) OPS_SRC_DIR=$(BUILD_DIR)/src TARGET=$(shell uname -s|tr '[:upper:]' '[:lower:]')-$(shell uname -m) ops
+#	@mkdir -p $(BUILD_DIR)/src
+#	$< $(BUILD_DIR)/src
 
 $(BUILD_DIR)/src/extras_tbl.c: $(BUILD_DIR)/src/builtins_tbl.c
 

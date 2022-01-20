@@ -135,8 +135,8 @@ For Windows it generates these assets:
 * `build/$target/$release/include/jsonlogic_defs.h`
 * `build/$target/$release/lib/jsonlogic_static.lib`
 
-`$target` may be a string like `linux-x86_64`, `darwin-i686`, `mingw-x86_64`
-`msvc-x64` or similar. Per default it is:
+`$target` may be a string like `linux-x86_64`, `darwin-i686`, `mingw-x86_64`,
+`msvc-x64`, `android-aarch64` or similar. Per default it is:
 
 ```bash
 echo $(uname -s|tr '[:upper:]' '[:lower:]')-$(uname -m)

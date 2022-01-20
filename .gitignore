@@ -8,3 +8,4 @@ vgcore.*
 perf.data
 perf.data.*
 /msvc
+/ndk

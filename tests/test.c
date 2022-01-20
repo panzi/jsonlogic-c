@@ -210,24 +210,24 @@ typedef struct TestCustomOps {
     double a;
 } TestCustomOps;
 
-JsonLogic_Handle add_to_a(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle op_add_to_a(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     assert(context != NULL);
     TestCustomOps *ptr = context;
     double b = argc == 0 ? 1 : jsonlogic_to_double(args[0]);
     return jsonlogic_number_from(ptr->a += b);
 }
 
-JsonLogic_Handle fives_add(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle op_fives_add(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     double i = argc == 0 ? 0.0 : jsonlogic_to_double(args[0]);
     return jsonlogic_number_from(i + 5);
 }
 
-JsonLogic_Handle fives_subtract(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle op_fives_subtract(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     double i = argc == 0 ? 0.0 : jsonlogic_to_double(args[0]);
     return jsonlogic_number_from(i - 5);
 }
 
-JsonLogic_Handle times(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle op_times(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc < 2) {
         return JsonLogic_Error_IllegalArgument;
     }
@@ -248,7 +248,7 @@ JsonLogic_Handle times(void *context, JsonLogic_Handle data, JsonLogic_Handle ar
     return jsonlogic_number_from(anum * bnum);
 }
 
-JsonLogic_Handle array_times(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
+JsonLogic_Handle op_array_times(void *context, JsonLogic_Handle data, JsonLogic_Handle args[], size_t argc) {
     if (argc < 1) {
         return JsonLogic_Error_IllegalArgument;
     }
@@ -292,7 +292,7 @@ void test_custom_operators(TestContext *test_context) {
     result = JsonLogic_Null;
 
     TEST_ASSERT(jsonlogic_operations_extend(&ops, &JsonLogic_Builtins) == JSONLOGIC_ERROR_SUCCESS);
-    TEST_ASSERT(jsonlogic_operations_set(&ops, u"add_to_a", &context, add_to_a) == JSONLOGIC_ERROR_SUCCESS);
+    TEST_ASSERT(jsonlogic_operations_set(&ops, u"add_to_a", &context, op_add_to_a) == JSONLOGIC_ERROR_SUCCESS);
 
     // New operation executes, returns desired result
     // No args
@@ -311,8 +311,8 @@ void test_custom_operators(TestContext *test_context) {
 
     TEST_ASSERT(jsonlogic_operations_extend(&ops2, &JsonLogic_Builtins) == JSONLOGIC_ERROR_SUCCESS);
     TEST_ASSERT(jsonlogic_operations_build(&ops2, (JsonLogic_Operations_BuildEntry[]) {
-        { u"fives.add",      { &context, fives_add      } },
-        { u"fives.subtract", { &context, fives_subtract } },
+        { u"fives.add",      { &context, op_fives_add      } },
+        { u"fives.subtract", { &context, op_fives_subtract } },
         { NULL,              { NULL,     NULL           } },
     }) == JSONLOGIC_ERROR_SUCCESS);
 
@@ -329,7 +329,7 @@ void test_custom_operators(TestContext *test_context) {
     TEST_ASSERT(jsonlogic_deep_strict_equal(result, jsonlogic_number_from(42)));
 
     TEST_ASSERT(jsonlogic_operations_extend(&ops3, &JsonLogic_Builtins) == JSONLOGIC_ERROR_SUCCESS);
-    TEST_ASSERT(jsonlogic_operations_set(&ops3, u"times", &context, times) == JSONLOGIC_ERROR_SUCCESS);
+    TEST_ASSERT(jsonlogic_operations_set(&ops3, u"times", &context, op_times) == JSONLOGIC_ERROR_SUCCESS);
 
     // Calling a method with multiple var as arguments.
     jsonlogic_decref(logic);
@@ -345,7 +345,7 @@ void test_custom_operators(TestContext *test_context) {
 
     // Calling a method that takes an array, but the inside of the array has rules, too
     TEST_ASSERT(jsonlogic_operations_extend(&ops4, &JsonLogic_Builtins) == JSONLOGIC_ERROR_SUCCESS);
-    TEST_ASSERT(jsonlogic_operations_set(&ops4, u"array_times", &context, array_times) == JSONLOGIC_ERROR_SUCCESS);
+    TEST_ASSERT(jsonlogic_operations_set(&ops4, u"array_times", &context, op_array_times) == JSONLOGIC_ERROR_SUCCESS);
 
     jsonlogic_decref(logic);
     logic = jsonlogic_parse("{\"array_times\":[[{\"var\":\"a\"},{\"var\":\"b\"}]]}", NULL);
