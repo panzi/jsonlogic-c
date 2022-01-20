@@ -61,7 +61,11 @@ ifeq ($(patsubst darwin%,darwin,$(TARGET)),darwin)
 else
 ifeq ($(patsubst android-%,android,$(TARGET)),android)
     ARCH    = $(shell echo $(TARGET)|sed 's/^android-//')
+ifeq ($(ARCH),armv7a)
+    CC      = $(NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/bin/$(ARCH)-linux-androideabi$(ANDROID_VERSION)-clang
+else
     CC      = $(NDK_PATH)/toolchains/llvm/prebuilt/linux-x86_64/bin/$(ARCH)-linux-android$(ANDROID_VERSION)-clang
+endif
     CFLAGS += -Qunused-arguments
 else
 ifneq ($(shell echo $(TARGET)|sed 's/-.*//'),$(shell uname -s|tr '[:upper:]' '[:lower:]'))

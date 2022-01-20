@@ -244,6 +244,16 @@ make -f Makefile.msvc ARCH=arm
 make -f Makefile.msvc ARCH=arm64
 ```
 
+Using `ndk_setup.sh` you can download the Android SDK and use that to compile
+binaries for Android:
+
+```bash
+./ndk_setup.sh
+make TARGET=android-aarch64
+make TARGET=android-armv7a
+make TARGET=android-i686
+```
+
 Extras
 ------
 

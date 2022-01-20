@@ -7,7 +7,13 @@ DIR=$(dirname "$SELF")
 
 cd "$DIR"
 
+NDK_VERSION=${NDK_VERSION:-r23b}
+
 MSVC_PATH=${MSVC_PATH:-$DIR/msvc/install/bin}
+NDK_PATH=${NDK_PATH:-$DIR/ndk/android-ndk-$NDK_VERSION}
+
+WITH_MSVC=${WITH_MSV:-ON}
+WITH_ANDROID=${WITH_ANDROID:-ON}
 
 release_id=$(git describe --tags 2>/dev/null || git rev-parse HEAD)
 zip_file="jsonlogic-c-$release_id.zip"
@@ -31,10 +37,20 @@ for release in OFF ON; do
                 make -j"$nproc" TARGET="$platform-$arch" RELEASE=$release $linkage >/dev/null
             done
         done
-        for arch in x86 x64 arm arm64; do
-            echo make -f Makefile.msvc RELEASE=$release ARCH=$arch $linkage
-            make -j"$nproc" -f Makefile.msvc MSVC_PATH="$MSVC_PATH" ARCH=$arch RELEASE=$release $linkage >/dev/null
-        done
+
+        if [[ "$WITH_MSVC" = ON ]]; then
+            for arch in x86 x64 arm arm64; do
+                echo make -f Makefile.msvc RELEASE=$release ARCH=$arch $linkage
+                make -j"$nproc" -f Makefile.msvc MSVC_PATH="$MSVC_PATH" ARCH=$arch RELEASE=$release $linkage >/dev/null
+            done
+        fi
+        
+        if [[ "$WITH_ANDROID" = ON ]]; then
+            for arch in aarch64 armv7a i686; do
+                echo make TARGET="android-$arch" RELEASE=$release $linkage
+                make -j"$nproc" NDK_PATH="$NDK_PATH" TARGET="android-$arch" RELEASE=$release $linkage >/dev/null
+            done
+        fi
     done
 done
 
@@ -47,4 +63,5 @@ zip -r9 "$zip_file" \
     Makefile.msvc \
     README.md \
     release.sh \
-    msbv_setup.sh
+    msvc_setup.sh \
+    ndk_setup.sh
