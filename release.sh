@@ -8,6 +8,7 @@ DIR=$(dirname "$SELF")
 cd "$DIR"
 
 NDK_VERSION=${NDK_VERSION:-r23b}
+ANDROID_VERSION=${ANDROID_VERSION:-31}
 
 MSVC_PATH=${MSVC_PATH:-$DIR/msvc/install/bin}
 NDK_PATH=${NDK_PATH:-$DIR/ndk/android-ndk-$NDK_VERSION}
@@ -48,7 +49,7 @@ for release in OFF ON; do
         if [[ "$WITH_ANDROID" = ON ]]; then
             for arch in aarch64 armv7a i686; do
                 echo make TARGET="android-$arch" RELEASE=$release $linkage
-                make -j"$nproc" NDK_PATH="$NDK_PATH" TARGET="android-$arch" RELEASE=$release $linkage >/dev/null
+                make -j"$nproc" ANDROID_VERSION="$ANDROID_VERSION" NDK_VERSION="$NDK_VERSION" NDK_PATH="$NDK_PATH" TARGET="android-$arch" RELEASE=$release $linkage >/dev/null
             done
         fi
     done

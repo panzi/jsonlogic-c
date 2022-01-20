@@ -6,7 +6,6 @@ SELF=$(readlink -f "$0")
 DIR=$(dirname "$SELF")
 
 NDK_VERSION=${NDK_VERSION:-r23b}
-ANDROID_VERSION=${ANDROID_VERSION:-31}
 
 if [[ -e "$DIR/ndk" ]]; then
 	echo "$DIR/ndk already exists.">&2
