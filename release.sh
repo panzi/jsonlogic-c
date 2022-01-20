@@ -12,7 +12,7 @@ NDK_VERSION=${NDK_VERSION:-r23b}
 MSVC_PATH=${MSVC_PATH:-$DIR/msvc/install/bin}
 NDK_PATH=${NDK_PATH:-$DIR/ndk/android-ndk-$NDK_VERSION}
 
-WITH_MSVC=${WITH_MSV:-ON}
+WITH_MSVC=${WITH_MSVC:-ON}
 WITH_ANDROID=${WITH_ANDROID:-ON}
 
 release_id=$(git describe --tags 2>/dev/null || git rev-parse HEAD)
