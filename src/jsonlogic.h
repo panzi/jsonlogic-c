@@ -211,6 +211,8 @@ typedef struct JsonLogic_Iterator {
     size_t index;
 } JsonLogic_Iterator;
 
+#define JSONLOGIC_ITERATOR_INIT { .handle = JsonLogic_Null, .index = 0 }
+
 // can't get JSONLOGIC_EXPORT inline to work, so I its marcos
 #define jsonlogic_get_utf16(object, key) jsonlogic_get_utf16_sized((object), (key), jsonlogic_utf16_len((key)))
 #define jsonlogic_boolean_from(value) ((value) ? JsonLogic_True : JsonLogic_False)
