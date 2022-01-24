@@ -1,6 +1,9 @@
 JsonLogic C Implentation
 ========================
 
+[![Release](https://img.shields.io/github/v/release/panzi/jsonlogic-c)](https://github.com/panzi/jsonlogic-c/releases)
+[![License](https://img.shields.io/github/license/panzi/jsonlogic-c)](https://github.com/panzi/jsonlogic-c/blob/main/LICENSE)
+
 Implementation of [JsonLogic](https://jsonlogic.com/) and
 [CertLogic](https://github.com/ehn-dcc-development/dgc-business-rules/tree/main/certlogic/specification)
 just for fun. No claims for correctness or speed are made.
