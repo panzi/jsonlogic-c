@@ -5,6 +5,7 @@
 vgcore.*
 *.log
 !.gitignore
+!.github
 perf.data
 perf.data.*
 /msvc
