@@ -15,6 +15,7 @@
 
 #if defined(JSONLOGIC_WINDOWS)
     #include <process.h>
+    #include <windows.h>
 #else
     #include <sys/types.h>
     #include <unistd.h>
@@ -888,6 +889,39 @@ const char *CertLogicTests[] = {
     NULL,
 };
 
+#if defined(__MINGW32__)
+    // XXX: mingw (but not msvc) seems to somehow break ANSI escape sequences?
+    #define COL_RED
+    #define COL_GREEN
+    #define COL_NORMAL
+#else
+    #define COL_RED    "\x1B[31m"
+    #define COL_GREEN  "\x1B[32m"
+    #define COL_NORMAL "\x1B[0m"
+#endif
+
+void print_ok() {
+    puts(COL_GREEN "OK" COL_NORMAL);
+}
+
+void print_failed() {
+    puts(COL_RED "FAILED" COL_NORMAL);
+}
+
+#if defined(JSONLOGIC_WINDOWS) && !defined(__MINGW32__)
+void print_win32_error() {
+    char buf[2048];
+    DWORD count = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        buf, sizeof(buf), NULL);
+    if (count > 0) {
+        fprintf(stderr, "*** error: %s\n", buf);
+    } else {
+        fprintf(stderr, "*** error: getting last Win32 error\n");
+    }
+}
+#endif
+
 int main(int argc, char *argv[]) {
     int status = 0;
     JsonLogic_Handle tests = JsonLogic_Null;
@@ -897,6 +931,22 @@ int main(int argc, char *argv[]) {
 
     JsonLogic_Operations ops = JSONLOGIC_OPERATIONS_INIT;
     JsonLogic_Error error = jsonlogic_operations_extend(&ops, &JsonLogic_Extras);
+
+#if defined(JSONLOGIC_WINDOWS) && !defined(__MINGW32__)
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    if (hOut != INVALID_HANDLE_VALUE) {
+        DWORD dwMode = 0;
+        if (GetConsoleMode(hOut, &dwMode)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            if (!SetConsoleMode(hOut, dwMode)) {
+                print_win32_error();
+                goto error;
+            }
+        }
+    }
+#endif
+
     if (error != JSONLOGIC_ERROR_SUCCESS) {
         fprintf(stderr, "*** error: building operations table: %s\n", jsonlogic_get_error_message(error));
         goto error;
@@ -954,7 +1004,11 @@ int main(int argc, char *argv[]) {
         test->func(&test_context);
 
         if (!test_context.newline) {
-            puts(test_context.passed ? "OK" : "FAILED");
+            if (test_context.passed) {
+                print_ok();
+            } else {
+                print_failed();
+            }
             fflush(stdout);
             test_context.newline = true;
         }
@@ -971,7 +1025,7 @@ int main(int argc, char *argv[]) {
 
     #define FAIL() \
         if (!test_context.newline) { \
-            puts("FAILED"); \
+            print_failed(); \
             fflush(stdout); \
             test_context.newline = true; \
         } \
@@ -988,7 +1042,7 @@ int main(int argc, char *argv[]) {
 
         if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
             if (!test_context.newline) {
-                puts("OK");
+                print_ok();
                 fflush(stdout);
                 test_context.newline = false;
             }
@@ -1001,7 +1055,7 @@ int main(int argc, char *argv[]) {
 
         if (jsonlogic_is_string(test)) {
             if (!test_context.newline) {
-                puts("OK");
+                print_ok();
             }
             size_t size = 0;
             const char16_t *str = jsonlogic_get_string_content(test, &size);
@@ -1106,10 +1160,10 @@ int main(int argc, char *argv[]) {
         JsonLogic_Handle result = jsonlogic_apply_custom(rule, code, &ops);
 
         if (jsonlogic_is_true(result)) {
-            puts("OK");
+            print_ok();
             ++ pass_count;
         } else {
-            puts("FAIL");
+            print_failed();
             fflush(stdout);
             fprintf(stderr, "     error: Wrong result\n");
             //fprintf(stderr, "     logic: "); jsonlogic_println(stderr, rule);
@@ -1171,10 +1225,10 @@ int main(int argc, char *argv[]) {
         JsonLogic_Handle result = jsonlogic_apply_custom(rule, code, &ops);
 
         if (jsonlogic_is_false(result)) {
-            puts("OK");
+            print_ok();
             ++ pass_count;
         } else {
-            puts("FAIL");
+            print_failed();
             fflush(stdout);
             fprintf(stderr, "     error: Wrong result\n");
             //fprintf(stderr, "     logic: "); jsonlogic_println(stderr, rule);
@@ -1269,7 +1323,7 @@ int main(int argc, char *argv[]) {
 
                 if (error == JSONLOGIC_ERROR_STOP_ITERATION) {
                     if (!test_context.newline) {
-                        puts("OK");
+                        print_ok();
                         fflush(stdout);
                         test_context.newline = false;
                     }
@@ -1322,8 +1376,20 @@ int main(int argc, char *argv[]) {
         jsonlogic_decref(test_group);
     }
 
-    printf("\ntests: %" PRIuPTR ", failed: %" PRIuPTR ", passed: %" PRIuPTR "\n",
-        test_count, test_count - pass_count, pass_count);
+    printf("\ntests: %" PRIuPTR ", failed: ", test_count);
+    size_t failed_count = test_count - pass_count;
+    if (failed_count > 0) {
+        printf(COL_RED "%" PRIuPTR COL_NORMAL, failed_count);
+    } else {
+        putchar('0');
+    }
+    printf(", passed: ");
+    if (pass_count > 0) {
+        printf(COL_GREEN "%" PRIuPTR COL_NORMAL, pass_count);
+    } else {
+        putchar('0');
+    }
+    putchar('\n');
 
     status = test_count == pass_count ? 0 : 1;
 
