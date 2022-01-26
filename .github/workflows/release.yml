@@ -14,7 +14,7 @@ jobs:
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        sudo apt-get install -q -y --no-install-recommends mingw-w64 wine msitools libc6-dev-i386
+        sudo apt-get install -q -y --no-install-recommends mingw-w64 wine msitools libc6-dev-i386 linux-headers-generic
 
     - name: Checkout
       uses: actions/checkout@v2
