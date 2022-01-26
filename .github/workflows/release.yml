@@ -16,6 +16,9 @@ jobs:
       run: |
         sudo apt-get install -q -y --no-install-recommends mingw-w64 wine
 
+    - name: Checkout
+      uses: actions/checkout@v2
+
     - name: Cache MSVC
       id: cache-msvc
       uses: actions/cache@v2
