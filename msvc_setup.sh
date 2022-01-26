@@ -26,5 +26,5 @@ cd "$DIR/msvc"
 
 curl -L https://github.com/panzi/msvc-wine/archive/refs/heads/add_double_quotes.zip -o msvc-wine.zip
 unzip msvc-wine.zip
-msvc-wine-master/vsdownload.py --dest install
-msvc-wine-master/install.sh install
+msvc-wine-add_double_quotes/vsdownload.py --dest install
+msvc-wine-add_double_quotes/install.sh install
