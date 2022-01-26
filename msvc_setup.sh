@@ -5,8 +5,12 @@ set -e
 SELF=$(readlink -f "$0")
 DIR=$(dirname "$SELF")
 
-if [[ "$DIR" != "{DIR//[$' \r\n\t\v']/}" ]]; then
-	echo "MSVC installation diroctory may not contain spaces.">&2
+function count_args () {
+	echo $#
+}
+
+if [[ $(count_args $DIR) -gt 1 ]]; then
+	echo "MSVC installation directory may not contain spaces: '$DIR'">&2
 	exit 1
 fi
 
