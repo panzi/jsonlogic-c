@@ -1,0 +1,57 @@
+name: Automatic Build and Upload Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+jobs:
+  build:
+    name: Build and Upload Release
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install MinGW-W64
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        sudo apt-get install -q -y --no-install-recommends mingw-w64 wine
+
+    - name: Cache MSVC
+      id: cache-msvc
+      uses: actions/cache@v2
+      with:
+        path: |
+          pak-examples/pak
+        key: ${{ runner.os }}-msvc-${{ hashFiles('msvc_setup.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-msvc-
+
+    - name: Install MSVC
+      if: steps.cache-msvc.outputs.cache-hit != 'true'
+      run: |
+        echo yes | ./msvc_setup.sh
+
+    - name: Cache Android NDK
+      id: cache-ndk
+      uses: actions/cache@v2
+      with:
+        path: |
+          pak-examples/pak
+        key: ${{ runner.os }}-ndk-${{ hashFiles('ndk_setup.sh') }}
+        restore-keys: |
+          ${{ runner.os }}-ndk-
+
+    - name: Install Android NDKMSVC
+      if: steps.cache-ndk.outputs.cache-hit != 'true'
+      run: |
+        ./ndk_setup.sh
+
+    - name: Build
+      run: ./release.sh
+
+    - name: Upload Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        files: |
+          jsonlogic-c-v*.zip
