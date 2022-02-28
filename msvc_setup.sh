@@ -15,7 +15,7 @@ mkdir "$DIR/msvc"
 
 cd "$DIR/msvc"
 
-curl -L https://github.com/panzi/msvc-wine/archive/refs/heads/install.py.zip -o msvc-wine.zip
+curl -L https://github.com/panzi/msvc-wine/archive/refs/heads/port-install-to-python.zip -o msvc-wine.zip
 unzip msvc-wine.zip
-msvc-wine-install.py/vsdownload.py --dest install
-msvc-wine-install.py/install.py install
+msvc-wine-port-install-to-python/vsdownload.py --dest install
+msvc-wine-port-install-to-python/install.py install

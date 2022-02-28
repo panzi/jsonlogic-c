@@ -7,7 +7,7 @@
 
 JsonLogic_Handle jsonlogic_array_into_handle(JsonLogic_Array *array);
 
-JsonLogic_Handle jsonlogic_empty_array() {
+JsonLogic_Handle jsonlogic_empty_array(void) {
     JsonLogic_Array *array = JSONLOGIC_MALLOC_EMPTY_ARRAY();
     if (array == NULL) {
         JSONLOGIC_ERROR_MEMORY();

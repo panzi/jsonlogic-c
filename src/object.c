@@ -25,7 +25,7 @@ void jsonlogic_object_debug(const JsonLogic_Object *object) {
 }
 #endif
 
-JsonLogic_Handle jsonlogic_empty_object() {
+JsonLogic_Handle jsonlogic_empty_object(void) {
     JsonLogic_Object *object = JSONLOGIC_MALLOC_EMPTY_OBJECT();
     if (object == NULL) {
         JSONLOGIC_ERROR_MEMORY();

@@ -530,7 +530,7 @@ JsonLogic_Handle jsonlogic_extra_HOURS(void *context, JsonLogic_Handle data, Jso
     return jsonlogic_number_from(jsonlogic_to_double(args[0]) * 60 * 60 * 1000);
 }
 
-double jsonlogic_now() {
+double jsonlogic_now(void) {
 #if defined(JSONLOGIC_WINDOWS)
     // TODO: find out how to get milliseconds precision time on Windows
     time_t tv = time(NULL);

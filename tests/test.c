@@ -900,16 +900,16 @@ const char *CertLogicTests[] = {
     #define COL_NORMAL "\x1B[0m"
 #endif
 
-void print_ok() {
+void print_ok(void) {
     puts(COL_GREEN "OK" COL_NORMAL);
 }
 
-void print_failed() {
+void print_failed(void) {
     puts(COL_RED "FAILED" COL_NORMAL);
 }
 
 #if defined(JSONLOGIC_WINDOWS) && !defined(__MINGW32__)
-void print_win32_error() {
+void print_win32_error(void) {
     char buf[2048];
     DWORD count = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),

@@ -25,7 +25,7 @@ size_t jsonlogic_utf16_len(const char16_t *key) {
     return ptr - key;
 }
 
-JsonLogic_Handle jsonlogic_empty_string() {
+JsonLogic_Handle jsonlogic_empty_string(void) {
     JsonLogic_String *string = JSONLOGIC_MALLOC_EMPTY_STRING();
     if (string == NULL) {
         JSONLOGIC_ERROR_MEMORY();

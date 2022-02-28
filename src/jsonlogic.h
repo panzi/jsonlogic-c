@@ -61,9 +61,9 @@ JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_number_from(double value);
 
 JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_error_from(JsonLogic_Error error);
 
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_string();
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_array();
-JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_object();
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_string(void);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_array(void);
+JSONLOGIC_EXPORT JsonLogic_Handle jsonlogic_empty_object(void);
 
 typedef struct JsonLogic_Object_Utf16Entry {
     const char16_t *key;
