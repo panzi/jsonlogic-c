@@ -1,7 +1,7 @@
 JsonLogic C Implentation
 ========================
 
-[![Test Status](https://img.shields.io/github/workflow/status/panzi/jsonlogic-c/Tests)](https://github.com/panzi/jsonlogic-c/actions/workflows/tests.yml)
+[![Test Status](https://img.shields.io/github/actions/workflow/status/panzi/jsonlogic-c/tests.yml?branch=main)](https://github.com/panzi/jsonlogic-c/actions/workflows/tests.yml)
 [![Release](https://img.shields.io/github/v/release/panzi/jsonlogic-c)](https://github.com/panzi/jsonlogic-c/releases)
 [![License](https://img.shields.io/github/license/panzi/jsonlogic-c)](https://github.com/panzi/jsonlogic-c/blob/main/LICENSE)
 
